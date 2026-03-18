@@ -119,6 +119,7 @@ export function EditorLayout({ projectId, projectName, files }: EditorLayoutProp
                 key={activeTabData.path}
                 initialContent={activeTabData.content}
                 filePath={activeTabData.path}
+                projectId={projectId}
                 theme={resolvedTheme === 'dark' ? 'dark' : 'light'}
                 onSave={handleSave}
               />

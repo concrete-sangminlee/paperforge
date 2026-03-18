@@ -8,24 +8,46 @@ import { foldGutter, foldKeymap, syntaxHighlighting, defaultHighlightStyle, brac
 import { autocompletion, completionKeymap } from '@codemirror/autocomplete';
 import { search, searchKeymap } from '@codemirror/search';
 import { oneDark } from '@codemirror/theme-one-dark';
+import * as Y from 'yjs';
+import { WebsocketProvider } from 'y-websocket';
+import { yCollab } from 'y-codemirror.next';
 import { useEditorStore } from '@/store/editor-store';
 
 interface LaTeXEditorProps {
   initialContent: string;
   filePath: string;
+  projectId: string;
   theme?: 'light' | 'dark';
   onSave?: (content: string) => void;
 }
 
 const themeCompartment = new Compartment();
 
-export function LaTeXEditor({ initialContent, filePath, theme = 'light', onSave }: LaTeXEditorProps) {
+const WS_BASE = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4001';
+
+export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'light', onSave }: LaTeXEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const updateContent = useEditorStore((s) => s.updateContent);
 
   useEffect(() => {
     if (!editorRef.current) return;
+
+    // --- Yjs setup ---
+    const ydoc = new Y.Doc();
+    const wsUrl = `${WS_BASE}/ws/${projectId}`;
+    const provider = new WebsocketProvider(wsUrl, projectId, ydoc);
+    // Use filePath as the key for the shared text within the project doc
+    const ytext = ydoc.getText(filePath);
+
+    // Initialise ytext with the existing content only when the doc is empty
+    // (first load / no remote state yet). Once remote state syncs it will
+    // override this, which is the correct CRDT behaviour.
+    provider.on('sync', (synced: boolean) => {
+      if (synced && ytext.length === 0 && initialContent) {
+        ytext.insert(0, initialContent);
+      }
+    });
 
     const saveKeymap = keymap.of([
       {
@@ -39,7 +61,7 @@ export function LaTeXEditor({ initialContent, filePath, theme = 'light', onSave 
     ]);
 
     const startState = EditorState.create({
-      doc: initialContent,
+      doc: ytext.toString() || initialContent,
       extensions: [
         lineNumbers(),
         highlightActiveLineGutter(),
@@ -71,6 +93,9 @@ export function LaTeXEditor({ initialContent, filePath, theme = 'light', onSave 
             updateContent(filePath, update.state.doc.toString());
           }
         }),
+        // Yjs collaboration extension — binds ytext to CodeMirror and exposes
+        // remote cursors/selections via awareness
+        yCollab(ytext, provider.awareness),
       ],
     });
 
@@ -83,9 +108,11 @@ export function LaTeXEditor({ initialContent, filePath, theme = 'light', onSave 
     return () => {
       view.destroy();
       viewRef.current = null;
+      provider.disconnect();
+      ydoc.destroy();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filePath]);
+  }, [filePath, projectId]);
 
   // Reconfigure theme when prop changes without destroying the editor
   useEffect(() => {
