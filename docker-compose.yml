@@ -53,6 +53,24 @@ services:
       - "1025:1025"
       - "8025:8025"
 
+  worker:
+    build: ./worker
+    depends_on:
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      REDIS_URL: redis://redis:6379
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: "9000"
+      MINIO_ACCESS_KEY: paperforge
+      MINIO_SECRET_KEY: paperforge123
+      MINIO_BUCKET: paperforge
+      DATABASE_URL: postgresql://paperforge:paperforge@postgres:5432/paperforge
+
 volumes:
   postgres_data:
   redis_data:

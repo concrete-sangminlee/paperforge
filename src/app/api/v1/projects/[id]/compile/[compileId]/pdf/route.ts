@@ -1,0 +1,58 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
+import { errorResponse, ApiError } from '@/lib/errors';
+import { assertProjectRole } from '@/services/project-service';
+import { prisma } from '@/lib/prisma';
+import { minioClient, getBucket } from '@/lib/minio';
+
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string; compileId: string }> },
+) {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = (session.user as { id: string }).id;
+    const { id, compileId } = await params;
+
+    await assertProjectRole(id, userId, ['owner', 'editor', 'viewer']);
+
+    const compilation = await prisma.compilation.findUnique({
+      where: { id: compileId },
+      select: { pdfMinioKey: true, status: true },
+    });
+
+    if (!compilation) {
+      throw new ApiError(404, 'Compilation not found');
+    }
+    if (!compilation.pdfMinioKey) {
+      throw new ApiError(404, 'PDF not available for this compilation');
+    }
+
+    const bucket = getBucket();
+    const stream = await minioClient.getObject(bucket, compilation.pdfMinioKey);
+
+    // Collect the stream into a buffer and return as a PDF response
+    const chunks: Buffer[] = [];
+    await new Promise<void>((resolve, reject) => {
+      stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+      stream.on('end', resolve);
+      stream.on('error', reject);
+    });
+
+    const buffer = Buffer.concat(chunks);
+    return new NextResponse(buffer, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Length': String(buffer.length),
+        'Content-Disposition': `inline; filename="output.pdf"`,
+        'Cache-Control': 'private, no-cache',
+      },
+    });
+  } catch (error) {
+    return errorResponse(error);
+  }
+}

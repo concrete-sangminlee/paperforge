@@ -1,0 +1,171 @@
+import { Worker, Job } from 'bullmq';
+import Redis from 'ioredis';
+import { Client as MinioClient } from 'minio';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
+import { PrismaClient } from '@prisma/client';
+import { compileLatex, CompilerType } from './compiler';
+
+// ---------------------------------------------------------------------------
+// Prisma client (standard JS client — no custom adapter needed in the worker)
+// ---------------------------------------------------------------------------
+const prisma = new PrismaClient();
+
+// ---------------------------------------------------------------------------
+// Redis connection (maxRetriesPerRequest must be null for BullMQ workers)
+// ---------------------------------------------------------------------------
+const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+
+const connection = new Redis(redisUrl, { maxRetriesPerRequest: null });
+
+// Separate pub/sub publisher client
+const publisher = new Redis(redisUrl, { maxRetriesPerRequest: null });
+
+// ---------------------------------------------------------------------------
+// MinIO client
+// ---------------------------------------------------------------------------
+const minioClient = new MinioClient({
+  endPoint: process.env.MINIO_ENDPOINT || 'localhost',
+  port: parseInt(process.env.MINIO_PORT || '9000', 10),
+  useSSL: process.env.MINIO_USE_SSL === 'true',
+  accessKey: process.env.MINIO_ACCESS_KEY || '',
+  secretKey: process.env.MINIO_SECRET_KEY || '',
+});
+
+const BUCKET = process.env.MINIO_BUCKET || 'paperforge';
+
+// ---------------------------------------------------------------------------
+// Job payload type
+// ---------------------------------------------------------------------------
+interface CompilationJobData {
+  compilationId: string;
+  projectId: string;
+  mainFile: string;
+  compiler: CompilerType;
+  files: Array<{ path: string; minioKey: string }>;
+}
+
+// ---------------------------------------------------------------------------
+// Helper: download all project files into a temp directory, preserving paths
+// ---------------------------------------------------------------------------
+async function downloadProjectFiles(
+  files: Array<{ path: string; minioKey: string }>,
+  workDir: string,
+): Promise<void> {
+  await Promise.all(
+    files.map(async (file) => {
+      const destPath = path.join(workDir, file.path);
+      const destDir = path.dirname(destPath);
+      fs.mkdirSync(destDir, { recursive: true });
+      await minioClient.fGetObject(BUCKET, file.minioKey, destPath);
+    }),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Helper: upload a local file to MinIO and return the key
+// ---------------------------------------------------------------------------
+async function uploadFile(localPath: string, minioKey: string): Promise<void> {
+  await minioClient.fPutObject(BUCKET, minioKey, localPath);
+}
+
+// ---------------------------------------------------------------------------
+// Helper: publish a status update to the Redis channel for this compilation
+// ---------------------------------------------------------------------------
+async function publishStatus(compilationId: string, payload: object): Promise<void> {
+  await publisher.publish(
+    `compilation:${compilationId}`,
+    JSON.stringify(payload),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// BullMQ worker
+// ---------------------------------------------------------------------------
+const worker = new Worker<CompilationJobData>(
+  'compilation',
+  async (job: Job<CompilationJobData>) => {
+    const { compilationId, projectId, mainFile, compiler, files } = job.data;
+
+    console.log(`[worker] Starting job ${job.id} — compilationId=${compilationId}`);
+
+    // Create a unique temp directory for this compilation
+    const workDir = fs.mkdtempSync(path.join(os.tmpdir(), `paperforge-${compilationId}-`));
+
+    try {
+      // 1. Download all project files from MinIO
+      await downloadProjectFiles(files, workDir);
+
+      // 2. Publish "compiling" status via Redis pub/sub
+      await publishStatus(compilationId, { status: 'compiling', compilationId });
+
+      // 3. Update DB status to "compiling"
+      await prisma.compilation.update({
+        where: { id: compilationId },
+        data: { status: 'compiling' },
+      });
+
+      // 4. Compile
+      const result = await compileLatex(workDir, mainFile, compiler);
+
+      // 5. Upload PDF and synctex.gz to MinIO if they exist
+      let pdfMinioKey: string | undefined;
+      let synctexMinioKey: string | undefined;
+
+      if (result.pdfPath) {
+        pdfMinioKey = `compilations/${projectId}/${compilationId}/output.pdf`;
+        await uploadFile(result.pdfPath, pdfMinioKey);
+      }
+
+      if (result.synctexPath) {
+        synctexMinioKey = `compilations/${projectId}/${compilationId}/output.synctex.gz`;
+        await uploadFile(result.synctexPath, synctexMinioKey);
+      }
+
+      // 6. Update the compilations table in PostgreSQL
+      const finalStatus = result.success ? 'success' : 'failed';
+      await prisma.compilation.update({
+        where: { id: compilationId },
+        data: {
+          status: finalStatus,
+          log: result.log,
+          pdfMinioKey: pdfMinioKey ?? null,
+          synctexMinioKey: synctexMinioKey ?? null,
+          durationMs: result.durationMs,
+        },
+      });
+
+      // 7. Publish result via Redis pub/sub for real-time notification
+      await publishStatus(compilationId, {
+        status: finalStatus,
+        compilationId,
+        durationMs: result.durationMs,
+        pdfMinioKey,
+        synctexMinioKey,
+      });
+
+      console.log(
+        `[worker] Job ${job.id} finished — status=${finalStatus} durationMs=${result.durationMs}`,
+      );
+    } finally {
+      // 8. Cleanup temp directory
+      try {
+        fs.rmSync(workDir, { recursive: true, force: true });
+      } catch (cleanupErr) {
+        console.error(`[worker] Failed to clean up temp dir ${workDir}:`, cleanupErr);
+      }
+    }
+  },
+  { connection },
+);
+
+worker.on('failed', (job, err) => {
+  console.error(`[worker] Job ${job?.id} failed:`, err);
+});
+
+worker.on('error', (err) => {
+  console.error('[worker] Worker error:', err);
+});
+
+console.log('[worker] Compilation worker started, listening on queue: compilation');
