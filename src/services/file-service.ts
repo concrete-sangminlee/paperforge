@@ -1,7 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { minioClient, getBucket, ensureBucket } from '@/lib/minio';
 import { ApiError } from '@/lib/errors';
-import { Readable } from 'stream';
 
 /**
  * Uploads text content to MinIO and upserts the File record.
@@ -18,52 +17,47 @@ export async function createFile(
   const minioKey = `projects/${projectId}/files/${path}`;
   const buffer = Buffer.from(content, 'utf-8');
 
-  await minioClient.putObject(bucket, minioKey, buffer, buffer.length, {
-    'Content-Type': 'text/plain',
-  });
+  await minioClient.putObject(bucket, minioKey, buffer);
 
   const existing = await prisma.file.findFirst({
     where: { projectId, path },
   });
 
   if (existing) {
-    const file = await prisma.file.update({
+    return prisma.file.update({
       where: { id: existing.id },
       data: {
+        sizeBytes: BigInt(buffer.length),
+        minioKey,
         deletedAt: null,
         isBinary: false,
-        sizeBytes: buffer.length,
-        mimeType: 'text/plain',
-        minioKey,
+        mimeType: 'text/x-tex',
       },
     });
-    return file;
   }
 
-  const file = await prisma.file.create({
+  return prisma.file.create({
     data: {
       projectId,
       path,
       isBinary: false,
-      sizeBytes: buffer.length,
-      mimeType: 'text/plain',
+      sizeBytes: BigInt(buffer.length),
+      mimeType: 'text/x-tex',
       minioKey,
     },
   });
-  return file;
 }
 
 /**
  * Reads file content from MinIO for a non-deleted File record.
  */
-export async function getFileContent(projectId: string, path: string) {
+export async function getFileContent(projectId: string, path: string): Promise<string> {
   const file = await prisma.file.findFirst({
     where: { projectId, path, deletedAt: null },
   });
-  if (!file) throw new ApiError(404, 'File not found');
+  if (!file || !file.minioKey) throw new ApiError(404, 'File not found');
 
-  const bucket = getBucket();
-  const stream = await minioClient.getObject(bucket, file.minioKey!);
+  const stream = await minioClient.getObject(getBucket(), file.minioKey);
   const chunks: Buffer[] = [];
   for await (const chunk of stream as AsyncIterable<Buffer>) {
     chunks.push(chunk);
@@ -78,6 +72,14 @@ export async function listFiles(projectId: string) {
   return prisma.file.findMany({
     where: { projectId, deletedAt: null },
     orderBy: { path: 'asc' },
+    select: {
+      id: true,
+      path: true,
+      isBinary: true,
+      sizeBytes: true,
+      mimeType: true,
+      updatedAt: true,
+    },
   });
 }
 
@@ -106,41 +108,34 @@ export async function uploadBinaryFile(
   mimeType: string,
 ) {
   await ensureBucket();
-  const bucket = getBucket();
   const minioKey = `projects/${projectId}/files/${path}`;
-
-  const stream = Readable.from(buffer);
-  await minioClient.putObject(bucket, minioKey, stream, buffer.length, {
-    'Content-Type': mimeType,
-  });
+  await minioClient.putObject(getBucket(), minioKey, buffer);
 
   const existing = await prisma.file.findFirst({
     where: { projectId, path },
   });
 
   if (existing) {
-    const file = await prisma.file.update({
+    return prisma.file.update({
       where: { id: existing.id },
       data: {
-        deletedAt: null,
-        isBinary: true,
-        sizeBytes: buffer.length,
-        mimeType,
+        sizeBytes: BigInt(buffer.length),
         minioKey,
+        mimeType,
+        isBinary: true,
+        deletedAt: null,
       },
     });
-    return file;
   }
 
-  const file = await prisma.file.create({
+  return prisma.file.create({
     data: {
       projectId,
       path,
       isBinary: true,
-      sizeBytes: buffer.length,
+      sizeBytes: BigInt(buffer.length),
       mimeType,
       minioKey,
     },
   });
-  return file;
 }
