@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { XIcon } from 'lucide-react';
 import { FileTree } from './file-tree';
 import { LaTeXEditor } from './latex-editor';
@@ -21,14 +21,29 @@ interface FileEntry {
 interface EditorLayoutProps {
   projectId: string;
   projectName: string;
+  initialMainFile?: string;
   files: FileEntry[];
 }
 
-export function EditorLayout({ projectId, projectName, files }: EditorLayoutProps) {
+export function EditorLayout({ projectId, projectName, initialMainFile, files: initialFiles }: EditorLayoutProps) {
   const { resolvedTheme } = useTheme();
   const { tabs, activeTab, setActiveTab, closeTab, markSaved } = useEditorStore();
+  const [files, setFiles] = useState<FileEntry[]>(initialFiles);
+  const [mainFile, setMainFile] = useState(initialMainFile ?? 'main.tex');
 
   const activeTabData = tabs.find((t) => t.path === activeTab);
+
+  const handleRefresh = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/v1/projects/${projectId}/files`);
+      if (res.ok) {
+        const data = await res.json() as FileEntry[];
+        setFiles(data);
+      }
+    } catch {
+      // ignore
+    }
+  }, [projectId]);
 
   const handleSave = useCallback(
     async (content: string) => {
@@ -59,7 +74,13 @@ export function EditorLayout({ projectId, projectName, files }: EditorLayoutProp
       <div className="flex min-h-0 flex-1">
         {/* Left sidebar – file tree */}
         <aside className="w-[200px] shrink-0 border-r bg-background">
-          <FileTree projectId={projectId} files={files} />
+          <FileTree
+            projectId={projectId}
+            files={files}
+            mainFile={mainFile}
+            onRefresh={() => void handleRefresh()}
+            onMainFileChange={setMainFile}
+          />
         </aside>
 
         {/* Centre – tab bar + editor */}

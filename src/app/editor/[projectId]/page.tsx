@@ -61,6 +61,7 @@ export default async function EditorPage({ params }: EditorPageProps) {
     <EditorLayout
       projectId={projectId}
       projectName={project.name}
+      initialMainFile={project.mainFile}
       files={fileEntries}
     />
   );
