@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 
 interface CollaboratorState {

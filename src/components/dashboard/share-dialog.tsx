@@ -41,7 +41,7 @@ interface ShareDialogProps {
   currentUserRole: string;
 }
 
-export function ShareDialog({ projectId, currentUserId, currentUserRole }: ShareDialogProps) {
+export function ShareDialog({ projectId, currentUserRole }: ShareDialogProps) {
   const [open, setOpen] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
