@@ -23,7 +23,12 @@ type PDFPageProxy = {
   render: (ctx: { canvasContext: CanvasRenderingContext2D; viewport: { width: number; height: number } }) => { promise: Promise<void> };
 };
 
-export function PdfViewer() {
+interface PdfViewerProps {
+  /** Increment this number to force a PDF reload even when the URL is unchanged. */
+  refreshKey?: number;
+}
+
+export function PdfViewer({ refreshKey }: PdfViewerProps) {
   const latestPdfUrl = useEditorStore((s) => s.latestPdfUrl);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pdfDocRef = useRef<PDFDocumentProxy | null>(null);
@@ -58,7 +63,7 @@ export function PdfViewer() {
     renderTaskRef.current = null;
   }, []);
 
-  // Load PDF whenever URL changes
+  // Load PDF whenever URL changes or refreshKey increments
   useEffect(() => {
     if (!latestPdfUrl) {
       pdfDocRef.current?.destroy();
@@ -72,6 +77,10 @@ export function PdfViewer() {
     setIsLoading(true);
     setError(null);
 
+    // Append a cache-busting timestamp so the browser always fetches the
+    // latest compiled PDF even when the URL path is identical.
+    const urlWithBust = `${latestPdfUrl}?t=${Date.now()}`;
+
     (async () => {
       try {
         // Dynamic import to avoid SSR issues
@@ -79,7 +88,7 @@ export function PdfViewer() {
         pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
         pdfDocRef.current?.destroy();
-        const doc = await pdfjsLib.getDocument(latestPdfUrl).promise as unknown as PDFDocumentProxy;
+        const doc = await pdfjsLib.getDocument(urlWithBust).promise as unknown as PDFDocumentProxy;
         if (cancelled) {
           doc.destroy();
           return;
@@ -101,7 +110,7 @@ export function PdfViewer() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [latestPdfUrl]);
+  }, [latestPdfUrl, refreshKey]);
 
   // Re-render when page or scale changes (but PDF already loaded)
   useEffect(() => {

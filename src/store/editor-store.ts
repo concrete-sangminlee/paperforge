@@ -12,6 +12,7 @@ interface EditorState {
   compilationLog: string;
   compilationStatus: 'idle' | 'compiling' | 'success' | 'error';
   latestPdfUrl: string | null;
+  autoCompileEnabled: boolean;
 
   openFile: (path: string, content: string) => void;
   closeTab: (path: string) => void;
@@ -21,6 +22,7 @@ interface EditorState {
   setCompilationLog: (log: string) => void;
   setCompilationStatus: (status: EditorState['compilationStatus']) => void;
   setLatestPdfUrl: (url: string | null) => void;
+  toggleAutoCompile: () => void;
 }
 
 export const useEditorStore = create<EditorState>((set) => ({
@@ -29,6 +31,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   compilationLog: '',
   compilationStatus: 'idle',
   latestPdfUrl: null,
+  autoCompileEnabled: true,
 
   openFile: (path, content) => set((state) => {
     if (state.tabs.find(t => t.path === path)) return { activeTab: path };
@@ -51,4 +54,5 @@ export const useEditorStore = create<EditorState>((set) => ({
   setCompilationLog: (log) => set({ compilationLog: log }),
   setCompilationStatus: (status) => set({ compilationStatus: status }),
   setLatestPdfUrl: (url) => set({ latestPdfUrl: url }),
+  toggleAutoCompile: () => set((state) => ({ autoCompileEnabled: !state.autoCompileEnabled })),
 }));

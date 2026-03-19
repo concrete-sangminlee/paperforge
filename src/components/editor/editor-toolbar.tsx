@@ -1,13 +1,15 @@
 'use client';
 
-import { useRef } from 'react';
-import { PlayIcon, LoaderCircleIcon, CheckCircleIcon, XCircleIcon } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { PlayIcon, LoaderCircleIcon, CheckCircleIcon, XCircleIcon, ZapIcon, ZapOffIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useEditorStore } from '@/store/editor-store';
 
 interface EditorToolbarProps {
   projectId: string;
+  /** Called by the parent to imperatively trigger a compile. */
+  onCompileReady?: (compileFn: () => Promise<void>) => void;
 }
 
 const STATUS_POLL_INTERVAL_MS = 1000;
@@ -20,8 +22,8 @@ type CompilationResponse = {
   durationMs: number | null;
 };
 
-export function EditorToolbar({ projectId }: EditorToolbarProps) {
-  const { compilationStatus, setCompilationStatus, setCompilationLog, setLatestPdfUrl } =
+export function EditorToolbar({ projectId, onCompileReady }: EditorToolbarProps) {
+  const { compilationStatus, setCompilationStatus, setCompilationLog, setLatestPdfUrl, autoCompileEnabled, toggleAutoCompile } =
     useEditorStore();
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -92,6 +94,20 @@ export function EditorToolbar({ projectId }: EditorToolbarProps) {
     }
   }
 
+  // Keep a ref to the latest handleCompile so the parent always calls
+  // the current closure (with up-to-date compilationStatus captured in it).
+  const handleCompileRef = useRef(handleCompile);
+  handleCompileRef.current = handleCompile;
+
+  // Expose a stable wrapper to the parent exactly once on mount.
+  useEffect(() => {
+    if (onCompileReady) {
+      onCompileReady(() => handleCompileRef.current());
+    }
+    // onCompileReady identity is stable; only run on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const isCompiling = compilationStatus === 'compiling';
 
   return (
@@ -108,6 +124,22 @@ export function EditorToolbar({ projectId }: EditorToolbarProps) {
           <PlayIcon className="size-3.5" />
         )}
         {isCompiling ? 'Compiling…' : 'Compile'}
+      </Button>
+
+      {/* Auto-compile toggle */}
+      <Button
+        size="sm"
+        variant={autoCompileEnabled ? 'secondary' : 'ghost'}
+        onClick={toggleAutoCompile}
+        className="gap-1.5 text-xs"
+        title={autoCompileEnabled ? 'Auto-compile ON — click to disable' : 'Auto-compile OFF — click to enable'}
+      >
+        {autoCompileEnabled ? (
+          <ZapIcon className="size-3.5 text-amber-500" />
+        ) : (
+          <ZapOffIcon className="size-3.5" />
+        )}
+        Auto: {autoCompileEnabled ? 'ON' : 'OFF'}
       </Button>
 
       <CompilationStatusBadge status={compilationStatus} />

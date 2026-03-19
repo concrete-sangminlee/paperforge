@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FileIcon, GitBranchIcon, HistoryIcon, XIcon } from 'lucide-react';
 import { FileTree } from './file-tree';
 import { LaTeXEditor } from './latex-editor';
@@ -32,14 +32,23 @@ interface EditorLayoutProps {
 
 type RightPanel = 'pdf' | 'history' | 'git';
 
+const AUTO_COMPILE_DEBOUNCE_MS = 2000;
+
 export function EditorLayout({ projectId, projectName, initialMainFile, files: initialFiles }: EditorLayoutProps) {
   const { resolvedTheme } = useTheme();
-  const { tabs, activeTab, setActiveTab, closeTab, markSaved } = useEditorStore();
+  const { tabs, activeTab, setActiveTab, closeTab, markSaved, autoCompileEnabled } = useEditorStore();
   const [files, setFiles] = useState<FileEntry[]>(initialFiles);
   const [mainFile, setMainFile] = useState(initialMainFile ?? 'main.tex');
   const [rightPanel, setRightPanel] = useState<RightPanel>('pdf');
+  const [pdfRefreshKey, setPdfRefreshKey] = useState(0);
   const providerRef = useRef<WebsocketProvider | null>(null);
   const [provider, setProvider] = useState<WebsocketProvider | null>(null);
+
+  // Stable ref to the compile function registered by EditorToolbar
+  const compileFnRef = useRef<(() => Promise<void>) | null>(null);
+
+  // Debounce timer for auto-compile
+  const autoCompileTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const activeTabData = tabs.find((t) => t.path === activeTab);
 
@@ -81,11 +90,79 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
     [activeTab, projectId, markSaved],
   );
 
+  /** Auto-save the active tab and then trigger compilation. */
+  const triggerAutoCompile = useCallback(async () => {
+    const state = useEditorStore.getState();
+    const currentTab = state.activeTab;
+    if (!currentTab) return;
+
+    const tabData = state.tabs.find((t) => t.path === currentTab);
+    if (!tabData) return;
+
+    // Auto-save
+    try {
+      const res = await fetch(`/api/v1/projects/${projectId}/files/${currentTab}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: tabData.content }),
+      });
+      if (res.ok) {
+        useEditorStore.getState().markSaved(currentTab);
+      }
+    } catch (err) {
+      console.error('Auto-save error:', err);
+    }
+
+    // Trigger compile via the registered compile function
+    if (compileFnRef.current) {
+      await compileFnRef.current();
+      // Increment refreshKey so the PDF viewer reloads even if the URL is unchanged
+      setPdfRefreshKey((k) => k + 1);
+    }
+  }, [projectId]);
+
+  /** Schedule a debounced auto-compile after the latest keystroke. */
+  const scheduleAutoCompile = useCallback(() => {
+    if (!autoCompileEnabled) return;
+    if (autoCompileTimer.current) clearTimeout(autoCompileTimer.current);
+    autoCompileTimer.current = setTimeout(() => {
+      void triggerAutoCompile();
+    }, AUTO_COMPILE_DEBOUNCE_MS);
+  }, [autoCompileEnabled, triggerAutoCompile]);
+
+  // Watch the Zustand tabs array for dirty content changes and schedule auto-compile
+  useEffect(() => {
+    // Only react when there is an active dirty tab
+    const state = useEditorStore.getState();
+    const currentTab = state.activeTab;
+    if (!currentTab) return;
+    const tabData = state.tabs.find((t) => t.path === currentTab);
+    if (tabData?.dirty) {
+      scheduleAutoCompile();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    // Depend on the content of the active tab so the effect fires on each keystroke.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    tabs.find((t) => t.path === activeTab)?.content,
+    scheduleAutoCompile,
+  ]);
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoCompileTimer.current) clearTimeout(autoCompileTimer.current);
+    };
+  }, []);
+
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       {/* Top toolbar */}
       <div className="flex items-center justify-between border-b bg-background px-2">
-        <EditorToolbar projectId={projectId} />
+        <EditorToolbar
+          projectId={projectId}
+          onCompileReady={(fn) => { compileFnRef.current = fn; }}
+        />
         <div className="flex items-center gap-2 px-2">
           {provider && <Collaborators provider={provider} />}
         </div>
@@ -219,7 +296,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
 
           {/* Panel content */}
           <div className="min-h-0 flex-1">
-            {rightPanel === 'pdf' && <PdfViewer />}
+            {rightPanel === 'pdf' && <PdfViewer refreshKey={pdfRefreshKey} />}
             {rightPanel === 'history' && <VersionHistory projectId={projectId} />}
             {rightPanel === 'git' && <GitPanel projectId={projectId} />}
           </div>
