@@ -4,11 +4,12 @@ import { createUser } from '@/services/user-service';
 import { createSignedToken } from '@/lib/jwt-utils';
 import { sendEmail } from '@/lib/email';
 import { errorResponse } from '@/lib/errors';
+import { emailTemplate, buttonHtml } from '@/lib/email-templates';
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { email, name, password } = registerSchema.parse(body);
+    const reqBody = await request.json();
+    const { email, name, password } = registerSchema.parse(reqBody);
 
     const user = await createUser(email, name, password);
 
@@ -20,14 +21,16 @@ export async function POST(request: Request) {
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     const verifyUrl = `${baseUrl}/api/v1/auth/verify-email/${token}`;
 
+    const body = `
+      <p style="margin:0 0 12px;color:#3f3f46">Hi ${name},</p>
+      <p style="margin:0 0 12px;color:#3f3f46">Thanks for signing up! Please verify your email address to get started.</p>
+      ${buttonHtml('Verify Email', verifyUrl)}
+      <p style="margin:16px 0 0;font-size:13px;color:#71717a">This link expires in 24 hours. If you did not create an account, you can safely ignore this email.</p>
+    `;
     await sendEmail(
       email,
       'Verify your PaperForge email',
-      `<h1>Welcome to PaperForge!</h1>
-       <p>Hi ${name},</p>
-       <p>Please verify your email by clicking the link below:</p>
-       <p><a href="${verifyUrl}">Verify Email</a></p>
-       <p>This link expires in 24 hours.</p>`,
+      emailTemplate('Welcome to PaperForge!', body),
     );
 
     return NextResponse.json(

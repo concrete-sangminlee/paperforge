@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { createSignedToken } from '@/lib/jwt-utils';
 import { sendEmail } from '@/lib/email';
 import { errorResponse } from '@/lib/errors';
+import { emailTemplate, buttonHtml } from '@/lib/email-templates';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email(),
@@ -11,8 +12,8 @@ const forgotPasswordSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { email } = forgotPasswordSchema.parse(body);
+    const reqBody = await request.json();
+    const { email } = forgotPasswordSchema.parse(reqBody);
 
     // Always return 200 to prevent email enumeration
     const user = await prisma.user.findUnique({ where: { email } });
@@ -26,14 +27,16 @@ export async function POST(request: Request) {
       const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
       const resetUrl = `${baseUrl}/reset-password?token=${token}`;
 
+      const body = `
+        <p style="margin:0 0 12px;color:#3f3f46">Hi ${user.name},</p>
+        <p style="margin:0 0 12px;color:#3f3f46">We received a request to reset your password. Click the button below to choose a new one.</p>
+        ${buttonHtml('Reset Password', resetUrl)}
+        <p style="margin:16px 0 0;font-size:13px;color:#71717a">This link expires in 1 hour. If you did not request a password reset, you can safely ignore this email.</p>
+      `;
       await sendEmail(
         email,
         'Reset your PaperForge password',
-        `<h1>Password Reset</h1>
-         <p>Hi ${user.name},</p>
-         <p>You requested a password reset. Click the link below to set a new password:</p>
-         <p><a href="${resetUrl}">Reset Password</a></p>
-         <p>This link expires in 1 hour. If you did not request this, you can safely ignore this email.</p>`,
+        emailTemplate('Password Reset', body),
       );
     }
 

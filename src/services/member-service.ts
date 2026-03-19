@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { ApiError } from '@/lib/errors';
 import { sendEmail } from '@/lib/email';
 import { assertProjectRole } from '@/services/project-service';
+import { emailTemplate, buttonHtml } from '@/lib/email-templates';
 
 export async function inviteMember(
   projectId: string,
@@ -35,12 +36,18 @@ export async function inviteMember(
   });
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const projectName = project?.name ?? 'a project';
+  const projectUrl = `${appUrl}/editor/${projectId}`;
+  const body = `
+    <p style="margin:0 0 12px;color:#3f3f46">Hi ${invitee.name},</p>
+    <p style="margin:0 0 12px;color:#3f3f46">You have been added as a <strong>${role}</strong> to the project <strong>${projectName}</strong> on PaperForge.</p>
+    ${buttonHtml('Open Project', projectUrl)}
+    <p style="margin:16px 0 0;font-size:13px;color:#71717a">If you believe this was sent in error, you can ignore this email.</p>
+  `;
   await sendEmail(
     email,
-    `You've been invited to "${project?.name ?? 'a project'}" on PaperForge`,
-    `<p>Hi ${invitee.name},</p>
-<p>You have been added as a <strong>${role}</strong> to the project <strong>${project?.name ?? 'a project'}</strong> on PaperForge.</p>
-<p><a href="${appUrl}/editor/${projectId}">Open project</a></p>`,
+    `You've been invited to "${projectName}" on PaperForge`,
+    emailTemplate(`You've been added to "${projectName}"`, body),
   );
 
   return member;
