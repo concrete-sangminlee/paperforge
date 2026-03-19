@@ -134,17 +134,14 @@ export function EditorToolbar({ projectId, onCompileReady }: EditorToolbarProps)
 
       {/* Download DOCX — only shown after a successful compilation with DOCX output */}
       {docxUrl && (
-        <Button
-          size="sm"
-          variant="outline"
-          asChild
-          className="gap-1.5"
+        <a
+          href={docxUrl}
+          download="output.docx"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1 text-sm font-medium hover:bg-muted transition-colors"
         >
-          <a href={docxUrl} download="output.docx">
-            <FileDownIcon className="size-3.5" />
-            Download DOCX
-          </a>
-        </Button>
+          <FileDownIcon className="size-3.5" />
+          DOCX
+        </a>
       )}
 
       {/* Auto-compile toggle */}
