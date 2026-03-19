@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
 const patchSettingsSchema = z.object({
-  settings: z.record(z.unknown()),
+  settings: z.record(z.string(), z.unknown()),
 });
 
 export async function GET() {
@@ -53,7 +53,7 @@ export async function PATCH(request: NextRequest) {
 
     const updated = await prisma.user.update({
       where: { id: userId },
-      data: { settings: merged },
+      data: { settings: JSON.parse(JSON.stringify(merged)) },
       select: { settings: true },
     });
 

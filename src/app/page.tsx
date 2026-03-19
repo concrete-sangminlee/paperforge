@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import {
   Card,
   CardContent,
@@ -152,17 +153,17 @@ export default async function HomePage() {
           </Link>
           <nav className="flex items-center gap-2">
             {isLoggedIn ? (
-              <Button asChild size="sm">
+              <Button render={<Link href="" />} size="sm">
                 <Link href="/projects">Go to Dashboard</Link>
               </Button>
             ) : (
               <>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/login">Sign In</Link>
-                </Button>
-                <Button size="sm" asChild>
-                  <Link href="/register">Get Started Free</Link>
-                </Button>
+                <Link href="/login" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+                  Sign In
+                </Link>
+                <Link href="/register" className={buttonVariants({ size: "sm" })}>
+                  Get Started Free
+                </Link>
               </>
             )}
           </nav>
@@ -195,22 +196,20 @@ export default async function HomePage() {
             </p>
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               {isLoggedIn ? (
-                <Button size="lg" className="px-8 text-base" asChild>
-                  <Link href="/projects">Go to Dashboard</Link>
-                </Button>
+                <Link href="/projects" className={cn(buttonVariants({ size: "lg" }), "px-8 text-base")}>
+                  Go to Dashboard
+                </Link>
               ) : (
                 <>
-                  <Button size="lg" className="px-8 text-base" asChild>
-                    <Link href="/register">Get Started Free</Link>
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="px-8 text-base"
-                    asChild
+                  <Link href="/register" className={cn(buttonVariants({ size: "lg" }), "px-8 text-base")}>
+                    Get Started Free
+                  </Link>
+                  <Link
+                    href="/login"
+                    className={cn(buttonVariants({ size: "lg", variant: "outline" }), "px-8 text-base")}
                   >
-                    <Link href="/login">Sign In</Link>
-                  </Button>
+                    Sign In
+                  </Link>
                 </>
               )}
             </div>
@@ -320,13 +319,13 @@ export default async function HomePage() {
             </p>
             <div className="mt-8">
               {isLoggedIn ? (
-                <Button size="lg" className="px-10 text-base" asChild>
-                  <Link href="/projects">Open Dashboard</Link>
-                </Button>
+                <Link href="/projects" className={cn(buttonVariants({ size: "lg" }), "px-10 text-base")}>
+                  Open Dashboard
+                </Link>
               ) : (
-                <Button size="lg" className="px-10 text-base" asChild>
-                  <Link href="/register">Get Started Free</Link>
-                </Button>
+                <Link href="/register" className={cn(buttonVariants({ size: "lg" }), "px-10 text-base")}>
+                  Get Started Free
+                </Link>
               )}
             </div>
           </div>
