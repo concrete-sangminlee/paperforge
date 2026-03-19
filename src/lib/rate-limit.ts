@@ -22,6 +22,11 @@ export async function checkRateLimit(
   limit: number,
   windowSeconds: number,
 ): Promise<RateLimitResult> {
+  // If Redis is not available, allow all requests
+  if (!redis) {
+    return { allowed: true, remaining: limit };
+  }
+
   const now = Date.now();
   const windowMs = windowSeconds * 1000;
   const windowStart = now - windowMs;

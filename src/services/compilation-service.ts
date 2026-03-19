@@ -2,13 +2,20 @@ import { Queue } from 'bullmq';
 import { prisma } from '@/lib/prisma';
 import { ApiError } from '@/lib/errors';
 
-const compilationQueue = new Queue('compilation', {
-  connection: {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6379'),
-    maxRetriesPerRequest: null,
-  },
-});
+let compilationQueue: Queue | null = null;
+try {
+  if (process.env.REDIS_URL || process.env.REDIS_HOST) {
+    compilationQueue = new Queue('compilation', {
+      connection: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379'),
+        maxRetriesPerRequest: null,
+      },
+    });
+  }
+} catch {
+  console.warn('BullMQ queue unavailable (no Redis)');
+}
 
 export async function triggerCompilation(projectId: string, userId: string) {
   const project = await prisma.project.findUnique({
@@ -20,6 +27,10 @@ export async function triggerCompilation(projectId: string, userId: string) {
   const compilation = await prisma.compilation.create({
     data: { projectId, userId, status: 'queued', compiler: project.compiler },
   });
+
+  if (!compilationQueue) {
+    throw new ApiError(503, 'Compilation service unavailable (Redis not configured)');
+  }
 
   await compilationQueue.add(
     'compile',
