@@ -16,7 +16,7 @@ export function createSignedToken(
   payload: Record<string, unknown>,
   expiresIn: string | number,
 ): string {
-  return jwt.sign(payload, getSecret(), { expiresIn });
+  return jwt.sign(payload, getSecret(), { expiresIn: expiresIn as jwt.SignOptions['expiresIn'] });
 }
 
 /**

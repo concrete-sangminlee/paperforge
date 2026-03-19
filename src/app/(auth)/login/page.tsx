@@ -1,11 +1,12 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { LoginForm } from "@/components/auth/login-form";
 import { OAuthButtons } from "@/components/auth/oauth-buttons";
 import { Separator } from "@/components/ui/separator";
 
-export default function LoginPage() {
+function LoginContent() {
   const searchParams = useSearchParams();
   const registered = searchParams.get("registered");
 
@@ -24,5 +25,13 @@ export default function LoginPage() {
       </div>
       <OAuthButtons />
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }

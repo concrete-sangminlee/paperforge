@@ -13,7 +13,7 @@ export async function logAuditAction(
       action,
       targetType,
       targetId,
-      details: details ?? undefined,
+      details: details ? JSON.parse(JSON.stringify(details)) : undefined,
     },
   });
 }

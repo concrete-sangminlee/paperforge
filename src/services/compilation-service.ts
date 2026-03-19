@@ -1,12 +1,13 @@
 import { Queue } from 'bullmq';
-import Redis from 'ioredis';
 import { prisma } from '@/lib/prisma';
 import { ApiError } from '@/lib/errors';
 
 const compilationQueue = new Queue('compilation', {
-  connection: new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+  connection: {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379'),
     maxRetriesPerRequest: null,
-  }),
+  },
 });
 
 export async function triggerCompilation(projectId: string, userId: string) {

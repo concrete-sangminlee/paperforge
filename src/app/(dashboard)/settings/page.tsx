@@ -230,7 +230,7 @@ export default function SettingsPage() {
           <form onSubmit={savePreferences} className="flex flex-col gap-4">
             <div className="grid gap-1.5">
               <label className="text-sm font-medium">Theme</label>
-              <Select value={theme} onValueChange={setTheme}>
+              <Select value={theme} onValueChange={(v) => v && setTheme(v)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -267,7 +267,7 @@ export default function SettingsPage() {
 
             <div className="grid gap-1.5">
               <label className="text-sm font-medium">Default Compiler</label>
-              <Select value={defaultCompiler} onValueChange={setDefaultCompiler}>
+              <Select value={defaultCompiler} onValueChange={(v) => v && setDefaultCompiler(v)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
