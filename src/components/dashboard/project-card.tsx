@@ -1,11 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { FileTextIcon, ClockIcon } from 'lucide-react';
+import { FileTextIcon, ClockIcon, Share2Icon } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AvatarGroup, AvatarGroupCount } from '@/components/ui/avatar';
+import { ShareDialog } from './share-dialog';
 
 interface ProjectMember {
   userId: string;
@@ -54,59 +57,92 @@ function formatRelativeTime(dateString: string): string {
 }
 
 export function ProjectCard({ project }: { project: ProjectData }) {
+  const [shareOpen, setShareOpen] = useState(false);
   const maxAvatars = 3;
   const visibleMembers = project.members.slice(0, maxAvatars);
   const remainingCount = project.members.length - maxAvatars;
 
+  // Derive the current viewer's role from the members list (first owner, fallback 'viewer')
+  const currentUserRole =
+    project.members.find((m) => m.role === 'owner')?.role ?? 'viewer';
+  const currentUserId =
+    project.members.find((m) => m.role === 'owner')?.userId ?? '';
+
   return (
-    <Link href={`/editor/${project.id}`} className="group block">
-      <Card className="transition-shadow hover:shadow-md hover:ring-foreground/20">
-        <CardHeader>
-          <div className="flex items-start justify-between gap-2">
-            <CardTitle className="truncate">{project.name}</CardTitle>
-            <Badge variant="secondary" className="shrink-0 text-[10px] uppercase">
-              {project.compiler}
-            </Badge>
-          </div>
-          {project.description && (
-            <CardDescription className="line-clamp-2">
-              {project.description}
-            </CardDescription>
-          )}
-        </CardHeader>
-        <CardFooter className="flex items-center justify-between gap-4 text-xs text-muted-foreground">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1">
-              <FileTextIcon className="size-3.5" />
-              {project._count.files} {project._count.files === 1 ? 'file' : 'files'}
-            </span>
-            <span className="flex items-center gap-1">
-              <ClockIcon className="size-3.5" />
-              {formatRelativeTime(project.updatedAt)}
-            </span>
-          </div>
-          <AvatarGroup>
-            {visibleMembers.map((member) => (
-              <Avatar key={member.userId} size="sm">
-                {member.user.avatarUrl && (
-                  <AvatarImage src={member.user.avatarUrl} alt={member.user.name} />
-                )}
-                <AvatarFallback>
-                  {member.user.name
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')
-                    .toUpperCase()
-                    .slice(0, 2)}
-                </AvatarFallback>
-              </Avatar>
-            ))}
-            {remainingCount > 0 && (
-              <AvatarGroupCount>+{remainingCount}</AvatarGroupCount>
+    <div className="group relative block">
+      <Link href={`/editor/${project.id}`} className="block">
+        <Card className="transition-shadow hover:shadow-md hover:ring-foreground/20">
+          <CardHeader>
+            <div className="flex items-start justify-between gap-2">
+              <CardTitle className="truncate">{project.name}</CardTitle>
+              <Badge variant="secondary" className="shrink-0 text-[10px] uppercase">
+                {project.compiler}
+              </Badge>
+            </div>
+            {project.description && (
+              <CardDescription className="line-clamp-2">
+                {project.description}
+              </CardDescription>
             )}
-          </AvatarGroup>
-        </CardFooter>
-      </Card>
-    </Link>
+          </CardHeader>
+          <CardFooter className="flex items-center justify-between gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1">
+                <FileTextIcon className="size-3.5" />
+                {project._count.files} {project._count.files === 1 ? 'file' : 'files'}
+              </span>
+              <span className="flex items-center gap-1">
+                <ClockIcon className="size-3.5" />
+                {formatRelativeTime(project.updatedAt)}
+              </span>
+            </div>
+            <AvatarGroup>
+              {visibleMembers.map((member) => (
+                <Avatar key={member.userId} size="sm">
+                  {member.user.avatarUrl && (
+                    <AvatarImage src={member.user.avatarUrl} alt={member.user.name} />
+                  )}
+                  <AvatarFallback>
+                    {member.user.name
+                      .split(' ')
+                      .map((n) => n[0])
+                      .join('')
+                      .toUpperCase()
+                      .slice(0, 2)}
+                  </AvatarFallback>
+                </Avatar>
+              ))}
+              {remainingCount > 0 && (
+                <AvatarGroupCount>+{remainingCount}</AvatarGroupCount>
+              )}
+            </AvatarGroup>
+          </CardFooter>
+        </Card>
+      </Link>
+
+      {/* Share button – sits above the link so clicks don't navigate */}
+      <div className="absolute right-3 top-3">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-7 opacity-0 transition-opacity group-hover:opacity-100"
+          aria-label={`Share ${project.name}`}
+          onClick={(e) => {
+            e.preventDefault();
+            setShareOpen(true);
+          }}
+        >
+          <Share2Icon className="size-3.5" />
+        </Button>
+      </div>
+
+      <ShareDialog
+        projectId={project.id}
+        currentUserId={currentUserId}
+        currentUserRole={currentUserRole}
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+      />
+    </div>
   );
 }

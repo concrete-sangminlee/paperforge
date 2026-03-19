@@ -39,10 +39,16 @@ interface ShareDialogProps {
   projectId: string;
   currentUserId: string;
   currentUserRole: string;
+  /** When provided the dialog is controlled externally (no built-in trigger rendered). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function ShareDialog({ projectId, currentUserRole }: ShareDialogProps) {
-  const [open, setOpen] = useState(false);
+export function ShareDialog({ projectId, currentUserRole, open: openProp, onOpenChange }: ShareDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = openProp !== undefined;
+  const open = isControlled ? openProp : internalOpen;
+  const setOpen = isControlled ? (onOpenChange ?? setInternalOpen) : setInternalOpen;
   const [members, setMembers] = useState<Member[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
 
@@ -158,10 +164,12 @@ export function ShareDialog({ projectId, currentUserRole }: ShareDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant="outline" size="sm" />}>
-        <Share2Icon data-icon="inline-start" />
-        Share
-      </DialogTrigger>
+      {!isControlled && (
+        <DialogTrigger render={<Button variant="outline" size="sm" />}>
+          <Share2Icon data-icon="inline-start" />
+          Share
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Share Project</DialogTitle>

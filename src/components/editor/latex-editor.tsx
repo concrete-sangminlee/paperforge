@@ -19,13 +19,14 @@ interface LaTeXEditorProps {
   projectId: string;
   theme?: 'light' | 'dark';
   onSave?: (content: string) => void;
+  onProviderReady?: (provider: WebsocketProvider) => void;
 }
 
 const themeCompartment = new Compartment();
 
 const WS_BASE = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4001';
 
-export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'light', onSave }: LaTeXEditorProps) {
+export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'light', onSave, onProviderReady }: LaTeXEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const updateContent = useEditorStore((s) => s.updateContent);
@@ -37,6 +38,7 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
     const ydoc = new Y.Doc();
     const wsUrl = `${WS_BASE}/ws/${projectId}`;
     const provider = new WebsocketProvider(wsUrl, projectId, ydoc);
+    onProviderReady?.(provider);
     // Use filePath as the key for the shared text within the project doc
     const ytext = ydoc.getText(filePath);
 

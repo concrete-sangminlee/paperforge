@@ -1,15 +1,20 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-import { XIcon } from 'lucide-react';
+import { useCallback, useRef, useState } from 'react';
+import { FileIcon, GitBranchIcon, HistoryIcon, XIcon } from 'lucide-react';
 import { FileTree } from './file-tree';
 import { LaTeXEditor } from './latex-editor';
 import { EditorToolbar } from './editor-toolbar';
 import { CompilationLog } from './compilation-log';
 import { PdfViewer } from './pdf-viewer';
+import { VersionHistory } from './version-history';
+import { GitPanel } from './git-panel';
+import { Collaborators } from './collaborators';
 import { useEditorStore } from '@/store/editor-store';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import type { WebsocketProvider } from 'y-websocket';
 
 interface FileEntry {
   id: string;
@@ -25,13 +30,23 @@ interface EditorLayoutProps {
   files: FileEntry[];
 }
 
+type RightPanel = 'pdf' | 'history' | 'git';
+
 export function EditorLayout({ projectId, projectName, initialMainFile, files: initialFiles }: EditorLayoutProps) {
   const { resolvedTheme } = useTheme();
   const { tabs, activeTab, setActiveTab, closeTab, markSaved } = useEditorStore();
   const [files, setFiles] = useState<FileEntry[]>(initialFiles);
   const [mainFile, setMainFile] = useState(initialMainFile ?? 'main.tex');
+  const [rightPanel, setRightPanel] = useState<RightPanel>('pdf');
+  const providerRef = useRef<WebsocketProvider | null>(null);
+  const [provider, setProvider] = useState<WebsocketProvider | null>(null);
 
   const activeTabData = tabs.find((t) => t.path === activeTab);
+
+  const handleProviderReady = useCallback((p: WebsocketProvider) => {
+    providerRef.current = p;
+    setProvider(p);
+  }, []);
 
   const handleRefresh = useCallback(async () => {
     try {
@@ -69,7 +84,12 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       {/* Top toolbar */}
-      <EditorToolbar projectId={projectId} />
+      <div className="flex items-center justify-between border-b bg-background px-2">
+        <EditorToolbar projectId={projectId} />
+        <div className="flex items-center gap-2 px-2">
+          {provider && <Collaborators provider={provider} />}
+        </div>
+      </div>
 
       <div className="flex min-h-0 flex-1">
         {/* Left sidebar – file tree */}
@@ -143,6 +163,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
                 projectId={projectId}
                 theme={resolvedTheme === 'dark' ? 'dark' : 'light'}
                 onSave={handleSave}
+                onProviderReady={handleProviderReady}
               />
             ) : (
               <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
@@ -160,9 +181,48 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
           </div>
         </div>
 
-        {/* Right – PDF viewer */}
-        <div className="w-[45%] shrink-0">
-          <PdfViewer />
+        {/* Right – switchable panel */}
+        <div className="flex w-[45%] shrink-0 flex-col">
+          {/* Panel tabs */}
+          <div className="flex shrink-0 items-center gap-1 border-b bg-muted/40 px-2 py-1">
+            <Button
+              size="sm"
+              variant={rightPanel === 'pdf' ? 'secondary' : 'ghost'}
+              className="h-7 gap-1.5 px-2 text-xs"
+              onClick={() => setRightPanel('pdf')}
+              aria-pressed={rightPanel === 'pdf'}
+            >
+              <FileIcon className="size-3.5" />
+              PDF
+            </Button>
+            <Button
+              size="sm"
+              variant={rightPanel === 'history' ? 'secondary' : 'ghost'}
+              className="h-7 gap-1.5 px-2 text-xs"
+              onClick={() => setRightPanel('history')}
+              aria-pressed={rightPanel === 'history'}
+            >
+              <HistoryIcon className="size-3.5" />
+              History
+            </Button>
+            <Button
+              size="sm"
+              variant={rightPanel === 'git' ? 'secondary' : 'ghost'}
+              className="h-7 gap-1.5 px-2 text-xs"
+              onClick={() => setRightPanel('git')}
+              aria-pressed={rightPanel === 'git'}
+            >
+              <GitBranchIcon className="size-3.5" />
+              Git
+            </Button>
+          </div>
+
+          {/* Panel content */}
+          <div className="min-h-0 flex-1">
+            {rightPanel === 'pdf' && <PdfViewer />}
+            {rightPanel === 'history' && <VersionHistory projectId={projectId} />}
+            {rightPanel === 'git' && <GitPanel projectId={projectId} />}
+          </div>
         </div>
       </div>
     </div>
