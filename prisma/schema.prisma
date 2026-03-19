@@ -122,6 +122,7 @@ model Compilation {
   log            String?
   pdfMinioKey    String?  @map("pdf_minio_key")
   synctexMinioKey String? @map("synctex_minio_key")
+  docxMinioKey   String?  @map("docx_minio_key")
   durationMs     Int?     @map("duration_ms")
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
 

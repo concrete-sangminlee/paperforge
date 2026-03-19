@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { PlayIcon, LoaderCircleIcon, CheckCircleIcon, XCircleIcon, ZapIcon, ZapOffIcon } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { PlayIcon, LoaderCircleIcon, CheckCircleIcon, XCircleIcon, ZapIcon, ZapOffIcon, FileDownIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useEditorStore } from '@/store/editor-store';
@@ -20,12 +20,14 @@ type CompilationResponse = {
   status: string;
   log: string | null;
   durationMs: number | null;
+  docxMinioKey?: string | null;
 };
 
 export function EditorToolbar({ projectId, onCompileReady }: EditorToolbarProps) {
   const { compilationStatus, setCompilationStatus, setCompilationLog, setLatestPdfUrl, autoCompileEnabled, toggleAutoCompile } =
     useEditorStore();
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [docxUrl, setDocxUrl] = useState<string | null>(null);
 
   function stopPolling() {
     if (pollRef.current) {
@@ -40,6 +42,7 @@ export function EditorToolbar({ projectId, onCompileReady }: EditorToolbarProps)
 
     setCompilationStatus('compiling');
     setCompilationLog('');
+    setDocxUrl(null);
 
     try {
       const res = await fetch(`/api/v1/projects/${projectId}/compile`, {
@@ -78,6 +81,9 @@ export function EditorToolbar({ projectId, onCompileReady }: EditorToolbarProps)
             setCompilationStatus('success');
             setCompilationLog(data.log ?? '');
             setLatestPdfUrl(`/api/v1/projects/${projectId}/compile/${compileId}/pdf`);
+            if (data.docxMinioKey) {
+              setDocxUrl(`/api/v1/projects/${projectId}/compile/${compileId}/docx`);
+            }
           } else if (data.status === 'failed' || data.status === 'error') {
             stopPolling();
             setCompilationStatus('error');
@@ -125,6 +131,21 @@ export function EditorToolbar({ projectId, onCompileReady }: EditorToolbarProps)
         )}
         {isCompiling ? 'Compiling…' : 'Compile'}
       </Button>
+
+      {/* Download DOCX — only shown after a successful compilation with DOCX output */}
+      {docxUrl && (
+        <Button
+          size="sm"
+          variant="outline"
+          asChild
+          className="gap-1.5"
+        >
+          <a href={docxUrl} download="output.docx">
+            <FileDownIcon className="size-3.5" />
+            Download DOCX
+          </a>
+        </Button>
+      )}
 
       {/* Auto-compile toggle */}
       <Button

@@ -12,6 +12,7 @@ export interface CompileResult {
   log: string;
   pdfPath?: string;
   synctexPath?: string;
+  docxPath?: string;
   durationMs: number;
 }
 
@@ -78,6 +79,33 @@ export async function compileLatex(
     }
     if (fs.existsSync(synctexPath)) {
       result.synctexPath = synctexPath;
+    }
+  }
+
+  // Attempt DOCX conversion via pandoc (best-effort — never blocks the result)
+  if (result.pdfPath) {
+    const docxPath = path.join(workDir, `${baseName}.docx`);
+    const texPath = path.join(workDir, mainFile);
+    try {
+      const { stdout: pandocOut, stderr: pandocErr } = await execFileAsync(
+        'pandoc',
+        [texPath, '-o', docxPath, '--from=latex', '--to=docx'],
+        { cwd: workDir, timeout: 30000, maxBuffer: 5 * 1024 * 1024 },
+      );
+      const pandocLog =
+        (pandocOut ? `\nPANDOC STDOUT:\n${pandocOut}` : '') +
+        (pandocErr ? `\nPANDOC STDERR:\n${pandocErr}` : '');
+      result.log += `\n\n--- DOCX conversion ---${pandocLog || '\n(no output)'}`;
+      if (fs.existsSync(docxPath)) {
+        result.docxPath = docxPath;
+      }
+    } catch (pandocErr: unknown) {
+      const e = pandocErr as { stdout?: string; stderr?: string; message?: string };
+      result.log +=
+        '\n\n--- DOCX conversion (failed — PDF still available) ---' +
+        (e.stdout ? `\nPANDOC STDOUT:\n${e.stdout}` : '') +
+        (e.stderr ? `\nPANDOC STDERR:\n${e.stderr}` : '') +
+        (e.message ? `\nERROR: ${e.message}` : '');
     }
   }
 

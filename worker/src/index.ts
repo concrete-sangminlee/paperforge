@@ -109,9 +109,10 @@ const worker = new Worker<CompilationJobData>(
       // 4. Compile
       const result = await compileLatex(workDir, mainFile, compiler);
 
-      // 5. Upload PDF and synctex.gz to MinIO if they exist
+      // 5. Upload PDF, synctex.gz, and DOCX to MinIO if they exist
       let pdfMinioKey: string | undefined;
       let synctexMinioKey: string | undefined;
+      let docxMinioKey: string | undefined;
 
       if (result.pdfPath) {
         pdfMinioKey = `compilations/${projectId}/${compilationId}/output.pdf`;
@@ -123,6 +124,11 @@ const worker = new Worker<CompilationJobData>(
         await uploadFile(result.synctexPath, synctexMinioKey);
       }
 
+      if (result.docxPath) {
+        docxMinioKey = `compilations/${projectId}/${compilationId}/output.docx`;
+        await uploadFile(result.docxPath, docxMinioKey);
+      }
+
       // 6. Update the compilations table in PostgreSQL
       const finalStatus = result.success ? 'success' : 'failed';
       await prisma.compilation.update({
@@ -132,6 +138,7 @@ const worker = new Worker<CompilationJobData>(
           log: result.log,
           pdfMinioKey: pdfMinioKey ?? null,
           synctexMinioKey: synctexMinioKey ?? null,
+          docxMinioKey: docxMinioKey ?? null,
           durationMs: result.durationMs,
         },
       });
@@ -143,6 +150,7 @@ const worker = new Worker<CompilationJobData>(
         durationMs: result.durationMs,
         pdfMinioKey,
         synctexMinioKey,
+        docxMinioKey,
       });
 
       console.log(

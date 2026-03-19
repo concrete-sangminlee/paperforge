@@ -60,6 +60,7 @@ export async function getCompilationStatus(compilationId: string) {
       log: true,
       durationMs: true,
       createdAt: true,
+      docxMinioKey: true,
     },
   });
 }
