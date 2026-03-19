@@ -11,13 +11,16 @@ export async function GET() {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Get queue info from Redis
-    const [waiting, active, completed, failed] = await Promise.all([
-      redis.llen('bull:compilation:wait'),
-      redis.llen('bull:compilation:active'),
-      redis.llen('bull:compilation:completed'),
-      redis.llen('bull:compilation:failed'),
-    ]);
+    // Get queue info from Redis (if available)
+    let waiting = 0, active = 0, completed = 0, failed = 0;
+    if (redis) {
+      [waiting, active, completed, failed] = await Promise.all([
+        redis.llen('bull:compilation:wait'),
+        redis.llen('bull:compilation:active'),
+        redis.llen('bull:compilation:completed'),
+        redis.llen('bull:compilation:failed'),
+      ]);
+    }
 
     return NextResponse.json({
       queue: {
