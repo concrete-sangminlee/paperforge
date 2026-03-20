@@ -138,9 +138,16 @@ function ComparisonCell({ value }: { value: ComparisonValue }) {
   return <span>{value}</span>;
 }
 
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
-  const session = await auth();
-  const isLoggedIn = Boolean(session?.user);
+  let isLoggedIn = false;
+  try {
+    const session = await auth();
+    isLoggedIn = Boolean(session?.user);
+  } catch {
+    // Auth may fail if DB is unavailable — treat as logged out
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
