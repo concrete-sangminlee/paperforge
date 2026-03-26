@@ -1,15 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/lib/auth';
 import { errorResponse } from '@/lib/errors';
 import { prisma } from '@/lib/prisma';
+import { apiSuccess, ApiErrors } from '@/lib/api-response';
 
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     const userRole = (session?.user as { role?: string } | undefined)?.role;
-    if (!session?.user || userRole !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    if (!session?.user || userRole !== 'admin') return ApiErrors.forbidden();
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') ?? undefined;
@@ -48,7 +47,7 @@ export async function GET(request: NextRequest) {
       prisma.user.count({ where }),
     ]);
 
-    return NextResponse.json({ users, total, page, limit });
+    return apiSuccess({ users, total, page, limit });
   } catch (error) {
     return errorResponse(error);
   }
