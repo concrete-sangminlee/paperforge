@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 
 interface UploadDialogProps {
   projectId: string;
@@ -84,8 +85,10 @@ export function UploadDialog({ projectId, onUploaded }: UploadDialogProps) {
       setCustomPath('');
       if (inputRef.current) inputRef.current.value = '';
       onUploaded();
+      toast.success('File uploaded');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
+      toast.error('Upload failed');
     } finally {
       setLoading(false);
     }

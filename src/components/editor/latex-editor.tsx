@@ -20,13 +20,14 @@ interface LaTeXEditorProps {
   theme?: 'light' | 'dark';
   onSave?: (content: string) => void;
   onProviderReady?: (provider: WebsocketProvider) => void;
+  onConnectionChange?: (connected: boolean) => void;
 }
 
 const themeCompartment = new Compartment();
 
 const WS_BASE = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4001';
 
-export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'light', onSave, onProviderReady }: LaTeXEditorProps) {
+export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'light', onSave, onProviderReady, onConnectionChange }: LaTeXEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const updateContent = useEditorStore((s) => s.updateContent);
@@ -39,6 +40,19 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
     const wsUrl = `${WS_BASE}/ws/${projectId}`;
     const provider = new WebsocketProvider(wsUrl, projectId, ydoc);
     onProviderReady?.(provider);
+
+    // --- Connection status tracking ---
+    const handleStatus = ({ status }: { status: string }) => {
+      const connected = status === 'connected';
+      onConnectionChange?.(connected);
+      if (!connected) {
+        console.log(`[PaperForge] WebSocket disconnected – attempting reconnection...`);
+      } else {
+        console.log(`[PaperForge] WebSocket connected`);
+      }
+    };
+    provider.on('status', handleStatus);
+
     // Use filePath as the key for the shared text within the project doc
     const ytext = ydoc.getText(filePath);
 
@@ -110,6 +124,7 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
     return () => {
       view.destroy();
       viewRef.current = null;
+      provider.off('status', handleStatus);
       provider.disconnect();
       ydoc.destroy();
     };

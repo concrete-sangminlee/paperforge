@@ -28,6 +28,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { toast } from 'sonner';
 
 interface VersionUser {
   id: string;
@@ -95,8 +96,11 @@ export function VersionHistory({ projectId }: VersionHistoryProps) {
       setLabelInput('');
       setDialogOpen(false);
       await fetchVersions();
+      toast.success('Version created');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      setError(msg);
+      toast.error('Failed to create version: ' + msg);
     } finally {
       setCreating(false);
     }
@@ -122,8 +126,11 @@ export function VersionHistory({ projectId }: VersionHistoryProps) {
       }
       setRestoreDialogOpen(false);
       setVersionToRestore(null);
+      toast.success('Version restored');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      setError(msg);
+      toast.error('Failed to restore version: ' + msg);
     } finally {
       setRestoring(null);
     }

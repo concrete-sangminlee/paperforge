@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
+import { CommandPalette } from "@/components/shared/command-palette";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -85,6 +86,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             {children}
+            <CommandPalette />
             <Toaster />
           </ThemeProvider>
         </SessionProvider>

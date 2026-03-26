@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface EditorTab {
   path: string;
@@ -67,7 +68,9 @@ function detectLanguage(path: string): string {
   }
 }
 
-export const useEditorStore = create<EditorState>((set, get) => ({
+export const useEditorStore = create<EditorState>()(
+  persist(
+    (set, get) => ({
   tabs: [],
   activeTab: null,
   compilationLog: '',
@@ -140,4 +143,17 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     tabs.splice(toIndex, 0, moved);
     return { tabs };
   }),
-}));
+    }),
+    {
+      name: 'paperforge-editor',
+      partialize: (state) => ({
+        fontSize: state.fontSize,
+        wordWrap: state.wordWrap,
+        showLineNumbers: state.showLineNumbers,
+        autoCompileEnabled: state.autoCompileEnabled,
+        sidebarCollapsed: state.sidebarCollapsed,
+        logPanelCollapsed: state.logPanelCollapsed,
+      }),
+    }
+  )
+);

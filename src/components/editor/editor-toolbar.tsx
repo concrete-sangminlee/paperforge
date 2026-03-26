@@ -24,6 +24,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useEditorStore } from '@/store/editor-store';
+import { toast } from 'sonner';
 
 interface EditorToolbarProps {
   projectId: string;
@@ -99,6 +100,7 @@ export function EditorToolbar({ projectId, projectName, onCompileReady }: Editor
         const err = await res.json().catch(() => ({ error: 'Compilation request failed' }));
         setCompilationLog((err as { error?: string }).error ?? 'Compilation request failed');
         setCompilationStatus('error');
+        toast.error('Compilation failed');
         return;
       }
 
@@ -112,6 +114,7 @@ export function EditorToolbar({ projectId, projectName, onCompileReady }: Editor
           stopPolling();
           setCompilationLog('Compilation timed out.');
           setCompilationStatus('error');
+          toast.error('Compilation failed');
           return;
         }
 
@@ -131,10 +134,12 @@ export function EditorToolbar({ projectId, projectName, onCompileReady }: Editor
             if (data.docxMinioKey) {
               setDocxUrl(`/api/v1/projects/${projectId}/compile/${compileId}/docx`);
             }
+            toast.success('Compiled successfully');
           } else if (data.status === 'failed' || data.status === 'error') {
             stopPolling();
             setCompilationStatus('error');
             setCompilationLog(data.log ?? 'Compilation failed.');
+            toast.error('Compilation failed');
           }
           // still 'queued' or 'running' — keep polling
         } catch {
@@ -144,6 +149,7 @@ export function EditorToolbar({ projectId, projectName, onCompileReady }: Editor
     } catch (err) {
       setCompilationLog(err instanceof Error ? err.message : 'Unknown error');
       setCompilationStatus('error');
+      toast.error('Compilation failed');
     }
   }
 
@@ -206,7 +212,7 @@ export function EditorToolbar({ projectId, projectName, onCompileReady }: Editor
       <Button
         size="sm"
         variant={autoCompileEnabled ? 'secondary' : 'ghost'}
-        onClick={toggleAutoCompile}
+        onClick={() => { toggleAutoCompile(); toast.info(autoCompileEnabled ? 'Auto-compile disabled' : 'Auto-compile enabled'); }}
         className="gap-1.5 text-xs"
         title={autoCompileEnabled ? 'Auto-compile ON - click to disable' : 'Auto-compile OFF - click to enable'}
       >

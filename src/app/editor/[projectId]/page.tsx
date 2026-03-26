@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { getProject } from '@/services/project-service';
 import { listFiles, createFile } from '@/services/file-service';
 import { EditorLayout } from '@/components/editor/editor-layout';
+import { ErrorBoundary } from '@/components/shared/error-boundary';
 
 interface EditorPageProps {
   params: Promise<{ projectId: string }>;
@@ -58,11 +59,13 @@ export default async function EditorPage({ params }: EditorPageProps) {
   }));
 
   return (
-    <EditorLayout
-      projectId={projectId}
-      projectName={project.name}
-      initialMainFile={project.mainFile}
-      files={fileEntries}
-    />
+    <ErrorBoundary>
+      <EditorLayout
+        projectId={projectId}
+        projectName={project.name}
+        initialMainFile={project.mainFile}
+        files={fileEntries}
+      />
+    </ErrorBoundary>
   );
 }

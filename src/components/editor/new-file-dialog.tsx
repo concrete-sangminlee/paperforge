@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 
 interface NewFileDialogProps {
   projectId: string;
@@ -52,8 +53,10 @@ export function NewFileDialog({ projectId, onCreated }: NewFileDialogProps) {
       setOpen(false);
       setFilePath('');
       onCreated();
+      toast.success('File created');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
+      toast.error('Failed to create file');
     } finally {
       setLoading(false);
     }

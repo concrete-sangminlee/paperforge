@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FileIcon, GitBranchIcon, HistoryIcon, XIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, ChevronDownIcon, ChevronUpIcon, FileTextIcon, CodeIcon } from 'lucide-react';
+import { FileIcon, GitBranchIcon, HistoryIcon, XIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, ChevronDownIcon, ChevronUpIcon, FileTextIcon, CodeIcon, WifiOff } from 'lucide-react';
 import { FileTree } from './file-tree';
 import { LaTeXEditor } from './latex-editor';
 import { EditorToolbar } from './editor-toolbar';
@@ -12,9 +12,11 @@ import { GitPanel } from './git-panel';
 import { Collaborators } from './collaborators';
 import { useEditorStore } from '@/store/editor-store';
 import { useTheme } from 'next-themes';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import type { WebsocketProvider } from 'y-websocket';
+import { useOnlineStatus } from '@/hooks/use-online-status';
 
 interface FileEntry {
   id: string;
@@ -43,6 +45,12 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
   const [pdfRefreshKey, setPdfRefreshKey] = useState(0);
   const providerRef = useRef<WebsocketProvider | null>(null);
   const [provider, setProvider] = useState<WebsocketProvider | null>(null);
+  const [wsConnected, setWsConnected] = useState(true);
+  const isOnline = useOnlineStatus();
+
+  const handleConnectionChange = useCallback((connected: boolean) => {
+    setWsConnected(connected);
+  }, []);
 
   // Stable ref to the compile function registered by EditorToolbar
   const compileFnRef = useRef<(() => Promise<void>) | null>(null);
@@ -80,11 +88,14 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
         });
         if (res.ok) {
           markSaved(activeTab);
+          toast.success('File saved');
         } else {
           console.error('Save failed:', await res.text());
+          toast.error('Save failed');
         }
       } catch (err) {
         console.error('Save error:', err);
+        toast.error('Save failed');
       }
     },
     [activeTab, projectId, markSaved],
@@ -157,6 +168,20 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
 
   return (
     <div className="flex h-screen flex-col overflow-hidden">
+      {/* Offline / disconnected banner */}
+      {!isOnline && (
+        <div className="flex items-center gap-2 bg-red-500/10 border-b border-red-500/20 px-4 py-1.5 text-xs text-red-600">
+          <WifiOff className="size-3.5" />
+          You are offline. Changes will sync when your internet connection is restored.
+        </div>
+      )}
+      {isOnline && !wsConnected && (
+        <div className="flex items-center gap-2 bg-amber-500/10 border-b border-amber-500/20 px-4 py-1.5 text-xs text-amber-600">
+          <WifiOff className="size-3.5" />
+          Connection lost. Changes will sync when reconnected.
+        </div>
+      )}
+
       {/* Top toolbar */}
       <div className="flex items-center justify-between border-b bg-background px-2">
         <EditorToolbar
@@ -165,6 +190,12 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
           onCompileReady={(fn) => { compileFnRef.current = fn; }}
         />
         <div className="flex items-center gap-2 px-2">
+          {isOnline && wsConnected && (
+            <div className="flex items-center gap-1.5 text-xs text-green-600" title="Connected">
+              <span className="size-2 rounded-full bg-green-500" />
+              Connected
+            </div>
+          )}
           {provider && <Collaborators provider={provider} />}
         </div>
       </div>
@@ -255,6 +286,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
                 theme={resolvedTheme === 'dark' ? 'dark' : 'light'}
                 onSave={handleSave}
                 onProviderReady={handleProviderReady}
+                onConnectionChange={handleConnectionChange}
               />
             ) : (
               <div className="flex h-full items-center justify-center text-sm text-muted-foreground">

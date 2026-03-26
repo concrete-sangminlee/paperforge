@@ -31,6 +31,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { toast } from 'sonner';
 
 interface GitCredential {
   id: string;
@@ -113,8 +114,11 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
       setRemoteUrl(remoteInput.trim());
       setRemoteInput('');
       setLinkOpen(false);
+      toast.success('Remote linked');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      setError(msg);
+      toast.error('Link failed: ' + msg);
     } finally {
       setLinking(false);
     }
@@ -135,11 +139,13 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
       }
       setPushStatus('success');
       setPushMessage('Changes pushed to remote successfully.');
+      toast.success('Pushed successfully');
     } catch (err) {
       setPushStatus('error');
       const msg = err instanceof Error ? err.message : 'Unknown error';
       setPushMessage(msg);
       setError(msg);
+      toast.error('Push failed: ' + msg);
     } finally {
       setPushing(false);
     }
@@ -160,11 +166,13 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
       }
       setPullStatus('success');
       setPullMessage('Latest changes pulled from remote.');
+      toast.success('Pulled successfully');
     } catch (err) {
       setPullStatus('error');
       const msg = err instanceof Error ? err.message : 'Unknown error';
       setPullMessage(msg);
       setError(msg);
+      toast.error('Pull failed: ' + msg);
     } finally {
       setPulling(false);
     }
@@ -191,8 +199,11 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
       setCredToken('');
       setCredOpen(false);
       await fetchCredentials();
+      toast.success('Credential saved');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      setError(msg);
+      toast.error('Failed to save credential: ' + msg);
     } finally {
       setAddingCred(false);
     }
@@ -206,6 +217,7 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
       await fetchCredentials();
     } catch {
       setError('Failed to remove credential');
+      toast.error('Failed to remove credential');
     }
   }
 

@@ -36,6 +36,7 @@ import { useEditorStore } from '@/store/editor-store';
 import { cn } from '@/lib/utils';
 import { NewFileDialog } from './new-file-dialog';
 import { UploadDialog } from './upload-dialog';
+import { toast } from 'sonner';
 
 interface FileEntry {
   id: string;
@@ -546,6 +547,7 @@ export function FileTree({
       openFile(file.path, data.content);
     } catch (err) {
       console.error('Failed to open file:', err);
+      toast.error('Failed to open file');
     } finally {
       setLoading(null);
     }
@@ -601,6 +603,7 @@ export function FileTree({
         onRefresh();
       } catch (err) {
         console.error('Rename failed:', err);
+        toast.error('Rename failed');
         setRenaming(null);
       }
     },
@@ -615,8 +618,10 @@ export function FileTree({
       });
       closeTab(file.path);
       onRefresh();
+      toast.success('File deleted');
     } catch (err) {
       console.error('Delete failed:', err);
+      toast.error('Delete failed');
     }
   }
 
@@ -630,6 +635,7 @@ export function FileTree({
       onMainFileChange?.(file.path);
     } catch (err) {
       console.error('Set main file failed:', err);
+      toast.error('Failed to set main file');
     }
   }
 
@@ -664,6 +670,7 @@ export function FileTree({
       onRefresh();
     } catch (err) {
       console.error('Duplicate failed:', err);
+      toast.error('Duplicate failed');
     }
   }
 
@@ -683,6 +690,7 @@ export function FileTree({
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Download failed:', err);
+      toast.error('Download failed');
     }
   }
 
@@ -715,6 +723,7 @@ export function FileTree({
       onRefresh();
     } catch (err) {
       console.error('Create folder failed:', err);
+      toast.error('Failed to create folder');
       setNewFolderParent(null);
     }
   }
@@ -772,6 +781,7 @@ export function FileTree({
       onRefresh();
     } catch (err) {
       console.error('Rename folder failed:', err);
+      toast.error('Rename folder failed');
       setRenamingFolder(null);
     }
   }
@@ -793,8 +803,10 @@ export function FileTree({
         closeTab(f.path);
       }
       onRefresh();
+      toast.success('File deleted');
     } catch (err) {
       console.error('Delete folder failed:', err);
+      toast.error('Delete folder failed');
     }
   }
 
