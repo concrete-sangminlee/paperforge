@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/lib/auth';
 import { errorResponse } from '@/lib/errors';
 import { listTemplates, submitTemplate } from '@/services/template-service';
 import { z } from 'zod';
+import { apiSuccess, ApiErrors } from '@/lib/api-response';
 
 const submitTemplateSchema = z.object({
   projectId: z.string().uuid(),
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category') ?? undefined;
     const search = searchParams.get('search') ?? undefined;
     const templates = await listTemplates(category, search);
-    return NextResponse.json(templates);
+    return apiSuccess(templates);
   } catch (error) {
     return errorResponse(error);
   }
@@ -26,9 +27,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!session?.user) return ApiErrors.unauthorized();
     const userId = (session.user as { id: string }).id;
     const body = await request.json();
     const data = submitTemplateSchema.parse(body);
@@ -39,7 +38,7 @@ export async function POST(request: NextRequest) {
       data.description,
       data.category,
     );
-    return NextResponse.json(template, { status: 201 });
+    return apiSuccess(template, 201);
   } catch (error) {
     return errorResponse(error);
   }

@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/lib/auth';
 import { errorResponse } from '@/lib/errors';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { apiSuccess, ApiErrors } from '@/lib/api-response';
 
 const patchProfileSchema = z.object({
   name: z.string().min(1).max(255).optional(),
@@ -10,32 +11,32 @@ const patchProfileSchema = z.object({
   bio: z.string().max(1000).optional().nullable(),
 });
 
+const profileSelect = {
+  id: true,
+  name: true,
+  email: true,
+  institution: true,
+  bio: true,
+  avatarUrl: true,
+  settings: true,
+  storageUsedBytes: true,
+  storageQuotaBytes: true,
+  role: true,
+  createdAt: true,
+} as const;
+
 export async function GET() {
   try {
     const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!session?.user) return ApiErrors.unauthorized();
     const userId = (session.user as { id: string }).id;
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        institution: true,
-        bio: true,
-        avatarUrl: true,
-        settings: true,
-        storageUsedBytes: true,
-        storageQuotaBytes: true,
-        role: true,
-        createdAt: true,
-      },
+      select: profileSelect,
     });
 
-    return NextResponse.json(user);
+    return apiSuccess(user);
   } catch (error) {
     return errorResponse(error);
   }
@@ -44,9 +45,7 @@ export async function GET() {
 export async function PATCH(request: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!session?.user) return ApiErrors.unauthorized();
     const userId = (session.user as { id: string }).id;
     const body = await request.json();
     const data = patchProfileSchema.parse(body);
@@ -58,22 +57,10 @@ export async function PATCH(request: NextRequest) {
         ...(data.institution !== undefined ? { institution: data.institution } : {}),
         ...(data.bio !== undefined ? { bio: data.bio } : {}),
       },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        institution: true,
-        bio: true,
-        avatarUrl: true,
-        settings: true,
-        storageUsedBytes: true,
-        storageQuotaBytes: true,
-        role: true,
-        createdAt: true,
-      },
+      select: profileSelect,
     });
 
-    return NextResponse.json(updated);
+    return apiSuccess(updated);
   } catch (error) {
     return errorResponse(error);
   }
