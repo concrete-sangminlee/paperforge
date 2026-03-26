@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { createSignedToken } from '@/lib/jwt-utils';
 import { sendEmail } from '@/lib/email';
 import { errorResponse } from '@/lib/errors';
 import { emailTemplate, buttonHtml } from '@/lib/email-templates';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { apiError } from '@/lib/api-response';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email(),
@@ -12,6 +15,14 @@ const forgotPasswordSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    // Rate limit: 5 per 15 minutes per IP
+    const headersList = await headers();
+    const ip = headersList.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
+    const rateLimit = await checkRateLimit(`rate:forgot-pw:${ip}`, 5, 900);
+    if (!rateLimit.allowed) {
+      return apiError('Too many attempts. Please try again later.', 429, 'RATE_LIMITED');
+    }
+
     const reqBody = await request.json();
     const { email } = forgotPasswordSchema.parse(reqBody);
 

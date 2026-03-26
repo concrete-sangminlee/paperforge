@@ -1,13 +1,25 @@
-import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 import { registerSchema } from '@/lib/validation';
 import { createUser } from '@/services/user-service';
 import { createSignedToken } from '@/lib/jwt-utils';
 import { sendEmail } from '@/lib/email';
 import { errorResponse } from '@/lib/errors';
 import { emailTemplate, buttonHtml } from '@/lib/email-templates';
+import { checkRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
+import { apiSuccess, apiError } from '@/lib/api-response';
 
 export async function POST(request: Request) {
   try {
+    // Rate limit: 5 registrations per 15 minutes per IP
+    const headersList = await headers();
+    const ip = headersList.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
+    const rateLimit = await checkRateLimit(`rate:register:${ip}`, 5, 900);
+    if (!rateLimit.allowed) {
+      return apiError('Too many registration attempts. Please try again later.', 429, 'RATE_LIMITED', {
+        ...rateLimitHeaders(5, rateLimit),
+      });
+    }
+
     const reqBody = await request.json();
     const { email, name, password } = registerSchema.parse(reqBody);
 
@@ -33,10 +45,7 @@ export async function POST(request: Request) {
       emailTemplate('Welcome to PaperForge!', body),
     );
 
-    return NextResponse.json(
-      { user },
-      { status: 201 },
-    );
+    return apiSuccess({ user }, 201);
   } catch (error) {
     return errorResponse(error);
   }
