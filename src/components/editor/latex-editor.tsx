@@ -131,6 +131,36 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filePath, projectId]);
 
+  // Listen for 'latex-insert' custom events from toolbar/command palette
+  useEffect(() => {
+    function handleLatexInsert(e: Event) {
+      const view = viewRef.current;
+      if (!view) return;
+
+      const detail = (e as CustomEvent).detail;
+      const text = typeof detail === 'string' ? detail : detail?.text;
+      if (!text) return;
+
+      const { from, to } = view.state.selection.main;
+      const selectedText = view.state.sliceDoc(from, to);
+
+      // If the command contains a placeholder like {}, insert selected text inside
+      let insertText = text;
+      if (selectedText && text.includes('{}')) {
+        insertText = text.replace('{}', `{${selectedText}}`);
+      }
+
+      view.dispatch({
+        changes: { from, to, insert: insertText },
+        selection: { anchor: from + insertText.length },
+      });
+      view.focus();
+    }
+
+    window.addEventListener('latex-insert', handleLatexInsert);
+    return () => window.removeEventListener('latex-insert', handleLatexInsert);
+  }, []);
+
   // Reconfigure theme when prop changes without destroying the editor
   useEffect(() => {
     if (!viewRef.current) return;

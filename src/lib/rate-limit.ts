@@ -69,3 +69,23 @@ export async function checkRateLimit(
     remaining: limit - currentCount - 1,
   };
 }
+
+/**
+ * Generate standard rate limit headers for HTTP responses.
+ */
+export function rateLimitHeaders(
+  limit: number,
+  result: RateLimitResult,
+): Record<string, string> {
+  const headers: Record<string, string> = {
+    'X-RateLimit-Limit': String(limit),
+    'X-RateLimit-Remaining': String(Math.max(0, result.remaining)),
+  };
+  if (result.retryAfter) {
+    headers['Retry-After'] = String(result.retryAfter);
+    headers['X-RateLimit-Reset'] = String(
+      Math.ceil(Date.now() / 1000) + result.retryAfter,
+    );
+  }
+  return headers;
+}

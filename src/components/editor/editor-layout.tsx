@@ -166,6 +166,17 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
     };
   }, []);
 
+  // Warn before leaving with unsaved changes
+  useEffect(() => {
+    function handleBeforeUnload(e: BeforeUnloadEvent) {
+      if (useEditorStore.getState().hasUnsavedChanges()) {
+        e.preventDefault();
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       {/* Offline / disconnected banner */}
