@@ -6,6 +6,7 @@ import { FileTree } from './file-tree';
 import { LaTeXEditor } from './latex-editor';
 import { EditorToolbar } from './editor-toolbar';
 import { CompilationLog } from './compilation-log';
+import { EditorStatusBar } from './editor-status-bar';
 import { PdfViewer } from './pdf-viewer';
 import { VersionHistory } from './version-history';
 import { GitPanel } from './git-panel';
@@ -316,6 +317,9 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
               </div>
             )}
           </div>
+
+          {/* Editor status bar */}
+          <EditorStatusBar />
 
           {/* Compilation log – bottom panel */}
           <div className={cn('shrink-0 border-t transition-all duration-200', logPanelCollapsed ? 'h-8' : 'h-44')}>
