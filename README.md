@@ -474,7 +474,8 @@ Includes all services: Next.js app, WebSocket server, compilation workers, Postg
 - [x] LaTeX snippet templates (12 common patterns)
 - [x] LaTeX error parser with structured diagnostics
 - [x] Keyboard shortcuts dialog
-- [x] 67 unit tests across 9 suites
+- [x] Project ZIP export (download entire project)
+- [x] 73 unit tests across 10 suites
 - [ ] Rich text / WYSIWYG mode
 - [ ] Spell check & grammar
 - [ ] Bibliography manager (BibTeX GUI)
