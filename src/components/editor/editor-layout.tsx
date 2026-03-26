@@ -1,12 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FileIcon, GitBranchIcon, HistoryIcon, XIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, ChevronDownIcon, ChevronUpIcon, FileTextIcon, CodeIcon, WifiOff } from 'lucide-react';
+import { FileIcon, GitBranchIcon, HistoryIcon, XIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, ChevronDownIcon, ChevronUpIcon, FileTextIcon, CodeIcon, WifiOff, ListTreeIcon } from 'lucide-react';
 import { FileTree } from './file-tree';
 import { LaTeXEditor } from './latex-editor';
 import { EditorToolbar } from './editor-toolbar';
 import { CompilationLog } from './compilation-log';
 import { EditorStatusBar } from './editor-status-bar';
+import { DocumentOutline } from './document-outline';
 import { PdfViewer } from './pdf-viewer';
 import { VersionHistory } from './version-history';
 import { GitPanel } from './git-panel';
@@ -33,7 +34,7 @@ interface EditorLayoutProps {
   files: FileEntry[];
 }
 
-type RightPanel = 'pdf' | 'history' | 'git';
+type RightPanel = 'pdf' | 'history' | 'git' | 'outline';
 
 const AUTO_COMPILE_DEBOUNCE_MS = 2000;
 
@@ -406,6 +407,16 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
               <GitBranchIcon className="size-3.5" />
               Git
             </Button>
+            <Button
+              size="sm"
+              variant={rightPanel === 'outline' ? 'secondary' : 'ghost'}
+              className="h-7 gap-1.5 px-2 text-xs"
+              onClick={() => setRightPanel('outline')}
+              aria-pressed={rightPanel === 'outline'}
+            >
+              <ListTreeIcon className="size-3.5" />
+              Outline
+            </Button>
           </div>
 
           {/* Panel content */}
@@ -413,6 +424,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
             {rightPanel === 'pdf' && <PdfViewer refreshKey={pdfRefreshKey} />}
             {rightPanel === 'history' && <VersionHistory projectId={projectId} />}
             {rightPanel === 'git' && <GitPanel projectId={projectId} />}
+            {rightPanel === 'outline' && <DocumentOutline />}
           </div>
         </div>
       </div>

@@ -166,6 +166,27 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
     return () => window.removeEventListener('latex-insert', handleLatexInsert);
   }, []);
 
+  // Listen for 'editor-goto-line' events from document outline
+  useEffect(() => {
+    function handleGotoLine(e: Event) {
+      const view = viewRef.current;
+      if (!view) return;
+      const line = (e as CustomEvent).detail as number;
+      if (typeof line !== 'number' || line < 1) return;
+      const lineCount = view.state.doc.lines;
+      const targetLine = Math.min(line, lineCount);
+      const lineInfo = view.state.doc.line(targetLine);
+      view.dispatch({
+        selection: { anchor: lineInfo.from },
+        effects: EditorView.scrollIntoView(lineInfo.from, { y: 'center' }),
+      });
+      view.focus();
+    }
+
+    window.addEventListener('editor-goto-line', handleGotoLine);
+    return () => window.removeEventListener('editor-goto-line', handleGotoLine);
+  }, []);
+
   // Reconfigure theme when prop changes without destroying the editor
   useEffect(() => {
     if (!viewRef.current) return;
