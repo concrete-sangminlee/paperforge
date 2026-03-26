@@ -470,7 +470,11 @@ Includes all services: Next.js app, WebSocket server, compilation workers, Postg
 - [x] Bracket auto-closing for LaTeX
 - [x] GitHub Actions CI/CD pipeline
 - [x] Dynamic sitemap generation
-- [ ] Keyboard shortcuts panel
+- [x] Document outline panel with section navigation
+- [x] LaTeX snippet templates (12 common patterns)
+- [x] LaTeX error parser with structured diagnostics
+- [x] Keyboard shortcuts dialog
+- [x] 67 unit tests across 9 suites
 - [ ] Rich text / WYSIWYG mode
 - [ ] Spell check & grammar
 - [ ] Bibliography manager (BibTeX GUI)
@@ -524,7 +528,7 @@ PaperForge is built on the shoulders of outstanding open-source projects:
 
 **Built with determination by [concrete-sangminlee](https://github.com/concrete-sangminlee)**
 
-**155+ TypeScript files · 53 tests · 39 API routes · 13 database models · 8 Docker services**
+**160+ TypeScript files · 67 tests · 39 API routes · 13 database models · 8 Docker services**
 
 If PaperForge helps your research, consider giving it a star!
 
