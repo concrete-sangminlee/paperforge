@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { ListTreeIcon, Heading1Icon, Heading2Icon, Heading3Icon, FileTextIcon } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useEditorStore } from '@/store/editor-store';
@@ -46,7 +46,7 @@ function getLevelIcon(level: number) {
   return Heading3Icon;
 }
 
-export function DocumentOutline() {
+export const DocumentOutline = memo(function DocumentOutline() {
   const activeTab = useEditorStore((s) => s.activeTab);
   const tabs = useEditorStore((s) => s.tabs);
 
@@ -119,4 +119,4 @@ export function DocumentOutline() {
       </ScrollArea>
     </div>
   );
-}
+});

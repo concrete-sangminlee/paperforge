@@ -8,7 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2026-03-27
 
 ### Added
-- **LaTeX Editor**: CodeMirror 6 with custom LaTeX syntax highlighting, 70+ autocomplete commands, bracket auto-closing, and LaTeX formatting toolbar
+- **LaTeX Editor**: CodeMirror 6 with custom LaTeX syntax highlighting, 70+ autocomplete commands, 12 snippet templates, bracket auto-closing, and LaTeX formatting toolbar
+- **Document Outline**: Real-time section parser showing document structure with click-to-navigate
+- **Error Navigation**: Clickable compilation errors jump to source line, structured diagnostics summary
+- **Project Export**: One-click ZIP download of entire project
+- **Status Bar**: Real-time word count, line count, file type, encoding display
 - **Real-time Collaboration**: Yjs CRDT-based conflict-free editing with multi-cursor support, per-user colors, and presence awareness
 - **PDF Preview**: Split-pane PDF.js viewer with keyboard navigation, zoom controls, fit-to-width/page, page jump, fullscreen mode, and download
 - **Compilation**: BullMQ-powered LaTeX compilation (pdflatex, xelatex, lualatex) with real-time auto-compile (2s debounce) and DOCX export via Pandoc
