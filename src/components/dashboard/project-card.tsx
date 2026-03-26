@@ -2,12 +2,29 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { FileTextIcon, ClockIcon, Share2Icon } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import {
+  FileTextIcon,
+  ClockIcon,
+  MoreVerticalIcon,
+  ExternalLinkIcon,
+  CopyIcon,
+  Trash2Icon,
+  Share2Icon,
+} from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AvatarGroup, AvatarGroupCount } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import { ShareDialog } from './share-dialog';
 
 interface ProjectMember {
@@ -25,6 +42,8 @@ export interface ProjectData {
   name: string;
   description: string | null;
   compiler: string;
+  createdAt: string;
+  createdBy: string | null;
   updatedAt: string;
   members: ProjectMember[];
   _count: {
@@ -32,52 +51,246 @@ export interface ProjectData {
   };
 }
 
-function formatRelativeTime(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffSec = Math.floor(diffMs / 1000);
-  const diffMin = Math.floor(diffSec / 60);
-  const diffHour = Math.floor(diffMin / 60);
-  const diffDay = Math.floor(diffHour / 24);
+/** Accent colour for the left border based on compiler type. */
+const compilerAccent: Record<string, string> = {
+  pdflatex: 'border-l-blue-500',
+  xelatex: 'border-l-emerald-500',
+  lualatex: 'border-l-violet-500',
+};
 
-  if (diffDay > 30) {
-    return date.toLocaleDateString();
-  }
-  if (diffDay > 0) {
-    return `${diffDay}d ago`;
-  }
-  if (diffHour > 0) {
-    return `${diffHour}h ago`;
-  }
-  if (diffMin > 0) {
-    return `${diffMin}m ago`;
-  }
-  return 'just now';
+/** Human-friendly compiler display name. */
+const compilerLabel: Record<string, string> = {
+  pdflatex: 'pdfLaTeX',
+  xelatex: 'XeLaTeX',
+  lualatex: 'LuaLaTeX',
+};
+
+/** Badge variant colour per compiler. */
+const compilerBadgeBg: Record<string, string> = {
+  pdflatex: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+  xelatex: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+  lualatex: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
+};
+
+/** Badge colour per role. */
+const roleBadgeStyle: Record<string, string> = {
+  owner: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  editor: 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',
+  viewer: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+};
+
+interface ProjectCardProps {
+  project: ProjectData;
+  currentUserId: string;
+  /** 'list' renders a horizontal row layout; 'grid' (default) the traditional card. */
+  viewMode?: 'grid' | 'list';
 }
 
-export function ProjectCard({ project }: { project: ProjectData }) {
+export function ProjectCard({ project, currentUserId, viewMode = 'grid' }: ProjectCardProps) {
+  const router = useRouter();
   const [shareOpen, setShareOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const maxAvatars = 3;
   const visibleMembers = project.members.slice(0, maxAvatars);
   const remainingCount = project.members.length - maxAvatars;
 
-  // Derive the current viewer's role from the members list (first owner, fallback 'viewer')
-  const currentUserRole =
-    project.members.find((m) => m.role === 'owner')?.role ?? 'viewer';
-  const currentUserId =
-    project.members.find((m) => m.role === 'owner')?.userId ?? '';
+  // Current user's role in this project
+  const currentMember = project.members.find((m) => m.userId === currentUserId);
+  const currentUserRole = currentMember?.role ?? 'viewer';
+  const isOwner = currentUserRole === 'owner';
 
+  const accent = compilerAccent[project.compiler] ?? 'border-l-gray-400';
+
+  const relativeTime = formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true });
+
+  async function handleDuplicate() {
+    try {
+      const res = await fetch('/api/v1/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `${project.name} (Copy)`,
+          compiler: project.compiler,
+        }),
+      });
+      if (res.ok) {
+        const newProject = await res.json();
+        router.push(`/editor/${newProject.id}`);
+      }
+    } catch {
+      // silently fail
+    }
+  }
+
+  async function handleDelete() {
+    if (deleting) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/v1/projects/${project.id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        // Force SWR to revalidate by dispatching a focus event
+        window.dispatchEvent(new Event('focus'));
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  // ── List view ──────────────────────────────────────────────
+  if (viewMode === 'list') {
+    return (
+      <div className="group relative">
+        <Link href={`/editor/${project.id}`} className="block">
+          <div
+            className={`flex items-center gap-4 rounded-xl border-l-4 bg-card px-4 py-3 ring-1 ring-foreground/10 transition-all duration-200 hover:shadow-md hover:ring-foreground/20 hover:-translate-y-px ${accent}`}
+          >
+            {/* Name + description */}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="truncate font-medium">{project.name}</span>
+                <Badge
+                  className={`shrink-0 border-0 text-[10px] uppercase ${compilerBadgeBg[project.compiler] ?? ''}`}
+                >
+                  {compilerLabel[project.compiler] ?? project.compiler}
+                </Badge>
+                <Badge
+                  className={`shrink-0 border-0 text-[10px] capitalize ${roleBadgeStyle[currentUserRole] ?? roleBadgeStyle.viewer}`}
+                >
+                  {currentUserRole}
+                </Badge>
+              </div>
+              {project.description && (
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                  {project.description}
+                </p>
+              )}
+            </div>
+
+            {/* Meta */}
+            <div className="hidden items-center gap-4 text-xs text-muted-foreground sm:flex">
+              <span className="flex items-center gap-1">
+                <FileTextIcon className="size-3.5" />
+                {project._count.files}
+              </span>
+              <span className="flex items-center gap-1 whitespace-nowrap">
+                <ClockIcon className="size-3.5" />
+                {relativeTime}
+              </span>
+            </div>
+
+            {/* Avatars */}
+            <AvatarGroup>
+              {visibleMembers.map((member) => (
+                <Avatar key={member.userId} size="sm">
+                  {member.user.avatarUrl && (
+                    <AvatarImage src={member.user.avatarUrl} alt={member.user.name} />
+                  )}
+                  <AvatarFallback>
+                    {member.user.name
+                      .split(' ')
+                      .map((n) => n[0])
+                      .join('')
+                      .toUpperCase()
+                      .slice(0, 2)}
+                  </AvatarFallback>
+                </Avatar>
+              ))}
+              {remainingCount > 0 && (
+                <AvatarGroupCount>+{remainingCount}</AvatarGroupCount>
+              )}
+            </AvatarGroup>
+          </div>
+        </Link>
+
+        {/* Quick-actions menu */}
+        <div className="absolute right-2 top-1/2 -translate-y-1/2">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-7 opacity-0 transition-opacity group-hover:opacity-100"
+                  aria-label={`Actions for ${project.name}`}
+                />
+              }
+            >
+              <MoreVerticalIcon className="size-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" side="bottom" sideOffset={4}>
+              <DropdownMenuItem
+                onClick={() => router.push(`/editor/${project.id}`)}
+              >
+                <ExternalLinkIcon className="size-4" />
+                Open
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => void handleDuplicate()}>
+                <CopyIcon className="size-4" />
+                Duplicate
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShareOpen(true);
+                }}
+              >
+                <Share2Icon className="size-4" />
+                Share
+              </DropdownMenuItem>
+              {isOwner && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => void handleDelete()}
+                    disabled={deleting}
+                  >
+                    <Trash2Icon className="size-4" />
+                    {deleting ? 'Deleting...' : 'Delete'}
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        <ShareDialog
+          projectId={project.id}
+          currentUserId={currentUserId}
+          currentUserRole={currentUserRole}
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+        />
+      </div>
+    );
+  }
+
+  // ── Grid view (default) ────────────────────────────────────
   return (
     <div className="group relative block">
       <Link href={`/editor/${project.id}`} className="block">
-        <Card className="transition-shadow hover:shadow-md hover:ring-foreground/20">
+        <Card
+          className={`border-l-4 transition-all duration-200 hover:shadow-lg hover:ring-foreground/20 hover:-translate-y-1 hover:scale-[1.02] ${accent}`}
+        >
           <CardHeader>
             <div className="flex items-start justify-between gap-2">
               <CardTitle className="truncate">{project.name}</CardTitle>
-              <Badge variant="secondary" className="shrink-0 text-[10px] uppercase">
-                {project.compiler}
-              </Badge>
+              <div className="flex shrink-0 items-center gap-1.5">
+                <Badge
+                  className={`border-0 text-[10px] uppercase ${compilerBadgeBg[project.compiler] ?? ''}`}
+                >
+                  {compilerLabel[project.compiler] ?? project.compiler}
+                </Badge>
+                <Badge
+                  className={`border-0 text-[10px] capitalize ${roleBadgeStyle[currentUserRole] ?? roleBadgeStyle.viewer}`}
+                >
+                  {currentUserRole}
+                </Badge>
+              </div>
             </div>
             {project.description && (
               <CardDescription className="line-clamp-2">
@@ -93,7 +306,7 @@ export function ProjectCard({ project }: { project: ProjectData }) {
               </span>
               <span className="flex items-center gap-1">
                 <ClockIcon className="size-3.5" />
-                {formatRelativeTime(project.updatedAt)}
+                {relativeTime}
               </span>
             </div>
             <AvatarGroup>
@@ -120,20 +333,56 @@ export function ProjectCard({ project }: { project: ProjectData }) {
         </Card>
       </Link>
 
-      {/* Share button – sits above the link so clicks don't navigate */}
-      <div className="absolute right-3 top-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-7 opacity-0 transition-opacity group-hover:opacity-100"
-          aria-label={`Share ${project.name}`}
-          onClick={(e) => {
-            e.preventDefault();
-            setShareOpen(true);
-          }}
-        >
-          <Share2Icon className="size-3.5" />
-        </Button>
+      {/* Quick-actions three-dot menu */}
+      <div className="absolute right-3 top-3 z-10">
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7 opacity-0 transition-opacity group-hover:opacity-100"
+                aria-label={`Actions for ${project.name}`}
+              />
+            }
+          >
+            <MoreVerticalIcon className="size-4" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" side="bottom" sideOffset={4}>
+            <DropdownMenuItem
+              onClick={() => router.push(`/editor/${project.id}`)}
+            >
+              <ExternalLinkIcon className="size-4" />
+              Open
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => void handleDuplicate()}>
+              <CopyIcon className="size-4" />
+              Duplicate
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.preventDefault();
+                setShareOpen(true);
+              }}
+            >
+              <Share2Icon className="size-4" />
+              Share
+            </DropdownMenuItem>
+            {isOwner && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => void handleDelete()}
+                  disabled={deleting}
+                >
+                  <Trash2Icon className="size-4" />
+                  {deleting ? 'Deleting...' : 'Delete'}
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <ShareDialog

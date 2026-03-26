@@ -1,8 +1,28 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
-import { LogOutIcon, UserIcon } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import {
+  FlameIcon,
+  SunIcon,
+  MoonIcon,
+  MenuIcon,
+  SettingsIcon,
+  KeyboardIcon,
+  HelpCircleIcon,
+  LogOutIcon,
+  UserIcon,
+  ChevronDownIcon,
+  FolderOpenIcon,
+  LayoutTemplateIcon,
+  BookOpenIcon,
+  ChevronRightIcon,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -12,10 +32,53 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Sheet,
+  SheetTrigger,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetClose,
+} from '@/components/ui/sheet';
+
+/* ────────────────────────── nav links ────────────────────────── */
+
+const navLinks = [
+  { href: '/projects', label: 'Projects', icon: FolderOpenIcon },
+  { href: '/templates', label: 'Templates', icon: LayoutTemplateIcon },
+  { href: '#', label: 'Docs', icon: BookOpenIcon },
+] as const;
+
+/* ────────────────────────── breadcrumb map ────────────────────── */
+
+function useBreadcrumbs() {
+  const pathname = usePathname();
+  const segments = pathname.split('/').filter(Boolean);
+
+  const labelMap: Record<string, string> = {
+    projects: 'Projects',
+    templates: 'Templates',
+    settings: 'Settings',
+    editor: 'Editor',
+    admin: 'Admin',
+  };
+
+  return segments.map((seg, i) => ({
+    label: labelMap[seg] ?? decodeURIComponent(seg),
+    href: '/' + segments.slice(0, i + 1).join('/'),
+    isLast: i === segments.length - 1,
+  }));
+}
+
+/* ────────────────────────── component ────────────────────────── */
 
 export function Navbar() {
   const { data: session } = useSession();
   const user = session?.user;
+  const pathname = usePathname();
+  const { theme, setTheme } = useTheme();
+  const breadcrumbs = useBreadcrumbs();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const initials = user?.name
     ? user.name
@@ -26,45 +89,130 @@ export function Navbar() {
         .slice(0, 2)
     : '?';
 
+  const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
+
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+      <div className="mx-auto flex h-14 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
+        {/* ── Logo ──────────────────────────────────────────── */}
         <Link
-          href="/projects"
-          className="flex items-center gap-2 font-semibold tracking-tight"
+          href="/"
+          className="flex shrink-0 items-center gap-2 font-bold text-lg tracking-tight transition-opacity hover:opacity-80"
         >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="size-5 text-primary"
-          >
-            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-            <polyline points="14 2 14 8 20 8" />
-            <line x1="16" x2="8" y1="13" y2="13" />
-            <line x1="16" x2="8" y1="17" y2="17" />
-            <line x1="10" x2="8" y1="9" y2="9" />
-          </svg>
+          <FlameIcon className="size-5 text-orange-500" />
           <span>PaperForge</span>
         </Link>
 
+        {/* ── Desktop nav links ─────────────────────────────── */}
+        <nav className="hidden items-center gap-1 md:flex">
+          {navLinks.map(({ href, label }) => {
+            const isActive =
+              href !== '#' && pathname.startsWith(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={cn(
+                  'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                  isActive
+                    ? 'bg-muted text-foreground'
+                    : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                )}
+              >
+                {label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* ── Breadcrumb (desktop) ──────────────────────────── */}
+        {breadcrumbs.length > 0 && (
+          <nav
+            aria-label="Breadcrumb"
+            className="hidden items-center gap-1 text-sm text-muted-foreground md:flex"
+          >
+            <ChevronRightIcon className="size-3.5 text-muted-foreground/50" />
+            {breadcrumbs.map(({ label, href, isLast }, i) => (
+              <span key={href} className="flex items-center gap-1">
+                {i > 0 && (
+                  <ChevronRightIcon className="size-3 text-muted-foreground/40" />
+                )}
+                {isLast ? (
+                  <span className="font-medium text-foreground">{label}</span>
+                ) : (
+                  <Link
+                    href={href}
+                    className="transition-colors hover:text-foreground"
+                  >
+                    {label}
+                  </Link>
+                )}
+              </span>
+            ))}
+          </nav>
+        )}
+
+        {/* ── Spacer ────────────────────────────────────────── */}
+        <div className="flex-1" />
+
+        {/* ── Theme toggle ──────────────────────────────────── */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleTheme}
+          aria-label="Toggle theme"
+          className="shrink-0"
+        >
+          <SunIcon className="size-4 rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" />
+          <MoonIcon className="absolute size-4 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
+        </Button>
+
+        {/* ── User menu (desktop) ───────────────────────────── */}
         <DropdownMenu>
-          <DropdownMenuTrigger className="cursor-pointer rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+          <DropdownMenuTrigger className="hidden cursor-pointer items-center gap-2 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:flex">
             <Avatar size="sm">
-              {user?.image && <AvatarImage src={user.image} alt={user.name ?? 'User'} />}
+              {user?.image && (
+                <AvatarImage src={user.image} alt={user.name ?? 'User'} />
+              )}
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
+            <span className="hidden max-w-[120px] truncate text-sm font-medium lg:inline-block">
+              {user?.name ?? 'User'}
+            </span>
+            <ChevronDownIcon className="hidden size-3.5 text-muted-foreground lg:block" />
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" sideOffset={8}>
+          <DropdownMenuContent align="end" sideOffset={8} className="w-56">
             <DropdownMenuLabel>
-              <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium">{user?.name ?? 'User'}</span>
-                <span className="text-xs text-muted-foreground">{user?.email}</span>
+              <div className="flex items-center gap-3">
+                <Avatar size="sm">
+                  {user?.image && (
+                    <AvatarImage src={user.image} alt={user.name ?? 'User'} />
+                  )}
+                  <AvatarFallback>{initials}</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-sm font-medium">
+                    {user?.name ?? 'User'}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {user?.email}
+                  </span>
+                </div>
               </div>
             </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="cursor-pointer">
+              <SettingsIcon className="mr-2" />
+              Settings
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer">
+              <KeyboardIcon className="mr-2" />
+              Keyboard Shortcuts
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer">
+              <HelpCircleIcon className="mr-2" />
+              Help
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <UserIcon className="mr-2" />
@@ -80,7 +228,145 @@ export function Navbar() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        {/* ── Mobile hamburger ──────────────────────────────── */}
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+          <SheetTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                className="shrink-0 md:hidden"
+                aria-label="Open menu"
+              />
+            }
+          >
+            <MenuIcon className="size-5" />
+          </SheetTrigger>
+          <SheetContent side="right" className="w-72 p-0">
+            <SheetHeader className="border-b px-4 py-3">
+              <SheetTitle className="flex items-center gap-2 text-base font-bold">
+                <FlameIcon className="size-4 text-orange-500" />
+                PaperForge
+              </SheetTitle>
+            </SheetHeader>
+
+            {/* mobile user info */}
+            <div className="flex items-center gap-3 border-b px-4 py-3">
+              <Avatar size="sm">
+                {user?.image && (
+                  <AvatarImage src={user.image} alt={user.name ?? 'User'} />
+                )}
+                <AvatarFallback>{initials}</AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">
+                  {user?.name ?? 'User'}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {user?.email}
+                </span>
+              </div>
+            </div>
+
+            {/* mobile nav links */}
+            <nav className="flex flex-col gap-1 p-3">
+              {navLinks.map(({ href, label, icon: Icon }) => {
+                const isActive =
+                  href !== '#' && pathname.startsWith(href);
+                return (
+                  <SheetClose key={href} render={<span />}>
+                    <Link
+                      href={href}
+                      onClick={() => setMobileOpen(false)}
+                      className={cn(
+                        'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                        isActive
+                          ? 'bg-muted text-foreground'
+                          : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                      )}
+                    >
+                      <Icon className="size-4" />
+                      {label}
+                    </Link>
+                  </SheetClose>
+                );
+              })}
+            </nav>
+
+            {/* mobile menu actions */}
+            <div className="mt-auto border-t p-3">
+              <div className="flex flex-col gap-1">
+                <button
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                >
+                  <SettingsIcon className="size-4" />
+                  Settings
+                </button>
+                <button
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                >
+                  <KeyboardIcon className="size-4" />
+                  Keyboard Shortcuts
+                </button>
+                <button
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                >
+                  <HelpCircleIcon className="size-4" />
+                  Help
+                </button>
+                <button
+                  onClick={toggleTheme}
+                  className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                >
+                  <SunIcon className="size-4 dark:hidden" />
+                  <MoonIcon className="hidden size-4 dark:block" />
+                  Toggle Theme
+                </button>
+              </div>
+              <div className="my-2 h-px bg-border" />
+              <button
+                onClick={() => signOut({ callbackUrl: '/login' })}
+                className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
+              >
+                <LogOutIcon className="size-4" />
+                Sign out
+              </button>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
+
+      {/* ── Breadcrumb bar (mobile) ───────────────────────── */}
+      {breadcrumbs.length > 0 && (
+        <div className="border-t border-border/30 px-4 py-1.5 md:hidden">
+          <nav
+            aria-label="Breadcrumb"
+            className="flex items-center gap-1 text-xs text-muted-foreground"
+          >
+            {breadcrumbs.map(({ label, href, isLast }, i) => (
+              <span key={href} className="flex items-center gap-1">
+                {i > 0 && (
+                  <ChevronRightIcon className="size-3 text-muted-foreground/40" />
+                )}
+                {isLast ? (
+                  <span className="font-medium text-foreground">{label}</span>
+                ) : (
+                  <Link
+                    href={href}
+                    className="transition-colors hover:text-foreground"
+                  >
+                    {label}
+                  </Link>
+                )}
+              </span>
+            ))}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }

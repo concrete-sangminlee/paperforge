@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FileIcon, GitBranchIcon, HistoryIcon, XIcon } from 'lucide-react';
+import { FileIcon, GitBranchIcon, HistoryIcon, XIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, ChevronDownIcon, ChevronUpIcon, FileTextIcon, CodeIcon } from 'lucide-react';
 import { FileTree } from './file-tree';
 import { LaTeXEditor } from './latex-editor';
 import { EditorToolbar } from './editor-toolbar';
@@ -36,7 +36,7 @@ const AUTO_COMPILE_DEBOUNCE_MS = 2000;
 
 export function EditorLayout({ projectId, projectName, initialMainFile, files: initialFiles }: EditorLayoutProps) {
   const { resolvedTheme } = useTheme();
-  const { tabs, activeTab, setActiveTab, closeTab, markSaved, autoCompileEnabled } = useEditorStore();
+  const { tabs, activeTab, setActiveTab, closeTab, markSaved, autoCompileEnabled, sidebarCollapsed, toggleSidebar, logPanelCollapsed, toggleLogPanel } = useEditorStore();
   const [files, setFiles] = useState<FileEntry[]>(initialFiles);
   const [mainFile, setMainFile] = useState(initialMainFile ?? 'main.tex');
   const [rightPanel, setRightPanel] = useState<RightPanel>('pdf');
@@ -161,6 +161,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
       <div className="flex items-center justify-between border-b bg-background px-2">
         <EditorToolbar
           projectId={projectId}
+          projectName={projectName}
           onCompileReady={(fn) => { compileFnRef.current = fn; }}
         />
         <div className="flex items-center gap-2 px-2">
@@ -170,7 +171,10 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
 
       <div className="flex min-h-0 flex-1">
         {/* Left sidebar – file tree */}
-        <aside className="w-[200px] shrink-0 border-r bg-background">
+        <aside className={cn(
+          'shrink-0 border-r bg-background transition-all duration-200',
+          sidebarCollapsed ? 'w-0 overflow-hidden' : 'w-[220px]'
+        )}>
           <FileTree
             projectId={projectId}
             files={files}
@@ -179,6 +183,16 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
             onMainFileChange={setMainFile}
           />
         </aside>
+
+        {/* Sidebar toggle */}
+        <button
+          onClick={toggleSidebar}
+          className="flex w-5 shrink-0 items-center justify-center border-r bg-muted/30 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          title={sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar'}
+          aria-label={sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar'}
+        >
+          {sidebarCollapsed ? <PanelLeftOpenIcon className="size-3" /> : <PanelLeftCloseIcon className="size-3" />}
+        </button>
 
         {/* Centre – tab bar + editor */}
         <div className="flex min-w-0 flex-1 flex-col border-r">
@@ -244,17 +258,35 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
               />
             ) : (
               <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                <div className="text-center">
-                  <p className="font-medium">{projectName}</p>
-                  <p className="mt-1 text-xs">Select a file to start editing</p>
+                <div className="text-center space-y-3">
+                  <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-muted/50">
+                    <CodeIcon className="size-8 text-muted-foreground/50" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground">{projectName}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Select a file from the sidebar to start editing</p>
+                  </div>
+                  <div className="flex items-center justify-center gap-4 text-[11px] text-muted-foreground/70">
+                    <span className="flex items-center gap-1"><FileTextIcon className="size-3" /> {files.length} files</span>
+                  </div>
                 </div>
               </div>
             )}
           </div>
 
           {/* Compilation log – bottom panel */}
-          <div className="h-40 shrink-0 border-t">
-            <CompilationLog />
+          <div className={cn('shrink-0 border-t transition-all duration-200', logPanelCollapsed ? 'h-8' : 'h-44')}>
+            <div className="flex h-8 items-center justify-between border-b bg-muted/30 px-2">
+              <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Output</span>
+              <button
+                onClick={toggleLogPanel}
+                className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                title={logPanelCollapsed ? 'Expand log' : 'Collapse log'}
+              >
+                {logPanelCollapsed ? <ChevronUpIcon className="size-3.5" /> : <ChevronDownIcon className="size-3.5" />}
+              </button>
+            </div>
+            {!logPanelCollapsed && <CompilationLog />}
           </div>
         </div>
 

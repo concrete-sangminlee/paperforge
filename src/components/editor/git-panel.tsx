@@ -1,12 +1,27 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { GitBranch, Link2, Trash2, Upload, Download } from 'lucide-react';
+import {
+  GitBranch,
+  Link2,
+  Trash2,
+  Upload,
+  Download,
+  Plus,
+  CheckCircle,
+  XCircle,
+  LoaderCircle,
+  Shield,
+  ExternalLink,
+  Key,
+  AlertTriangle,
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -26,7 +41,6 @@ interface GitCredential {
 
 interface GitPanelProps {
   projectId: string;
-  /** The current remote URL stored on the project (if any). */
   remoteUrl?: string | null;
 }
 
@@ -40,12 +54,15 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
   const [pulling, setPulling] = useState(false);
   const [pushStatus, setPushStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [pullStatus, setPullStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [pushMessage, setPushMessage] = useState('');
+  const [pullMessage, setPullMessage] = useState('');
 
   const [credentials, setCredentials] = useState<GitCredential[]>([]);
   const [credOpen, setCredOpen] = useState(false);
   const [credProvider, setCredProvider] = useState('');
   const [credToken, setCredToken] = useState('');
   const [addingCred, setAddingCred] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -63,6 +80,21 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
   useEffect(() => {
     fetchCredentials();
   }, [fetchCredentials]);
+
+  // Auto-clear status messages after 5 seconds
+  useEffect(() => {
+    if (pushStatus !== 'idle') {
+      const timer = setTimeout(() => { setPushStatus('idle'); setPushMessage(''); }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [pushStatus]);
+
+  useEffect(() => {
+    if (pullStatus !== 'idle') {
+      const timer = setTimeout(() => { setPullStatus('idle'); setPullMessage(''); }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [pullStatus]);
 
   async function handleLinkRemote() {
     if (!remoteInput.trim()) return;
@@ -92,6 +124,7 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
     try {
       setPushing(true);
       setPushStatus('idle');
+      setPushMessage('');
       setError(null);
       const res = await fetch(`/api/v1/projects/${projectId}/git/push`, {
         method: 'POST',
@@ -101,9 +134,12 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
         throw new Error(data.error || 'Push failed');
       }
       setPushStatus('success');
+      setPushMessage('Changes pushed to remote successfully.');
     } catch (err) {
       setPushStatus('error');
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      setPushMessage(msg);
+      setError(msg);
     } finally {
       setPushing(false);
     }
@@ -113,6 +149,7 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
     try {
       setPulling(true);
       setPullStatus('idle');
+      setPullMessage('');
       setError(null);
       const res = await fetch(`/api/v1/projects/${projectId}/git/pull`, {
         method: 'POST',
@@ -122,9 +159,12 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
         throw new Error(data.error || 'Pull failed');
       }
       setPullStatus('success');
+      setPullMessage('Latest changes pulled from remote.');
     } catch (err) {
       setPullStatus('error');
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      setPullMessage(msg);
+      setError(msg);
     } finally {
       setPulling(false);
     }
@@ -159,14 +199,22 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
   }
 
   async function handleDeleteCredential(id: string) {
-    if (!confirm('Remove this credential?')) return;
     try {
       setError(null);
       await fetch(`/api/v1/user/git-credentials/${id}`, { method: 'DELETE' });
+      setDeleteConfirm(null);
       await fetchCredentials();
     } catch {
       setError('Failed to remove credential');
     }
+  }
+
+  function getProviderIcon(provider: string) {
+    const p = provider.toLowerCase();
+    if (p.includes('github')) return '🔵';
+    if (p.includes('gitlab')) return '🟠';
+    if (p.includes('bitbucket')) return '🔷';
+    return '🔑';
   }
 
   return (
@@ -175,13 +223,26 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
       <div className="flex items-center gap-1.5 border-b px-3 py-2 text-sm font-medium">
         <GitBranch className="size-4" />
         Git Integration
+        {remoteUrl && (
+          <Badge variant="secondary" className="ml-auto h-4 gap-0.5 px-1.5 text-[10px]">
+            <CheckCircle className="size-2.5 text-green-500" />
+            Linked
+          </Badge>
+        )}
       </div>
 
       {/* Error banner */}
       {error && (
-        <p className="bg-destructive/10 px-3 py-2 text-xs text-destructive">
-          {error}
-        </p>
+        <div className="flex items-center gap-2 bg-destructive/10 px-3 py-2">
+          <AlertTriangle className="size-3.5 shrink-0 text-destructive" />
+          <p className="text-xs text-destructive flex-1">{error}</p>
+          <button
+            className="text-xs text-destructive hover:underline"
+            onClick={() => setError(null)}
+          >
+            Dismiss
+          </button>
+        </div>
       )}
 
       <ScrollArea className="flex-1">
@@ -189,15 +250,21 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
           {/* Remote URL section */}
           <section>
             <p className="mb-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Remote
+              Remote Repository
             </p>
             <div className="rounded-md border px-3 py-2">
               {remoteUrl ? (
-                <p className="break-all font-mono text-xs">{remoteUrl}</p>
+                <div className="flex items-center gap-2">
+                  <ExternalLink className="size-3.5 shrink-0 text-muted-foreground" />
+                  <p className="break-all font-mono text-xs flex-1">{remoteUrl}</p>
+                </div>
               ) : (
-                <p className="text-xs text-muted-foreground italic">
-                  No remote repository linked
-                </p>
+                <div className="flex items-center gap-2">
+                  <Link2 className="size-3.5 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground italic">
+                    No remote repository linked
+                  </p>
+                </div>
               )}
             </div>
 
@@ -210,13 +277,16 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
                     className="mt-2 h-7 w-full gap-1.5 text-xs"
                   >
                     <Link2 className="size-3.5" />
-                    {remoteUrl ? 'Change Remote' : 'Link Remote'}
+                    {remoteUrl ? 'Change Remote' : 'Link Remote Repository'}
                   </Button>
                 }
               />
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                   <DialogTitle>Link Git Remote</DialogTitle>
+                  <DialogDescription>
+                    Connect your project to a Git remote for push/pull operations.
+                  </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-3 py-2">
                   <div className="grid gap-1.5">
@@ -230,6 +300,9 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
                         if (e.key === 'Enter') handleLinkRemote();
                       }}
                     />
+                    <p className="text-[11px] text-muted-foreground">
+                      Supports GitHub, GitLab, Bitbucket, and any Git HTTPS URL.
+                    </p>
                   </div>
                 </div>
                 <DialogFooter>
@@ -237,8 +310,19 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
                     onClick={handleLinkRemote}
                     disabled={linking || !remoteInput.trim()}
                     size="sm"
+                    className="gap-1.5"
                   >
-                    {linking ? 'Linking…' : 'Link'}
+                    {linking ? (
+                      <>
+                        <LoaderCircle className="size-3.5 animate-spin" />
+                        Linking…
+                      </>
+                    ) : (
+                      <>
+                        <Link2 className="size-3.5" />
+                        Link
+                      </>
+                    )}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -260,7 +344,11 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
                 disabled={pushing || !remoteUrl}
                 onClick={handlePush}
               >
-                <Upload className="size-3.5" />
+                {pushing ? (
+                  <LoaderCircle className="size-3.5 animate-spin" />
+                ) : (
+                  <Upload className="size-3.5" />
+                )}
                 {pushing ? 'Pushing…' : 'Push'}
               </Button>
               <Button
@@ -270,15 +358,42 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
                 disabled={pulling || !remoteUrl}
                 onClick={handlePull}
               >
-                <Download className="size-3.5" />
+                {pulling ? (
+                  <LoaderCircle className="size-3.5 animate-spin" />
+                ) : (
+                  <Download className="size-3.5" />
+                )}
                 {pulling ? 'Pulling…' : 'Pull'}
               </Button>
             </div>
+            {!remoteUrl && (
+              <p className="mt-1.5 text-[11px] text-muted-foreground italic">
+                Link a remote repository to enable push/pull.
+              </p>
+            )}
             {pushStatus === 'success' && (
-              <p className="mt-1.5 text-xs text-green-600">Pushed successfully.</p>
+              <div className="mt-2 flex items-center gap-1.5 rounded-md bg-green-500/10 px-2.5 py-1.5">
+                <CheckCircle className="size-3.5 text-green-600" />
+                <p className="text-xs text-green-600">{pushMessage}</p>
+              </div>
+            )}
+            {pushStatus === 'error' && (
+              <div className="mt-2 flex items-center gap-1.5 rounded-md bg-destructive/10 px-2.5 py-1.5">
+                <XCircle className="size-3.5 text-destructive" />
+                <p className="text-xs text-destructive">{pushMessage}</p>
+              </div>
             )}
             {pullStatus === 'success' && (
-              <p className="mt-1.5 text-xs text-green-600">Pulled successfully.</p>
+              <div className="mt-2 flex items-center gap-1.5 rounded-md bg-green-500/10 px-2.5 py-1.5">
+                <CheckCircle className="size-3.5 text-green-600" />
+                <p className="text-xs text-green-600">{pullMessage}</p>
+              </div>
+            )}
+            {pullStatus === 'error' && (
+              <div className="mt-2 flex items-center gap-1.5 rounded-md bg-destructive/10 px-2.5 py-1.5">
+                <XCircle className="size-3.5 text-destructive" />
+                <p className="text-xs text-destructive">{pullMessage}</p>
+              </div>
             )}
           </section>
 
@@ -287,13 +402,17 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
           {/* Credentials */}
           <section>
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Credentials
-              </p>
+              <div className="flex items-center gap-1.5">
+                <Shield className="size-3.5 text-muted-foreground" />
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Credentials
+                </p>
+              </div>
               <Dialog open={credOpen} onOpenChange={setCredOpen}>
                 <DialogTrigger
                   render={
-                    <Button size="sm" variant="ghost" className="h-6 px-2 text-xs">
+                    <Button size="sm" variant="ghost" className="h-6 gap-1 px-2 text-xs">
+                      <Plus className="size-3" />
                       Add
                     </Button>
                   }
@@ -301,6 +420,9 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
                 <DialogContent className="sm:max-w-sm">
                   <DialogHeader>
                     <DialogTitle>Add Git Credential</DialogTitle>
+                    <DialogDescription>
+                      Your token is encrypted with AES-256-GCM before storage.
+                    </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-3 py-2">
                     <div className="grid gap-1.5">
@@ -321,6 +443,9 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
                         value={credToken}
                         onChange={(e) => setCredToken(e.target.value)}
                       />
+                      <p className="text-[11px] text-muted-foreground">
+                        Requires repo scope. Token is stored encrypted.
+                      </p>
                     </div>
                   </div>
                   <DialogFooter>
@@ -328,8 +453,19 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
                       onClick={handleAddCredential}
                       disabled={addingCred || !credProvider.trim() || !credToken.trim()}
                       size="sm"
+                      className="gap-1.5"
                     >
-                      {addingCred ? 'Saving…' : 'Save'}
+                      {addingCred ? (
+                        <>
+                          <LoaderCircle className="size-3.5 animate-spin" />
+                          Saving…
+                        </>
+                      ) : (
+                        <>
+                          <Key className="size-3.5" />
+                          Save Credential
+                        </>
+                      )}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -337,34 +473,64 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
             </div>
 
             {credentials.length === 0 ? (
-              <p className="text-xs text-muted-foreground italic">
-                No credentials saved. Add a token to enable push/pull.
-              </p>
+              <div className="rounded-md border border-dashed px-3 py-4 text-center">
+                <Key className="mx-auto size-6 text-muted-foreground/50" />
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  No credentials saved
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  Add a personal access token to enable push/pull.
+                </p>
+              </div>
             ) : (
               <ul className="space-y-1.5">
                 {credentials.map((c) => (
                   <li
                     key={c.id}
-                    className="group flex items-center justify-between rounded-md border px-2.5 py-1.5"
+                    className="group flex items-center justify-between rounded-md border px-2.5 py-2 transition-colors hover:bg-muted/50"
                   >
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="text-[10px]">
-                        {c.provider}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        token ••••••
-                      </span>
+                      <span className="text-sm">{getProviderIcon(c.provider)}</span>
+                      <div>
+                        <Badge variant="secondary" className="text-[10px]">
+                          {c.provider}
+                        </Badge>
+                        <p className="mt-0.5 text-[10px] text-muted-foreground">
+                          token ••••••••
+                        </p>
+                      </div>
                     </div>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="size-6 opacity-0 transition-opacity group-hover:opacity-100"
-                      onClick={() => handleDeleteCredential(c.id)}
-                      title="Remove credential"
-                    >
-                      <Trash2 className="size-3.5 text-destructive" />
-                      <span className="sr-only">Remove</span>
-                    </Button>
+                    {deleteConfirm === c.id ? (
+                      <div className="flex items-center gap-1">
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="h-6 px-2 text-[10px]"
+                          onClick={() => handleDeleteCredential(c.id)}
+                        >
+                          Confirm
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 px-2 text-[10px]"
+                          onClick={() => setDeleteConfirm(null)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="size-6 opacity-0 transition-opacity group-hover:opacity-100"
+                        onClick={() => setDeleteConfirm(c.id)}
+                        title="Remove credential"
+                      >
+                        <Trash2 className="size-3.5 text-destructive" />
+                        <span className="sr-only">Remove</span>
+                      </Button>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -372,6 +538,11 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
           </section>
         </div>
       </ScrollArea>
+
+      <Separator />
+      <p className="px-3 py-1.5 text-[10px] text-muted-foreground">
+        All credentials are encrypted with AES-256-GCM before storage.
+      </p>
     </div>
   );
 }

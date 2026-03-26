@@ -2,12 +2,23 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { GitCommitHorizontal, Plus, RotateCcw } from 'lucide-react';
+import {
+  GitCommitHorizontal,
+  Plus,
+  RotateCcw,
+  Diff,
+  LoaderCircle,
+  Tag,
+  Clock,
+  User,
+  AlertTriangle,
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -42,8 +53,13 @@ export function VersionHistory({ projectId }: VersionHistoryProps) {
   const [creating, setCreating] = useState(false);
   const [restoring, setRestoring] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
+  const [versionToRestore, setVersionToRestore] = useState<Version | null>(null);
   const [labelInput, setLabelInput] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [diffOpen, setDiffOpen] = useState(false);
+  const [diffContent, setDiffContent] = useState<string | null>(null);
+  const [diffLoading, setDiffLoading] = useState(false);
 
   const fetchVersions = useCallback(async () => {
     try {
@@ -86,19 +102,26 @@ export function VersionHistory({ projectId }: VersionHistoryProps) {
     }
   }
 
-  async function handleRestore(versionId: string) {
-    if (!confirm('Restore this version? Current changes will be overwritten.')) return;
+  function openRestoreDialog(version: Version) {
+    setVersionToRestore(version);
+    setRestoreDialogOpen(true);
+  }
+
+  async function handleRestore() {
+    if (!versionToRestore) return;
     try {
-      setRestoring(versionId);
+      setRestoring(versionToRestore.id);
       setError(null);
       const res = await fetch(
-        `/api/v1/projects/${projectId}/versions/${versionId}/restore`,
+        `/api/v1/projects/${projectId}/versions/${versionToRestore.id}/restore`,
         { method: 'POST' },
       );
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Failed to restore version');
       }
+      setRestoreDialogOpen(false);
+      setVersionToRestore(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
@@ -106,13 +129,47 @@ export function VersionHistory({ projectId }: VersionHistoryProps) {
     }
   }
 
+  async function handleViewDiff(versionId: string) {
+    try {
+      setDiffLoading(true);
+      setDiffOpen(true);
+      const res = await fetch(
+        `/api/v1/projects/${projectId}/versions/${versionId}/diff`,
+      );
+      if (!res.ok) throw new Error('Failed to load diff');
+      const data = await res.json();
+      setDiffContent(typeof data === 'string' ? data : JSON.stringify(data, null, 2));
+    } catch {
+      setDiffContent('Failed to load diff.');
+    } finally {
+      setDiffLoading(false);
+    }
+  }
+
+  // Group versions by date
+  const groupedVersions = versions.reduce<Record<string, Version[]>>((acc, v) => {
+    const date = new Date(v.createdAt).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+    if (!acc[date]) acc[date] = [];
+    acc[date].push(v);
+    return acc;
+  }, {});
+
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
       <div className="flex items-center justify-between border-b px-3 py-2">
         <div className="flex items-center gap-1.5 text-sm font-medium">
-          <GitCommitHorizontal className="size-4" />
+          <Clock className="size-4" />
           Version History
+          {versions.length > 0 && (
+            <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">
+              {versions.length}
+            </Badge>
+          )}
         </div>
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -124,17 +181,19 @@ export function VersionHistory({ projectId }: VersionHistoryProps) {
               </Button>
             }
           />
-
           <DialogContent className="sm:max-w-sm">
             <DialogHeader>
               <DialogTitle>Create Version</DialogTitle>
+              <DialogDescription>
+                Save a named snapshot of your current project state.
+              </DialogDescription>
             </DialogHeader>
             <div className="grid gap-3 py-2">
               <div className="grid gap-1.5">
                 <Label htmlFor="version-label">Label (optional)</Label>
                 <Input
                   id="version-label"
-                  placeholder="e.g. Before major edits"
+                  placeholder="e.g. Draft 1, Before major edits"
                   value={labelInput}
                   onChange={(e) => setLabelInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -148,8 +207,19 @@ export function VersionHistory({ projectId }: VersionHistoryProps) {
                 onClick={handleCreateVersion}
                 disabled={creating}
                 size="sm"
+                className="gap-1.5"
               >
-                {creating ? 'Saving…' : 'Save Version'}
+                {creating ? (
+                  <>
+                    <LoaderCircle className="size-3.5 animate-spin" />
+                    Saving…
+                  </>
+                ) : (
+                  <>
+                    <Tag className="size-3.5" />
+                    Save Version
+                  </>
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -158,73 +228,179 @@ export function VersionHistory({ projectId }: VersionHistoryProps) {
 
       {/* Error banner */}
       {error && (
-        <p className="bg-destructive/10 px-3 py-2 text-xs text-destructive">
-          {error}
-        </p>
+        <div className="flex items-center gap-2 bg-destructive/10 px-3 py-2">
+          <AlertTriangle className="size-3.5 text-destructive" />
+          <p className="text-xs text-destructive">{error}</p>
+        </div>
       )}
 
       {/* Version list */}
       <ScrollArea className="flex-1">
         {loading ? (
-          <p className="px-3 py-4 text-xs text-muted-foreground">Loading…</p>
+          <div className="flex flex-col items-center gap-2 px-3 py-8">
+            <LoaderCircle className="size-5 animate-spin text-muted-foreground" />
+            <p className="text-xs text-muted-foreground">Loading versions…</p>
+          </div>
         ) : versions.length === 0 ? (
-          <p className="px-3 py-4 text-xs text-muted-foreground">
-            No versions yet. Click &quot;Save&quot; to create one.
-          </p>
+          <div className="flex flex-col items-center gap-2 px-3 py-8 text-center">
+            <GitCommitHorizontal className="size-8 text-muted-foreground/50" />
+            <p className="text-sm font-medium text-muted-foreground">No versions yet</p>
+            <p className="text-xs text-muted-foreground">
+              Click &ldquo;Save&rdquo; to create your first version snapshot.
+            </p>
+          </div>
         ) : (
-          <ul className="divide-y">
-            {versions.map((v) => (
-              <li key={v.id} className="group flex items-start gap-2 px-3 py-2.5">
-                <GitCommitHorizontal className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-
-                <div className="min-w-0 flex-1 space-y-0.5">
-                  {v.label ? (
-                    <p className="truncate text-sm font-medium">{v.label}</p>
-                  ) : (
-                    <p className="truncate text-sm text-muted-foreground italic">
-                      Auto-save
-                    </p>
-                  )}
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(v.createdAt), {
-                        addSuffix: true,
-                      })}
-                    </span>
-                    {v.user && (
-                      <Badge variant="outline" className="h-4 px-1 text-[10px]">
-                        {v.user.name}
-                      </Badge>
-                    )}
-                    <span
-                      className="font-mono text-[10px] text-muted-foreground"
-                      title={v.gitHash}
-                    >
-                      {v.gitHash.slice(0, 7)}
-                    </span>
-                  </div>
+          <div className="py-1">
+            {Object.entries(groupedVersions).map(([date, versionGroup]) => (
+              <div key={date}>
+                <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm px-3 py-1.5">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    {date}
+                  </p>
                 </div>
+                <ul>
+                  {versionGroup.map((v) => (
+                    <li
+                      key={v.id}
+                      className="group relative flex items-start gap-2 px-3 py-2.5 hover:bg-muted/50 transition-colors"
+                    >
+                      {/* Timeline connector */}
+                      <div className="flex flex-col items-center">
+                        <div className="mt-1 size-2.5 rounded-full border-2 border-orange-400 bg-background" />
+                        <div className="w-px flex-1 bg-border" />
+                      </div>
 
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="size-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-                  title="Restore this version"
-                  disabled={restoring === v.id}
-                  onClick={() => handleRestore(v.id)}
-                >
-                  <RotateCcw className="size-3.5" />
-                  <span className="sr-only">Restore</span>
-                </Button>
-              </li>
+                      <div className="min-w-0 flex-1 space-y-1">
+                        {v.label ? (
+                          <p className="truncate text-sm font-medium">{v.label}</p>
+                        ) : (
+                          <p className="truncate text-sm text-muted-foreground italic">
+                            Auto-save
+                          </p>
+                        )}
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="text-[11px] text-muted-foreground">
+                            {formatDistanceToNow(new Date(v.createdAt), {
+                              addSuffix: true,
+                            })}
+                          </span>
+                          {v.user && (
+                            <Badge variant="outline" className="h-4 gap-0.5 px-1 text-[10px]">
+                              <User className="size-2.5" />
+                              {v.user.name}
+                            </Badge>
+                          )}
+                          <span
+                            className="font-mono text-[10px] text-muted-foreground"
+                            title={v.gitHash}
+                          >
+                            {v.gitHash.slice(0, 7)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="size-6"
+                          title="View diff"
+                          onClick={() => handleViewDiff(v.id)}
+                        >
+                          <Diff className="size-3.5" />
+                          <span className="sr-only">View diff</span>
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="size-6"
+                          title="Restore this version"
+                          disabled={restoring === v.id}
+                          onClick={() => openRestoreDialog(v)}
+                        >
+                          <RotateCcw className="size-3.5" />
+                          <span className="sr-only">Restore</span>
+                        </Button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </ScrollArea>
 
+      {/* Restore confirmation dialog */}
+      <Dialog open={restoreDialogOpen} onOpenChange={setRestoreDialogOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="size-5 text-amber-500" />
+              Restore Version
+            </DialogTitle>
+            <DialogDescription>
+              This will restore your project to{' '}
+              <strong>{versionToRestore?.label || 'this auto-save'}</strong>
+              {' '}from{' '}
+              {versionToRestore && formatDistanceToNow(new Date(versionToRestore.createdAt), { addSuffix: true })}.
+              Current unsaved changes will be overwritten.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setRestoreDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleRestore}
+              disabled={!!restoring}
+              className="gap-1.5"
+            >
+              {restoring ? (
+                <>
+                  <LoaderCircle className="size-3.5 animate-spin" />
+                  Restoring…
+                </>
+              ) : (
+                <>
+                  <RotateCcw className="size-3.5" />
+                  Restore
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Diff viewer dialog */}
+      <Dialog open={diffOpen} onOpenChange={setDiffOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[70vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Diff className="size-5" />
+              Version Diff
+            </DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[50vh] rounded-md border bg-muted/30">
+            {diffLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <LoaderCircle className="size-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <pre className="whitespace-pre-wrap p-4 font-mono text-xs leading-relaxed">
+                {diffContent || 'No changes found.'}
+              </pre>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
       <Separator />
       <p className="px-3 py-1.5 text-[10px] text-muted-foreground">
-        Each saved version is a git commit stored locally.
+        Each saved version is a git commit. Restore any version with one click.
       </p>
     </div>
   );

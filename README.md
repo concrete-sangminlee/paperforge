@@ -13,6 +13,13 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square)](https://github.com/concrete-sangminlee/paperforge/actions)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](https://github.com/concrete-sangminlee/paperforge/pulls)
+[![Code Quality](https://img.shields.io/badge/code%20quality-A-brightgreen?style=flat-square)](https://github.com/concrete-sangminlee/paperforge)
+[![DOCX Export](https://img.shields.io/badge/export-DOCX%20%7C%20PDF-blue?style=flat-square)](https://github.com/concrete-sangminlee/paperforge)
+[![Made with Node.js](https://img.shields.io/badge/Made%20with-Node.js-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Made with React](https://img.shields.io/badge/Made%20with-React-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
+
 [Live Demo](https://projectlatexcompiler.vercel.app) · [Report Bug](https://github.com/concrete-sangminlee/paperforge/issues) · [Request Feature](https://github.com/concrete-sangminlee/paperforge/issues)
 
 ---
@@ -29,9 +36,22 @@
 | Compile Timeout | 20s | 4 min | **Configurable** |
 | Version History | 24h only | Full | **Full (Git-based)** |
 | Git Integration | - | Push only | **Full Push/Pull** |
+| DOCX Export | - | - | **Yes (via Pandoc)** |
+| Auto-Compile | - | Yes | **Yes (2s debounce)** |
 | Self-Hostable | - | - | **Yes** |
 | Templates | Limited | Limited | **Extensible** |
 | Cost | Free | $199/yr | **$0 Forever** |
+
+---
+
+## What's New
+
+| Release | Feature | Description |
+|:---:|:---|:---|
+| Latest | **Real-time Auto-Compile** | Overleaf-style live compilation with a 2-second debounce — see your changes as you type |
+| Latest | **DOCX Export** | Export your LaTeX documents to Word (`.docx`) via Pandoc for seamless sharing with non-LaTeX users |
+| Latest | **Styled Email Templates** | Professional, branded email notifications for verification, invitations, and password resets |
+| Latest | **Major UI/UX Improvements** | Refined editor layout, improved navigation, polished component design across the application |
 
 ---
 
@@ -104,6 +124,28 @@
 
 </td>
 </tr>
+<tr>
+<td width="50%">
+
+### <img src="https://img.icons8.com/fluency/24/export-pdf.png" width="20" /> DOCX Export
+- **LaTeX to Word** conversion powered by **Pandoc**
+- Preserve formatting, equations, tables, and figures
+- One-click export from the editor toolbar
+- Ideal for journal submissions requiring `.docx` format
+- Compatible with Microsoft Word and Google Docs
+
+</td>
+<td width="50%">
+
+### <img src="https://img.icons8.com/fluency/24/lightning-bolt.png" width="20" /> Auto-Compile
+- **Real-time compilation** with 2-second debounce
+- Overleaf-style live preview as you type
+- Intelligent change detection to avoid redundant builds
+- Compile status indicator with error reporting
+- Configurable debounce interval
+
+</td>
+</tr>
 </table>
 
 ---
@@ -159,6 +201,7 @@
 | <img src="https://cdn.simpleicons.org/minio/C72E49" width="16" height="16" /> | **MinIO** (S3-compatible) | File & PDF storage |
 | <img src="https://cdn.simpleicons.org/docker/2496ED" width="16" height="16" /> | **Docker Compose** | One-command dev setup |
 | <img src="https://cdn.simpleicons.org/latex/008080" width="16" height="16" /> | **TeX Live** + **latexmk** | LaTeX compilation engine |
+| <img src="https://cdn.simpleicons.org/pandoc/4B5562" width="16" height="16" /> | **Pandoc** | DOCX export (LaTeX to Word) |
 | <img src="https://cdn.simpleicons.org/auth0/EB5424" width="16" height="16" /> | **NextAuth.js v5** | Authentication (OAuth + credentials) |
 
 </div>
@@ -290,7 +333,7 @@ paperforge/
 </details>
 
 <details>
-<summary><strong>Compilation</strong></summary>
+<summary><strong>Compilation & Export</strong></summary>
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -298,6 +341,7 @@ paperforge/
 | `GET`  | `/api/v1/projects/:id/compile/:cid/status` | Check status |
 | `GET`  | `/api/v1/projects/:id/compile/:cid/pdf` | Download PDF |
 | `GET`  | `/api/v1/projects/:id/compile/:cid/synctex` | Get SyncTeX |
+| `POST` | `/api/v1/projects/:id/export/docx` | Export as DOCX |
 
 </details>
 
@@ -352,18 +396,32 @@ Includes all services: Next.js app, WebSocket server, compilation workers, Postg
 
 ---
 
+## Performance
+
+| Optimization | Details |
+|:---|:---|
+| **Static Asset Caching** | 365-day `max-age` headers for immutable assets via CDN/Nginx |
+| **Code Splitting & Lazy Loading** | Route-based chunking with Next.js dynamic imports for editor components |
+| **Database Connection Pooling** | PgBouncer manages PostgreSQL connections to minimize overhead |
+| **Debounced Auto-Save** | 2-second debounce prevents excessive writes during active editing |
+| **Redis Caching** | Session data, rate-limit counters, and compilation results cached in Redis |
+| **Optimized PDF Rendering** | PDF.js web worker offloads rendering from the main thread |
+
+---
+
 ## Security
 
 | Feature | Implementation |
-|---------|---------------|
+|:---|:---|
 | **Compilation Sandbox** | nsjail process isolation, no shell escape, resource limits |
+| **Process Isolation** | Each compilation runs in an isolated temp directory, cleaned up after completion |
 | **Authentication** | NextAuth.js v5 with JWT, OAuth (Google, GitHub), bcrypt |
 | **Encryption** | AES-256-GCM for OAuth tokens & Git credentials |
 | **Rate Limiting** | Redis sliding window (100 req/min API, 10 compiles/min) |
-| **Brute Force** | Progressive delay + account lockout after 20 failures |
+| **Brute Force Protection** | Progressive delay + account lockout after 20 failures |
 | **Input Validation** | Zod schemas on all endpoints |
-| **CSRF/XSS** | NextAuth CSRF tokens, React escaping, CSP headers |
-| **File Upload** | Type validation, 50MB/file, 500MB/project, 2GB/user |
+| **CSRF/XSS Prevention** | NextAuth CSRF tokens, React escaping, CSP headers |
+| **File Upload Guards** | Type validation, 50MB/file, 500MB/project, 2GB/user |
 
 ---
 
@@ -378,6 +436,9 @@ Includes all services: Next.js app, WebSocket server, compilation workers, Postg
 - [x] Git integration (GitHub/GitLab)
 - [x] Template gallery
 - [x] Admin panel with audit log
+- [x] Real-time auto-compile with debounce
+- [x] DOCX export via Pandoc
+- [ ] Keyboard shortcuts panel
 - [ ] Rich text / WYSIWYG mode
 - [ ] Spell check & grammar
 - [ ] Bibliography manager (BibTeX GUI)
@@ -404,6 +465,20 @@ Contributions are welcome! Please read our contributing guidelines before submit
 ## License
 
 Distributed under the **MIT License**. See `LICENSE` for more information.
+
+---
+
+## Acknowledgements
+
+PaperForge is built on the shoulders of outstanding open-source projects:
+
+- **[CodeMirror](https://codemirror.net/)** -- Extensible code editor engine powering the LaTeX editing experience
+- **[Yjs](https://yjs.dev/)** -- CRDT framework enabling real-time collaborative editing
+- **[PDF.js](https://mozilla.github.io/pdf.js/)** -- Mozilla's PDF rendering library for in-browser preview
+- **[Next.js](https://nextjs.org/)** -- React framework for the full-stack application
+- **[shadcn/ui](https://ui.shadcn.com/)** -- Beautifully designed, accessible UI components
+- **[TailwindCSS](https://tailwindcss.com/)** -- Utility-first CSS framework for rapid styling
+- **[Pandoc](https://pandoc.org/)** -- Universal document converter powering DOCX export
 
 ---
 

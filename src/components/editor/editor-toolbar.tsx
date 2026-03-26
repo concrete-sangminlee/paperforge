@@ -1,13 +1,33 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { PlayIcon, LoaderCircleIcon, CheckCircleIcon, XCircleIcon, ZapIcon, ZapOffIcon, FileDownIcon } from 'lucide-react';
+import {
+  PlayIcon,
+  LoaderCircleIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ZapIcon,
+  ZapOffIcon,
+  FileDownIcon,
+  BoldIcon,
+  ItalicIcon,
+  UnderlineIcon,
+  SigmaIcon,
+  Heading1Icon,
+  Heading2Icon,
+  ListIcon,
+  ListOrderedIcon,
+  LinkIcon,
+  ImageIcon,
+  KeyboardIcon,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useEditorStore } from '@/store/editor-store';
 
 interface EditorToolbarProps {
   projectId: string;
+  projectName?: string;
   /** Called by the parent to imperatively trigger a compile. */
   onCompileReady?: (compileFn: () => Promise<void>) => void;
 }
@@ -23,7 +43,34 @@ type CompilationResponse = {
   docxMinioKey?: string | null;
 };
 
-export function EditorToolbar({ projectId, onCompileReady }: EditorToolbarProps) {
+const insertLatex = (command: string) => {
+  window.dispatchEvent(new CustomEvent('latex-insert', { detail: command }));
+};
+
+const FORMATTING_BUTTONS = [
+  { label: 'Bold', icon: BoldIcon, command: '\\textbf{}', shortcut: 'Ctrl+B' },
+  { label: 'Italic', icon: ItalicIcon, command: '\\textit{}', shortcut: 'Ctrl+I' },
+  { label: 'Underline', icon: UnderlineIcon, command: '\\underline{}', shortcut: '' },
+  { label: 'Math mode', icon: SigmaIcon, command: '$$', shortcut: 'Ctrl+M' },
+] as const;
+
+const STRUCTURE_BUTTONS = [
+  { label: 'Section', icon: Heading1Icon, command: '\\section{}' },
+  { label: 'Subsection', icon: Heading2Icon, command: '\\subsection{}' },
+  { label: 'Bullet list', icon: ListIcon, command: '\\begin{itemize}\n  \\item \n\\end{itemize}' },
+  { label: 'Numbered list', icon: ListOrderedIcon, command: '\\begin{enumerate}\n  \\item \n\\end{enumerate}' },
+  { label: 'Link', icon: LinkIcon, command: '\\href{}{}' },
+  { label: 'Image', icon: ImageIcon, command: '\\includegraphics{}' },
+] as const;
+
+const SHORTCUTS_HELP = `Keyboard Shortcuts:
+Ctrl+B  Bold
+Ctrl+I  Italic
+Ctrl+M  Math mode
+Ctrl+S  Save
+Ctrl+Enter  Compile`;
+
+export function EditorToolbar({ projectId, projectName, onCompileReady }: EditorToolbarProps) {
   const { compilationStatus, setCompilationStatus, setCompilationLog, setLatestPdfUrl, autoCompileEnabled, toggleAutoCompile } =
     useEditorStore();
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -117,7 +164,18 @@ export function EditorToolbar({ projectId, onCompileReady }: EditorToolbarProps)
   const isCompiling = compilationStatus === 'compiling';
 
   return (
-    <div className="flex items-center gap-3 border-b bg-background px-4 py-2">
+    <div className="flex items-center gap-1.5 border-b bg-background px-3 py-1.5">
+      {/* Project name */}
+      {projectName && (
+        <>
+          <span className="mr-1 max-w-[160px] truncate text-sm font-semibold text-foreground" title={projectName}>
+            {projectName}
+          </span>
+          <ToolbarSeparator />
+        </>
+      )}
+
+      {/* Compile controls */}
       <Button
         size="sm"
         onClick={handleCompile}
@@ -129,7 +187,7 @@ export function EditorToolbar({ projectId, onCompileReady }: EditorToolbarProps)
         ) : (
           <PlayIcon className="size-3.5" />
         )}
-        {isCompiling ? 'Compiling…' : 'Compile'}
+        {isCompiling ? 'Compiling...' : 'Compile'}
       </Button>
 
       {/* Download DOCX — only shown after a successful compilation with DOCX output */}
@@ -150,7 +208,7 @@ export function EditorToolbar({ projectId, onCompileReady }: EditorToolbarProps)
         variant={autoCompileEnabled ? 'secondary' : 'ghost'}
         onClick={toggleAutoCompile}
         className="gap-1.5 text-xs"
-        title={autoCompileEnabled ? 'Auto-compile ON — click to disable' : 'Auto-compile OFF — click to enable'}
+        title={autoCompileEnabled ? 'Auto-compile ON - click to disable' : 'Auto-compile OFF - click to enable'}
       >
         {autoCompileEnabled ? (
           <ZapIcon className="size-3.5 text-amber-500" />
@@ -161,8 +219,58 @@ export function EditorToolbar({ projectId, onCompileReady }: EditorToolbarProps)
       </Button>
 
       <CompilationStatusBadge status={compilationStatus} />
+
+      <ToolbarSeparator />
+
+      {/* Formatting buttons - text formatting */}
+      <div className="flex items-center gap-0.5">
+        {FORMATTING_BUTTONS.map(({ label, icon: Icon, command, shortcut }) => (
+          <Button
+            key={label}
+            size="icon-xs"
+            variant="ghost"
+            onClick={() => insertLatex(command)}
+            title={shortcut ? `${label} (${shortcut})` : label}
+          >
+            <Icon className="size-3.5" />
+          </Button>
+        ))}
+      </div>
+
+      <ToolbarSeparator />
+
+      {/* Formatting buttons - structure */}
+      <div className="flex items-center gap-0.5">
+        {STRUCTURE_BUTTONS.map(({ label, icon: Icon, command }) => (
+          <Button
+            key={label}
+            size="icon-xs"
+            variant="ghost"
+            onClick={() => insertLatex(command)}
+            title={label}
+          >
+            <Icon className="size-3.5" />
+          </Button>
+        ))}
+      </div>
+
+      <ToolbarSeparator />
+
+      {/* Keyboard shortcuts help */}
+      <Button
+        size="icon-xs"
+        variant="ghost"
+        title={SHORTCUTS_HELP}
+      >
+        <KeyboardIcon className="size-3.5" />
+      </Button>
     </div>
   );
+}
+
+/** Thin vertical separator between toolbar button groups. */
+function ToolbarSeparator() {
+  return <div className="mx-1 h-5 w-px shrink-0 bg-border" />;
 }
 
 function CompilationStatusBadge({

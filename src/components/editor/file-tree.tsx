@@ -6,8 +6,23 @@ import {
   FolderOpenIcon,
   LoaderCircleIcon,
   StarIcon,
+  ChevronRightIcon,
+  ChevronDownIcon,
+  SearchIcon,
+  ImageIcon,
+  FileCodeIcon,
+  DatabaseIcon,
+  ChevronsDownUpIcon,
+  CopyIcon,
+  DownloadIcon,
+  FolderPlusIcon,
+  PencilIcon,
+  Trash2Icon,
+  FileIcon,
+  BookOpenIcon,
+  FileArchiveIcon,
 } from 'lucide-react';
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   DropdownMenu,
@@ -16,6 +31,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 import { useEditorStore } from '@/store/editor-store';
 import { cn } from '@/lib/utils';
 import { NewFileDialog } from './new-file-dialog';
@@ -34,6 +50,41 @@ interface FileTreeProps {
   mainFile?: string;
   onRefresh: () => void;
   onMainFileChange?: (path: string) => void;
+}
+
+// ---------- file icon helper ----------
+
+function getFileIcon(name: string, className: string) {
+  const ext = name.split('.').pop()?.toLowerCase() ?? '';
+  switch (ext) {
+    case 'tex':
+    case 'ltx':
+      return <FileTextIcon className={className} />;
+    case 'bib':
+    case 'bst':
+      return <DatabaseIcon className={className} />;
+    case 'png':
+    case 'jpg':
+    case 'jpeg':
+    case 'gif':
+    case 'svg':
+    case 'webp':
+    case 'ico':
+      return <ImageIcon className={className} />;
+    case 'cls':
+    case 'sty':
+    case 'dtx':
+    case 'ins':
+      return <FileCodeIcon className={className} />;
+    case 'pdf':
+      return <BookOpenIcon className={className} />;
+    case 'zip':
+    case 'tar':
+    case 'gz':
+      return <FileArchiveIcon className={className} />;
+    default:
+      return <FileIcon className={className} />;
+  }
 }
 
 // ---------- folder tree helpers ----------
@@ -76,7 +127,56 @@ function buildTree(files: FileEntry[]): TreeNode[] {
     nodes.push({ type: 'file', entry: file, name: parts[parts.length - 1] });
   }
 
+  // Sort: folders first, then alphabetical
+  function sortNodes(nodes: TreeNode[]) {
+    nodes.sort((a, b) => {
+      if (a.type !== b.type) return a.type === 'folder' ? -1 : 1;
+      const nameA = a.type === 'folder' ? a.name : a.name;
+      const nameB = b.type === 'folder' ? b.name : b.name;
+      return nameA.localeCompare(nameB);
+    });
+    for (const n of nodes) {
+      if (n.type === 'folder') sortNodes(n.children);
+    }
+  }
+  sortNodes(root);
+
   return root;
+}
+
+function filterTree(nodes: TreeNode[], query: string): TreeNode[] {
+  const q = query.toLowerCase();
+  const result: TreeNode[] = [];
+  for (const node of nodes) {
+    if (node.type === 'file') {
+      if (node.name.toLowerCase().includes(q)) {
+        result.push(node);
+      }
+    } else {
+      const filteredChildren = filterTree(node.children, query);
+      if (filteredChildren.length > 0) {
+        result.push({ ...node, children: filteredChildren });
+      }
+    }
+  }
+  return result;
+}
+
+// ---------- indentation guide ----------
+
+function IndentGuides({ depth }: { depth: number }) {
+  if (depth === 0) return null;
+  return (
+    <>
+      {Array.from({ length: depth }, (_, i) => (
+        <span
+          key={i}
+          className="absolute top-0 bottom-0 w-px bg-border/50"
+          style={{ left: `${i * 12 + 14}px` }}
+        />
+      ))}
+    </>
+  );
 }
 
 // ---------- file node with right-click context menu ----------
@@ -89,10 +189,14 @@ interface FileNodeProps {
   mainFile?: string;
   loading: string | null;
   onClick: (file: FileEntry) => void;
+  onDoubleClick: (file: FileEntry) => void;
   onRename: (file: FileEntry) => void;
   onDelete: (file: FileEntry) => void;
   onSetMain: (file: FileEntry) => void;
+  onDuplicate: (file: FileEntry) => void;
+  onDownload: (file: FileEntry) => void;
   activeTab: string | null;
+  focusedPath: string | null;
 }
 
 function FileNode({
@@ -102,15 +206,21 @@ function FileNode({
   mainFile,
   loading,
   onClick,
+  onDoubleClick,
   onRename,
   onDelete,
   onSetMain,
+  onDuplicate,
+  onDownload,
   activeTab,
+  focusedPath,
 }: FileNodeProps) {
   const isMain = file.path === mainFile;
   const isActive = activeTab === file.path;
+  const isFocused = focusedPath === file.path;
   const isLoading = loading === file.path;
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const iconCls = 'size-3.5 shrink-0';
 
   return (
     <DropdownMenu>
@@ -118,27 +228,31 @@ function FileNode({
         render={
           <button
             ref={triggerRef}
+            data-path={file.path}
+            data-type="file"
             onClick={() => onClick(file)}
+            onDoubleClick={() => onDoubleClick(file)}
             disabled={file.isBinary || isLoading}
             style={{ paddingLeft: `${depth * 12 + 8}px` }}
             className={cn(
-              'flex w-full items-center gap-1.5 rounded-md py-1 pr-2 text-left text-xs transition-colors',
-              'hover:bg-accent hover:text-accent-foreground',
+              'relative flex w-full items-center gap-1.5 rounded-md py-1 pr-2 text-left text-xs transition-colors',
+              'hover:bg-accent/60 hover:text-accent-foreground',
               isActive && 'bg-accent text-accent-foreground font-medium',
+              isFocused && !isActive && 'ring-1 ring-ring/40',
               file.isBinary && 'opacity-50 cursor-not-allowed',
             )}
             onContextMenu={(e) => {
               e.preventDefault();
-              // Trigger dropdown by clicking the trigger element
               triggerRef.current?.click();
             }}
           />
         }
       >
+        <IndentGuides depth={depth} />
         {isLoading ? (
-          <LoaderCircleIcon className="size-3.5 shrink-0 animate-spin text-muted-foreground" />
+          <LoaderCircleIcon className={cn(iconCls, 'animate-spin text-muted-foreground')} />
         ) : (
-          <FileTextIcon className="size-3.5 shrink-0 text-muted-foreground" />
+          getFileIcon(name, cn(iconCls, 'text-muted-foreground'))
         )}
         <span className="flex-1 truncate">{name}</span>
         {isMain && (
@@ -148,18 +262,34 @@ function FileNode({
           />
         )}
       </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        <DropdownMenuItem onClick={() => onRename(file)}>Rename</DropdownMenuItem>
+      <DropdownMenuContent side="right" align="start">
+        <DropdownMenuItem onClick={() => onRename(file)}>
+          <PencilIcon className="size-3.5 mr-1.5 text-muted-foreground" />
+          Rename
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onDuplicate(file)}>
+          <CopyIcon className="size-3.5 mr-1.5 text-muted-foreground" />
+          Duplicate
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onDownload(file)}>
+          <DownloadIcon className="size-3.5 mr-1.5 text-muted-foreground" />
+          Download
+        </DropdownMenuItem>
         {!file.isBinary && !isMain && (
-          <DropdownMenuItem onClick={() => onSetMain(file)}>
-            Set as Main Document
-          </DropdownMenuItem>
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => onSetMain(file)}>
+              <StarIcon className="size-3.5 mr-1.5 text-muted-foreground" />
+              Set as Main Document
+            </DropdownMenuItem>
+          </>
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => onDelete(file)}
           variant="destructive"
         >
+          <Trash2Icon className="size-3.5 mr-1.5" />
           Delete
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -167,47 +297,167 @@ function FileNode({
   );
 }
 
+// ---------- shared props passed through the tree ----------
+
+interface SharedTreeProps {
+  projectId: string;
+  mainFile?: string;
+  loading: string | null;
+  onClick: (file: FileEntry) => void;
+  onDoubleClick: (file: FileEntry) => void;
+  onRename: (file: FileEntry) => void;
+  onDelete: (file: FileEntry) => void;
+  onSetMain: (file: FileEntry) => void;
+  onDuplicate: (file: FileEntry) => void;
+  onDownload: (file: FileEntry) => void;
+  activeTab: string | null;
+  expandedFolders: Set<string>;
+}
+
 // ---------- folder node ----------
+
+interface FolderNodeProps {
+  folder: TreeFolder;
+  depth: number;
+  expanded: boolean;
+  onToggle: (path: string) => void;
+  onNewFolder: (parentPath: string) => void;
+  onRenameFolder: (folderPath: string) => void;
+  onDeleteFolder: (folderPath: string) => void;
+  focusedPath: string | null;
+  shared: SharedTreeProps;
+}
 
 function FolderNode({
   folder,
   depth,
-  ...rest
-}: {
-  folder: TreeFolder;
-  depth: number;
-} & Omit<FileNodeProps, 'file' | 'name' | 'depth'>) {
-  const [expanded, setExpanded] = useState(true);
+  expanded,
+  onToggle,
+  onNewFolder,
+  onRenameFolder,
+  onDeleteFolder,
+  focusedPath,
+  shared,
+}: FolderNodeProps) {
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const isFocused = focusedPath === `folder:${folder.fullPath}`;
+
   return (
     <div>
-      <button
-        onClick={() => setExpanded((v) => !v)}
-        style={{ paddingLeft: `${depth * 12 + 8}px` }}
-        className="flex w-full items-center gap-1.5 rounded-md py-1 text-left text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-      >
-        {expanded ? (
-          <FolderOpenIcon className="size-3.5 shrink-0" />
-        ) : (
-          <FolderIcon className="size-3.5 shrink-0" />
-        )}
-        <span className="truncate font-medium">{folder.name}</span>
-      </button>
-      {expanded &&
-        folder.children.map((node) =>
-          node.type === 'folder' ? (
-            <FolderNode key={node.fullPath} folder={node} depth={depth + 1} {...rest} />
-          ) : (
-            <FileNode
-              key={node.entry.id}
-              file={node.entry}
-              name={node.name}
-              depth={depth + 1}
-              {...rest}
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <button
+              ref={triggerRef}
+              data-path={`folder:${folder.fullPath}`}
+              data-type="folder"
+              data-folder-path={folder.fullPath}
+              onClick={() => onToggle(folder.fullPath)}
+              style={{ paddingLeft: `${depth * 12 + 8}px` }}
+              className={cn(
+                'relative flex w-full items-center gap-1.5 rounded-md py-1 pr-2 text-left text-xs text-muted-foreground transition-colors',
+                'hover:bg-accent/60 hover:text-accent-foreground',
+                isFocused && 'ring-1 ring-ring/40',
+              )}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                triggerRef.current?.click();
+              }}
             />
-          ),
-        )}
+          }
+        >
+          <IndentGuides depth={depth} />
+          <span className="inline-flex transition-transform duration-150">
+            {expanded ? (
+              <ChevronDownIcon className="size-3 shrink-0" />
+            ) : (
+              <ChevronRightIcon className="size-3 shrink-0" />
+            )}
+          </span>
+          {expanded ? (
+            <FolderOpenIcon className="size-3.5 shrink-0 text-amber-500" />
+          ) : (
+            <FolderIcon className="size-3.5 shrink-0 text-amber-500/70" />
+          )}
+          <span className="truncate font-medium">{folder.name}</span>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent side="right" align="start">
+          <DropdownMenuItem onClick={() => onNewFolder(folder.fullPath)}>
+            <FolderPlusIcon className="size-3.5 mr-1.5 text-muted-foreground" />
+            New Folder
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onRenameFolder(folder.fullPath)}>
+            <PencilIcon className="size-3.5 mr-1.5 text-muted-foreground" />
+            Rename
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => onDeleteFolder(folder.fullPath)}
+            variant="destructive"
+          >
+            <Trash2Icon className="size-3.5 mr-1.5" />
+            Delete Folder
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {expanded && (
+        <div className="relative">
+          {folder.children.map((node) =>
+            node.type === 'folder' ? (
+              <FolderNode
+                key={node.fullPath}
+                folder={node}
+                depth={depth + 1}
+                expanded={shared.expandedFolders.has(node.fullPath)}
+                onToggle={onToggle}
+                onNewFolder={onNewFolder}
+                onRenameFolder={onRenameFolder}
+                onDeleteFolder={onDeleteFolder}
+                focusedPath={focusedPath}
+                shared={shared}
+              />
+            ) : (
+              <FileNode
+                key={node.entry.id}
+                file={node.entry}
+                name={node.name}
+                depth={depth + 1}
+                focusedPath={focusedPath}
+                projectId={shared.projectId}
+                mainFile={shared.mainFile}
+                loading={shared.loading}
+                onClick={shared.onClick}
+                onDoubleClick={shared.onDoubleClick}
+                onRename={shared.onRename}
+                onDelete={shared.onDelete}
+                onSetMain={shared.onSetMain}
+                onDuplicate={shared.onDuplicate}
+                onDownload={shared.onDownload}
+                activeTab={shared.activeTab}
+              />
+            ),
+          )}
+        </div>
+      )}
     </div>
   );
+}
+
+// ---------- helpers to gather all visible paths in order ----------
+
+function gatherPaths(nodes: TreeNode[], expandedFolders: Set<string>): string[] {
+  const paths: string[] = [];
+  for (const node of nodes) {
+    if (node.type === 'folder') {
+      paths.push(`folder:${node.fullPath}`);
+      if (expandedFolders.has(node.fullPath)) {
+        paths.push(...gatherPaths(node.children, expandedFolders));
+      }
+    } else {
+      paths.push(node.entry.path);
+    }
+  }
+  return paths;
 }
 
 // ---------- main component ----------
@@ -223,8 +473,61 @@ export function FileTree({
   const [loading, setLoading] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<FileEntry | null>(null);
   const [renamePath, setRenamePath] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [foldersInitialized, setFoldersInitialized] = useState(false);
+  const [focusedPath, setFocusedPath] = useState<string | null>(null);
+  const [renamingFolder, setRenamingFolder] = useState<string | null>(null);
+  const [renameFolderPath, setRenameFolderPath] = useState('');
+  const [newFolderParent, setNewFolderParent] = useState<string | null>(null);
+  const [newFolderName, setNewFolderName] = useState('');
+  const treeContainerRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const tree = buildTree(files);
+  const tree = useMemo(() => buildTree(files), [files]);
+
+  // Initialize all folders as expanded
+  useEffect(() => {
+    if (!foldersInitialized && files.length > 0) {
+      const allFolders = new Set<string>();
+      const collectFolders = (nodes: TreeNode[]) => {
+        for (const n of nodes) {
+          if (n.type === 'folder') {
+            allFolders.add(n.fullPath);
+            collectFolders(n.children);
+          }
+        }
+      };
+      collectFolders(tree);
+      setExpandedFolders(allFolders);
+      setFoldersInitialized(true);
+    }
+  }, [files, tree, foldersInitialized]);
+
+  const filteredTree = useMemo(
+    () => (searchQuery ? filterTree(tree, searchQuery) : tree),
+    [tree, searchQuery],
+  );
+
+  const visiblePaths = useMemo(
+    () => gatherPaths(filteredTree, expandedFolders),
+    [filteredTree, expandedFolders],
+  );
+
+  const fileCount = files.length;
+
+  function toggleFolder(path: string) {
+    setExpandedFolders((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
+      return next;
+    });
+  }
+
+  function collapseAll() {
+    setExpandedFolders(new Set());
+  }
 
   async function handleFileClick(file: FileEntry) {
     if (file.isBinary) return;
@@ -246,6 +549,11 @@ export function FileTree({
     } finally {
       setLoading(null);
     }
+  }
+
+  function handleDoubleClick(file: FileEntry) {
+    // Double-click also opens (same behavior, ensures opening even if single-click was prevented)
+    void handleFileClick(file);
   }
 
   function handleRenameStart(file: FileEntry) {
@@ -325,35 +633,328 @@ export function FileTree({
     }
   }
 
-  const sharedNodeProps = {
+  async function handleDuplicate(file: FileEntry) {
+    try {
+      // Compute duplicate path: main.tex -> main-copy.tex
+      const dotIdx = file.path.lastIndexOf('.');
+      const basePath = dotIdx > 0 ? file.path.slice(0, dotIdx) : file.path;
+      const ext = dotIdx > 0 ? file.path.slice(dotIdx) : '';
+      const newPath = `${basePath}-copy${ext}`;
+
+      let content = '';
+      if (!file.isBinary) {
+        const tab = tabs.find((t) => t.path === file.path);
+        if (tab) {
+          content = tab.content;
+        } else {
+          const res = await fetch(`/api/v1/projects/${projectId}/files/${file.path}`);
+          if (res.ok) {
+            const data = (await res.json()) as { content: string };
+            content = data.content;
+          }
+        }
+      }
+
+      await fetch(`/api/v1/projects/${projectId}/files/${newPath}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      });
+
+      onRefresh();
+    } catch (err) {
+      console.error('Duplicate failed:', err);
+    }
+  }
+
+  async function handleDownload(file: FileEntry) {
+    try {
+      const res = await fetch(`/api/v1/projects/${projectId}/files/${file.path}`);
+      if (!res.ok) throw new Error('Download failed');
+      const data = (await res.json()) as { content: string };
+      const blob = new Blob([data.content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.path.split('/').pop() ?? file.path;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download failed:', err);
+    }
+  }
+
+  // -- Folder operations --
+
+  async function handleNewFolder(parentPath: string | null) {
+    setNewFolderParent(parentPath);
+    setNewFolderName('');
+  }
+
+  async function handleNewFolderSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const name = newFolderName.trim();
+    if (!name) {
+      setNewFolderParent(null);
+      return;
+    }
+
+    const folderPath = newFolderParent ? `${newFolderParent}/${name}` : name;
+    // Create a .gitkeep file to materialize the folder
+    try {
+      await fetch(`/api/v1/projects/${projectId}/files/${folderPath}/.gitkeep`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: '' }),
+      });
+      setExpandedFolders((prev) => new Set(prev).add(folderPath));
+      setNewFolderParent(null);
+      setNewFolderName('');
+      onRefresh();
+    } catch (err) {
+      console.error('Create folder failed:', err);
+      setNewFolderParent(null);
+    }
+  }
+
+  function handleRenameFolderStart(folderPath: string) {
+    setRenamingFolder(folderPath);
+    setRenameFolderPath(folderPath);
+  }
+
+  async function handleRenameFolderSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!renamingFolder) return;
+    const newPath = renameFolderPath.trim();
+    if (!newPath || newPath === renamingFolder) {
+      setRenamingFolder(null);
+      return;
+    }
+
+    // Rename all files under the old folder to the new folder path
+    const affectedFiles = files.filter((f) =>
+      f.path.startsWith(renamingFolder + '/'),
+    );
+
+    try {
+      for (const f of affectedFiles) {
+        const relativePath = f.path.slice(renamingFolder.length);
+        const destPath = newPath + relativePath;
+
+        let content = '';
+        if (!f.isBinary) {
+          const tab = tabs.find((t) => t.path === f.path);
+          if (tab) {
+            content = tab.content;
+          } else {
+            const res = await fetch(`/api/v1/projects/${projectId}/files/${f.path}`);
+            if (res.ok) {
+              const data = (await res.json()) as { content: string };
+              content = data.content;
+            }
+          }
+        }
+
+        await fetch(`/api/v1/projects/${projectId}/files/${destPath}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content }),
+        });
+        await fetch(`/api/v1/projects/${projectId}/files/${f.path}`, {
+          method: 'DELETE',
+        });
+        closeTab(f.path);
+      }
+
+      setRenamingFolder(null);
+      onRefresh();
+    } catch (err) {
+      console.error('Rename folder failed:', err);
+      setRenamingFolder(null);
+    }
+  }
+
+  async function handleDeleteFolder(folderPath: string) {
+    const affectedFiles = files.filter((f) => f.path.startsWith(folderPath + '/'));
+    if (
+      !confirm(
+        `Delete folder "${folderPath}" and its ${affectedFiles.length} file(s)? This cannot be undone.`,
+      )
+    )
+      return;
+
+    try {
+      for (const f of affectedFiles) {
+        await fetch(`/api/v1/projects/${projectId}/files/${f.path}`, {
+          method: 'DELETE',
+        });
+        closeTab(f.path);
+      }
+      onRefresh();
+    } catch (err) {
+      console.error('Delete folder failed:', err);
+    }
+  }
+
+  // -- Keyboard navigation --
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.target instanceof HTMLInputElement) return;
+
+    const paths = visiblePaths;
+    if (paths.length === 0) return;
+
+    const currentIdx = focusedPath ? paths.indexOf(focusedPath) : -1;
+
+    switch (e.key) {
+      case 'ArrowDown': {
+        e.preventDefault();
+        const nextIdx = currentIdx < paths.length - 1 ? currentIdx + 1 : 0;
+        setFocusedPath(paths[nextIdx]);
+        // Scroll the focused item into view
+        const el = treeContainerRef.current?.querySelector(
+          `[data-path="${CSS.escape(paths[nextIdx])}"]`,
+        );
+        el?.scrollIntoView({ block: 'nearest' });
+        break;
+      }
+      case 'ArrowUp': {
+        e.preventDefault();
+        const prevIdx = currentIdx > 0 ? currentIdx - 1 : paths.length - 1;
+        setFocusedPath(paths[prevIdx]);
+        const el = treeContainerRef.current?.querySelector(
+          `[data-path="${CSS.escape(paths[prevIdx])}"]`,
+        );
+        el?.scrollIntoView({ block: 'nearest' });
+        break;
+      }
+      case 'ArrowRight': {
+        e.preventDefault();
+        if (focusedPath?.startsWith('folder:')) {
+          const fp = focusedPath.slice(7);
+          setExpandedFolders((prev) => new Set(prev).add(fp));
+        }
+        break;
+      }
+      case 'ArrowLeft': {
+        e.preventDefault();
+        if (focusedPath?.startsWith('folder:')) {
+          const fp = focusedPath.slice(7);
+          setExpandedFolders((prev) => {
+            const next = new Set(prev);
+            next.delete(fp);
+            return next;
+          });
+        }
+        break;
+      }
+      case 'Enter': {
+        e.preventDefault();
+        if (!focusedPath) break;
+        if (focusedPath.startsWith('folder:')) {
+          const fp = focusedPath.slice(7);
+          toggleFolder(fp);
+        } else {
+          const file = files.find((f) => f.path === focusedPath);
+          if (file) void handleFileClick(file);
+        }
+        break;
+      }
+      case '/': {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        break;
+      }
+    }
+  }
+
+  const shared: SharedTreeProps = {
     projectId,
     mainFile,
     loading,
     onClick: handleFileClick,
+    onDoubleClick: handleDoubleClick,
     onRename: handleRenameStart,
     onDelete: handleDelete,
     onSetMain: handleSetMain,
+    onDuplicate: handleDuplicate,
+    onDownload: handleDownload,
     activeTab,
+    expandedFolders,
   };
 
+  const showRenameForm = renaming !== null;
+  const showRenameFolderForm = renamingFolder !== null;
+  const showNewFolderForm = newFolderParent !== null;
+
   return (
-    <div className="flex h-full flex-col">
+    <div
+      className="flex h-full flex-col focus:outline-none"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+    >
       {/* Header */}
       <div className="flex items-center gap-1 border-b px-2 py-1.5">
-        <FileTextIcon className="size-3.5 text-muted-foreground" />
-        <span className="flex-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <span className="flex flex-1 items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Files
+          {fileCount > 0 && (
+            <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-muted px-1 text-[10px] font-medium text-muted-foreground">
+              {fileCount}
+            </span>
+          )}
         </span>
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          className="size-6"
+          aria-label="New folder"
+          onClick={() => handleNewFolder(null)}
+        >
+          <FolderPlusIcon className="size-3.5" />
+        </Button>
         <NewFileDialog projectId={projectId} onCreated={onRefresh} />
         <UploadDialog projectId={projectId} onUploaded={onRefresh} />
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          className="size-6"
+          aria-label="Collapse all folders"
+          onClick={collapseAll}
+        >
+          <ChevronsDownUpIcon className="size-3.5" />
+        </Button>
       </div>
 
-      {/* Inline rename form */}
-      {renaming && (
+      {/* Search filter */}
+      <div className="border-b px-2 py-1.5">
+        <div className="relative">
+          <SearchIcon className="absolute left-2 top-1/2 size-3 -translate-y-1/2 text-muted-foreground" />
+          <input
+            ref={searchInputRef}
+            type="text"
+            placeholder="Filter files... ( / )"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setSearchQuery('');
+                (e.target as HTMLInputElement).blur();
+              }
+            }}
+            className="h-6 w-full rounded-md border border-input bg-background pl-7 pr-2 text-xs outline-none placeholder:text-muted-foreground/60 focus:border-ring focus:ring-1 focus:ring-ring/30"
+          />
+        </div>
+      </div>
+
+      {/* Inline rename form (file) */}
+      {showRenameForm && (
         <form
           onSubmit={(e) => void handleRenameSubmit(e)}
           className="flex items-center gap-1 border-b px-2 py-1"
         >
+          <PencilIcon className="size-3 shrink-0 text-muted-foreground" />
           <input
             autoFocus
             value={renamePath}
@@ -365,7 +966,7 @@ export function FileTree({
           />
           <button
             type="submit"
-            className="rounded bg-primary px-1.5 py-0.5 text-xs text-primary-foreground"
+            className="rounded bg-primary px-1.5 py-0.5 text-xs text-primary-foreground hover:bg-primary/90"
           >
             OK
           </button>
@@ -374,26 +975,126 @@ export function FileTree({
             onClick={() => setRenaming(null)}
             className="rounded px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-accent"
           >
-            ✕
+            Cancel
+          </button>
+        </form>
+      )}
+
+      {/* Inline rename form (folder) */}
+      {showRenameFolderForm && (
+        <form
+          onSubmit={(e) => void handleRenameFolderSubmit(e)}
+          className="flex items-center gap-1 border-b px-2 py-1"
+        >
+          <FolderIcon className="size-3 shrink-0 text-muted-foreground" />
+          <input
+            autoFocus
+            value={renameFolderPath}
+            onChange={(e) => setRenameFolderPath(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setRenamingFolder(null);
+            }}
+            className="flex-1 rounded border bg-background px-1.5 py-0.5 text-xs outline-none focus:ring-1 focus:ring-ring"
+          />
+          <button
+            type="submit"
+            className="rounded bg-primary px-1.5 py-0.5 text-xs text-primary-foreground hover:bg-primary/90"
+          >
+            OK
+          </button>
+          <button
+            type="button"
+            onClick={() => setRenamingFolder(null)}
+            className="rounded px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-accent"
+          >
+            Cancel
+          </button>
+        </form>
+      )}
+
+      {/* Inline new folder form */}
+      {showNewFolderForm && (
+        <form
+          onSubmit={(e) => void handleNewFolderSubmit(e)}
+          className="flex items-center gap-1 border-b px-2 py-1"
+        >
+          <FolderPlusIcon className="size-3 shrink-0 text-muted-foreground" />
+          <input
+            autoFocus
+            placeholder={newFolderParent ? `Subfolder in ${newFolderParent}` : 'Folder name'}
+            value={newFolderName}
+            onChange={(e) => setNewFolderName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setNewFolderParent(null);
+            }}
+            className="flex-1 rounded border bg-background px-1.5 py-0.5 text-xs outline-none focus:ring-1 focus:ring-ring"
+          />
+          <button
+            type="submit"
+            className="rounded bg-primary px-1.5 py-0.5 text-xs text-primary-foreground hover:bg-primary/90"
+          >
+            Create
+          </button>
+          <button
+            type="button"
+            onClick={() => setNewFolderParent(null)}
+            className="rounded px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-accent"
+          >
+            Cancel
           </button>
         </form>
       )}
 
       <ScrollArea className="flex-1">
-        <div className="p-1">
+        <div ref={treeContainerRef} className="p-1">
           {files.length === 0 ? (
-            <p className="px-3 py-4 text-xs text-muted-foreground">No files</p>
+            <div className="flex flex-col items-center justify-center gap-2 px-3 py-8 text-center">
+              <FolderOpenIcon className="size-8 text-muted-foreground/40" />
+              <p className="text-xs font-medium text-muted-foreground">No files yet</p>
+              <p className="text-[10px] text-muted-foreground/60">
+                Create a new file or upload one to get started
+              </p>
+            </div>
+          ) : filteredTree.length === 0 ? (
+            <div className="flex flex-col items-center gap-1 px-3 py-6 text-center">
+              <SearchIcon className="size-5 text-muted-foreground/40" />
+              <p className="text-xs text-muted-foreground">
+                No files matching &ldquo;{searchQuery}&rdquo;
+              </p>
+            </div>
           ) : (
-            tree.map((node) =>
+            filteredTree.map((node) =>
               node.type === 'folder' ? (
-                <FolderNode key={node.fullPath} folder={node} depth={0} {...sharedNodeProps} />
+                <FolderNode
+                  key={node.fullPath}
+                  folder={node}
+                  depth={0}
+                  expanded={expandedFolders.has(node.fullPath)}
+                  onToggle={toggleFolder}
+                  onNewFolder={handleNewFolder}
+                  onRenameFolder={handleRenameFolderStart}
+                  onDeleteFolder={handleDeleteFolder}
+                  focusedPath={focusedPath}
+                  shared={shared}
+                />
               ) : (
                 <FileNode
                   key={node.entry.id}
                   file={node.entry}
                   name={node.name}
                   depth={0}
-                  {...sharedNodeProps}
+                  focusedPath={focusedPath}
+                  projectId={shared.projectId}
+                  mainFile={shared.mainFile}
+                  loading={shared.loading}
+                  onClick={shared.onClick}
+                  onDoubleClick={shared.onDoubleClick}
+                  onRename={shared.onRename}
+                  onDelete={shared.onDelete}
+                  onSetMain={shared.onSetMain}
+                  onDuplicate={shared.onDuplicate}
+                  onDownload={shared.onDownload}
+                  activeTab={shared.activeTab}
                 />
               ),
             )

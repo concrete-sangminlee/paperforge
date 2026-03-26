@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import { SearchIcon, FileTextIcon, BookOpenIcon, PresentationIcon, MailIcon, UserIcon } from 'lucide-react';
@@ -71,6 +71,7 @@ export default function TemplatesPage() {
   const [projectName, setProjectName] = useState('');
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   const params = new URLSearchParams();
   if (activeCategory !== 'all') params.set('category', activeCategory);
@@ -82,10 +83,11 @@ export default function TemplatesPage() {
   );
 
   function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setSearch(e.target.value);
-    clearTimeout((handleSearchChange as { _timer?: ReturnType<typeof setTimeout> })._timer);
-    (handleSearchChange as { _timer?: ReturnType<typeof setTimeout> })._timer = setTimeout(() => {
-      setDebouncedSearch(e.target.value);
+    const value = e.target.value;
+    setSearch(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(value);
     }, 300);
   }
 
@@ -124,11 +126,18 @@ export default function TemplatesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Template Gallery</h1>
-        <p className="text-sm text-muted-foreground">
-          Start your document from a curated academic template.
-        </p>
+      <div className="flex items-end justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Template Gallery</h1>
+          <p className="text-sm text-muted-foreground">
+            Start your document from a curated academic template.
+          </p>
+        </div>
+        {templates && (
+          <Badge variant="secondary" className="text-xs">
+            {templates.length} template{templates.length !== 1 ? 's' : ''}
+          </Badge>
+        )}
       </div>
 
       {/* Search */}
@@ -167,7 +176,7 @@ export default function TemplatesPage() {
       ) : templates && templates.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {templates.map((template) => (
-            <Card key={template.id} className="flex flex-col">
+            <Card key={template.id} className="flex flex-col transition-all duration-200 hover:shadow-lg hover:border-orange-200 dark:hover:border-orange-800 hover:-translate-y-0.5">
               <CardHeader className="flex flex-row items-start gap-4 space-y-0 pb-2">
                 <div className="flex size-16 shrink-0 items-center justify-center rounded-lg bg-muted">
                   {template.thumbnailUrl ? (

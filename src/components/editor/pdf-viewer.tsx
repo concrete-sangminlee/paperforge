@@ -8,6 +8,12 @@ import {
   ZoomOutIcon,
   DownloadIcon,
   FileTextIcon,
+  Maximize2Icon,
+  Minimize2Icon,
+  ColumnsIcon,
+  MaximizeIcon,
+  Loader2Icon,
+  AlertCircleIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEditorStore } from '@/store/editor-store';
@@ -20,7 +26,10 @@ type PDFDocumentProxy = {
 
 type PDFPageProxy = {
   getViewport: (opts: { scale: number }) => { width: number; height: number };
-  render: (ctx: { canvasContext: CanvasRenderingContext2D; viewport: { width: number; height: number } }) => { promise: Promise<void> };
+  render: (ctx: {
+    canvasContext: CanvasRenderingContext2D;
+    viewport: { width: number; height: number };
+  }) => { promise: Promise<void> };
 };
 
 interface PdfViewerProps {
@@ -28,9 +37,15 @@ interface PdfViewerProps {
   refreshKey?: number;
 }
 
+const MIN_SCALE = 0.25;
+const MAX_SCALE = 4;
+const SCALE_STEP = 0.25;
+
 export function PdfViewer({ refreshKey }: PdfViewerProps) {
   const latestPdfUrl = useEditorStore((s) => s.latestPdfUrl);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const viewerRef = useRef<HTMLDivElement>(null);
   const pdfDocRef = useRef<PDFDocumentProxy | null>(null);
   const renderTaskRef = useRef<Promise<void> | null>(null);
 
@@ -39,31 +54,38 @@ export function PdfViewer({ refreshKey }: PdfViewerProps) {
   const [scale, setScale] = useState(1.2);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [pageInputValue, setPageInputValue] = useState('');
+  const [pageInputFocused, setPageInputFocused] = useState(false);
 
-  const renderPage = useCallback(async (doc: PDFDocumentProxy, pageNum: number, pageScale: number) => {
-    if (!canvasRef.current) return;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+  // ── Render a single page ──────────────────────────────────────────────
+  const renderPage = useCallback(
+    async (doc: PDFDocumentProxy, pageNum: number, pageScale: number) => {
+      if (!canvasRef.current) return;
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
 
-    // Wait for any in-flight render
-    if (renderTaskRef.current) {
-      await renderTaskRef.current.catch(() => null);
-    }
+      // Wait for any in-flight render
+      if (renderTaskRef.current) {
+        await renderTaskRef.current.catch(() => null);
+      }
 
-    const page = await doc.getPage(pageNum);
-    const viewport = page.getViewport({ scale: pageScale });
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const page = await doc.getPage(pageNum);
+      const viewport = page.getViewport({ scale: pageScale });
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const task = page.render({ canvasContext: ctx, viewport });
-    renderTaskRef.current = task.promise;
-    await task.promise;
-    renderTaskRef.current = null;
-  }, []);
+      const task = page.render({ canvasContext: ctx, viewport });
+      renderTaskRef.current = task.promise;
+      await task.promise;
+      renderTaskRef.current = null;
+    },
+    []
+  );
 
-  // Load PDF whenever URL changes or refreshKey increments
+  // ── Load PDF whenever URL changes or refreshKey increments ────────────
   useEffect(() => {
     if (!latestPdfUrl) {
       pdfDocRef.current?.destroy();
@@ -83,12 +105,12 @@ export function PdfViewer({ refreshKey }: PdfViewerProps) {
 
     (async () => {
       try {
-        // Dynamic import to avoid SSR issues
         const pdfjsLib = await import('pdfjs-dist');
         pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
         pdfDocRef.current?.destroy();
-        const doc = await pdfjsLib.getDocument(urlWithBust).promise as unknown as PDFDocumentProxy;
+        const doc = (await pdfjsLib.getDocument(urlWithBust)
+          .promise) as unknown as PDFDocumentProxy;
         if (cancelled) {
           doc.destroy();
           return;
@@ -99,7 +121,9 @@ export function PdfViewer({ refreshKey }: PdfViewerProps) {
         await renderPage(doc, 1, scale);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load PDF');
+          setError(
+            err instanceof Error ? err.message : 'Failed to load PDF'
+          );
         }
       } finally {
         if (!cancelled) setIsLoading(false);
@@ -112,28 +136,212 @@ export function PdfViewer({ refreshKey }: PdfViewerProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [latestPdfUrl, refreshKey]);
 
-  // Re-render when page or scale changes (but PDF already loaded)
+  // ── Re-render when page or scale changes (PDF already loaded) ─────────
   useEffect(() => {
     if (!pdfDocRef.current || isLoading) return;
     renderPage(pdfDocRef.current, currentPage, scale).catch(console.error);
   }, [currentPage, scale, isLoading, renderPage]);
 
-  function goPrev() {
+  // ── Navigation helpers ────────────────────────────────────────────────
+  const goPrev = useCallback(() => {
     setCurrentPage((p) => Math.max(1, p - 1));
-  }
+  }, []);
 
-  function goNext() {
+  const goNext = useCallback(() => {
     setCurrentPage((p) => Math.min(numPages, p + 1));
+  }, [numPages]);
+
+  const goFirst = useCallback(() => {
+    setCurrentPage(1);
+  }, []);
+
+  const goLast = useCallback(() => {
+    setCurrentPage(numPages);
+  }, [numPages]);
+
+  const jumpToPage = useCallback(
+    (page: number) => {
+      const clamped = Math.max(1, Math.min(numPages, page));
+      setCurrentPage(clamped);
+    },
+    [numPages]
+  );
+
+  // ── Zoom helpers ──────────────────────────────────────────────────────
+  const zoomIn = useCallback(() => {
+    setScale((s) =>
+      Math.min(MAX_SCALE, parseFloat((s + SCALE_STEP).toFixed(2)))
+    );
+  }, []);
+
+  const zoomOut = useCallback(() => {
+    setScale((s) =>
+      Math.max(MIN_SCALE, parseFloat((s - SCALE_STEP).toFixed(2)))
+    );
+  }, []);
+
+  const resetZoom = useCallback(() => {
+    setScale(1.0);
+  }, []);
+
+  // ── Fit modes ─────────────────────────────────────────────────────────
+  const fitToWidth = useCallback(async () => {
+    const container = containerRef.current;
+    if (!container || !pdfDocRef.current) return;
+
+    try {
+      const page = await pdfDocRef.current.getPage(currentPage);
+      const viewport = page.getViewport({ scale: 1.0 });
+      // Subtract padding (32px = 16px each side)
+      const containerWidth = container.clientWidth - 32;
+      const newScale = parseFloat((containerWidth / viewport.width).toFixed(2));
+      setScale(Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale)));
+    } catch {
+      // If we can't get the page, silently fail
+    }
+  }, [currentPage]);
+
+  const fitToPage = useCallback(async () => {
+    const container = containerRef.current;
+    if (!container || !pdfDocRef.current) return;
+
+    try {
+      const page = await pdfDocRef.current.getPage(currentPage);
+      const viewport = page.getViewport({ scale: 1.0 });
+      // Subtract padding (32px each axis)
+      const containerWidth = container.clientWidth - 32;
+      const containerHeight = container.clientHeight - 32;
+      const scaleX = containerWidth / viewport.width;
+      const scaleY = containerHeight / viewport.height;
+      const newScale = parseFloat(Math.min(scaleX, scaleY).toFixed(2));
+      setScale(Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale)));
+    } catch {
+      // If we can't get the page, silently fail
+    }
+  }, [currentPage]);
+
+  // ── Fullscreen ────────────────────────────────────────────────────────
+  const toggleFullscreen = useCallback(async () => {
+    const viewer = viewerRef.current;
+    if (!viewer) return;
+
+    try {
+      if (!document.fullscreenElement) {
+        await viewer.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch {
+      // Fullscreen API not available or denied
+    }
+  }, []);
+
+  // Track fullscreen state changes
+  useEffect(() => {
+    function onFullscreenChange() {
+      setIsFullscreen(!!document.fullscreenElement);
+    }
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', onFullscreenChange);
+    };
+  }, []);
+
+  // ── Keyboard navigation ───────────────────────────────────────────────
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer) return;
+
+    function handleKeyDown(e: KeyboardEvent) {
+      // Don't capture keys when typing in the page input
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+
+      switch (e.key) {
+        case 'ArrowDown':
+        case 'PageDown':
+          e.preventDefault();
+          goNext();
+          break;
+        case 'ArrowUp':
+        case 'PageUp':
+          e.preventDefault();
+          goPrev();
+          break;
+        case 'Home':
+          e.preventDefault();
+          goFirst();
+          break;
+        case 'End':
+          e.preventDefault();
+          goLast();
+          break;
+        case '+':
+        case '=':
+          if (e.ctrlKey || e.key === '+') {
+            e.preventDefault();
+            zoomIn();
+          }
+          break;
+        case '-':
+          if (e.ctrlKey || e.key === '-') {
+            e.preventDefault();
+            zoomOut();
+          }
+          break;
+        case '0':
+          if (e.ctrlKey) {
+            e.preventDefault();
+            resetZoom();
+          } else {
+            resetZoom();
+          }
+          break;
+      }
+    }
+
+    viewer.addEventListener('keydown', handleKeyDown);
+    return () => {
+      viewer.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [goNext, goPrev, goFirst, goLast, zoomIn, zoomOut, resetZoom]);
+
+  // ── Page input handlers ───────────────────────────────────────────────
+  function handlePageInputFocus() {
+    setPageInputFocused(true);
+    setPageInputValue(String(currentPage));
   }
 
-  function zoomIn() {
-    setScale((s) => Math.min(4, parseFloat((s + 0.25).toFixed(2))));
+  function handlePageInputBlur() {
+    setPageInputFocused(false);
+    const parsed = parseInt(pageInputValue, 10);
+    if (!isNaN(parsed)) {
+      jumpToPage(parsed);
+    }
+    setPageInputValue('');
   }
 
-  function zoomOut() {
-    setScale((s) => Math.max(0.25, parseFloat((s - 0.25).toFixed(2))));
+  function handlePageInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') {
+      e.currentTarget.blur();
+    }
+    if (e.key === 'Escape') {
+      setPageInputValue('');
+      e.currentTarget.blur();
+    }
   }
 
+  function handlePageInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    // Allow only digits
+    const val = e.target.value.replace(/[^\d]/g, '');
+    setPageInputValue(val);
+  }
+
+  // ── No PDF URL – empty state ──────────────────────────────────────────
   if (!latestPdfUrl) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 bg-muted/30 text-muted-foreground">
@@ -143,11 +351,17 @@ export function PdfViewer({ refreshKey }: PdfViewerProps) {
     );
   }
 
+  // ── Main viewer ───────────────────────────────────────────────────────
   return (
-    <div className="flex h-full flex-col bg-muted/20">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between gap-2 border-b bg-background px-3 py-1.5">
-        <div className="flex items-center gap-1">
+    <div
+      ref={viewerRef}
+      className="flex h-full flex-col bg-muted/20 outline-none"
+      tabIndex={0}
+    >
+      {/* ── Toolbar ─────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between gap-1 border-b bg-background px-2 py-1">
+        {/* Left: Page navigation */}
+        <div className="flex items-center gap-0.5">
           <Button
             variant="ghost"
             size="icon"
@@ -155,12 +369,36 @@ export function PdfViewer({ refreshKey }: PdfViewerProps) {
             onClick={goPrev}
             disabled={currentPage <= 1 || isLoading}
             aria-label="Previous page"
+            title="Previous page (Arrow Up / Page Up)"
           >
             <ChevronLeftIcon className="size-4" />
           </Button>
-          <span className="min-w-[5rem] text-center text-xs tabular-nums text-muted-foreground">
-            {numPages > 0 ? `${currentPage} / ${numPages}` : '—'}
-          </span>
+
+          {/* Page jump input */}
+          <div className="flex items-center text-xs tabular-nums text-muted-foreground">
+            {numPages > 0 ? (
+              <>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={pageInputFocused ? pageInputValue : String(currentPage)}
+                  onFocus={handlePageInputFocus}
+                  onBlur={handlePageInputBlur}
+                  onKeyDown={handlePageInputKeyDown}
+                  onChange={handlePageInputChange}
+                  disabled={isLoading || numPages === 0}
+                  className="h-5 w-8 rounded border border-transparent bg-transparent text-center text-xs tabular-nums text-foreground outline-none transition-colors hover:border-border focus:border-ring focus:bg-background"
+                  aria-label="Current page"
+                  title="Type a page number to jump"
+                />
+                <span className="text-muted-foreground/70">/</span>
+                <span className="px-0.5">{numPages}</span>
+              </>
+            ) : (
+              <span className="min-w-[3rem] text-center">—</span>
+            )}
+          </div>
+
           <Button
             variant="ghost"
             size="icon"
@@ -168,56 +406,136 @@ export function PdfViewer({ refreshKey }: PdfViewerProps) {
             onClick={goNext}
             disabled={currentPage >= numPages || isLoading}
             aria-label="Next page"
+            title="Next page (Arrow Down / Page Down)"
           >
             <ChevronRightIcon className="size-4" />
           </Button>
         </div>
 
-        <div className="flex items-center gap-1">
+        {/* Center: Zoom controls */}
+        <div className="flex items-center gap-0.5">
           <Button
             variant="ghost"
             size="icon"
             className="size-7"
             onClick={zoomOut}
-            disabled={scale <= 0.25 || isLoading}
+            disabled={scale <= MIN_SCALE || isLoading}
             aria-label="Zoom out"
+            title="Zoom out (- or Ctrl+-)"
           >
             <ZoomOutIcon className="size-4" />
           </Button>
-          <span className="min-w-[3.5rem] text-center text-xs tabular-nums text-muted-foreground">
+
+          <button
+            onClick={resetZoom}
+            disabled={isLoading}
+            className="min-w-[3rem] rounded px-1 py-0.5 text-center text-xs tabular-nums text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+            title="Reset zoom to 100% (0 or Ctrl+0)"
+          >
             {Math.round(scale * 100)}%
-          </span>
+          </button>
+
           <Button
             variant="ghost"
             size="icon"
             className="size-7"
             onClick={zoomIn}
-            disabled={scale >= 4 || isLoading}
+            disabled={scale >= MAX_SCALE || isLoading}
             aria-label="Zoom in"
+            title="Zoom in (+ or Ctrl+=)"
           >
             <ZoomInIcon className="size-4" />
           </Button>
+
+          <div className="mx-0.5 h-4 w-px bg-border" />
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7"
+            onClick={fitToWidth}
+            disabled={isLoading || numPages === 0}
+            aria-label="Fit to width"
+            title="Fit to width"
+          >
+            <ColumnsIcon className="size-3.5" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7"
+            onClick={fitToPage}
+            disabled={isLoading || numPages === 0}
+            aria-label="Fit to page"
+            title="Fit to page"
+          >
+            <MaximizeIcon className="size-3.5" />
+          </Button>
         </div>
 
-        <a href={latestPdfUrl} download="output.pdf" target="_blank" rel="noopener noreferrer">
-          <Button variant="ghost" size="icon" className="size-7" aria-label="Download PDF">
-            <DownloadIcon className="size-4" />
+        {/* Right: Download, fullscreen */}
+        <div className="flex items-center gap-0.5">
+          <a
+            href={latestPdfUrl}
+            download="output.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7"
+              aria-label="Download PDF"
+              title="Download PDF"
+            >
+              <DownloadIcon className="size-4" />
+            </Button>
+          </a>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7"
+            onClick={toggleFullscreen}
+            aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            title={isFullscreen ? 'Exit fullscreen (Esc)' : 'Fullscreen'}
+          >
+            {isFullscreen ? (
+              <Minimize2Icon className="size-4" />
+            ) : (
+              <Maximize2Icon className="size-4" />
+            )}
           </Button>
-        </a>
+        </div>
       </div>
 
-      {/* Canvas area */}
-      <div className="relative flex-1 overflow-auto">
+      {/* ── Canvas area ─────────────────────────────────────────────── */}
+      <div ref={containerRef} className="relative flex-1 overflow-auto">
+        {/* Loading overlay */}
         {isLoading && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/70">
-            <div className="size-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-sm">
+            <Loader2Icon className="size-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Loading PDF...</p>
           </div>
         )}
+
+        {/* Error state */}
         {error && (
-          <div className="flex h-full items-center justify-center p-4 text-sm text-destructive">
-            {error}
+          <div className="flex h-full flex-col items-center justify-center gap-3 p-8">
+            <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+              <AlertCircleIcon className="size-5 shrink-0 text-destructive" />
+              <div className="text-sm">
+                <p className="font-medium text-destructive">
+                  Failed to load PDF
+                </p>
+                <p className="mt-0.5 text-muted-foreground">{error}</p>
+              </div>
+            </div>
           </div>
         )}
+
+        {/* Canvas */}
         <div className="flex min-h-full justify-center p-4">
           <canvas
             ref={canvasRef}
