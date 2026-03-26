@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { errorResponse, ApiError } from '@/lib/errors';
+import { ApiErrors } from '@/lib/api-response';
 import { assertProjectRole } from '@/services/project-service';
 import { prisma } from '@/lib/prisma';
 import { minioClient, getBucket } from '@/lib/minio';
@@ -12,7 +13,7 @@ export async function GET(
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return ApiErrors.unauthorized();
     }
     const userId = (session.user as { id: string }).id;
     const { id, compileId } = await params;

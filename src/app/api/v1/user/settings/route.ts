@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/lib/auth';
 import { errorResponse } from '@/lib/errors';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { apiSuccess, ApiErrors } from '@/lib/api-response';
 
 const patchSettingsSchema = z.object({
   settings: z.record(z.string(), z.unknown()),
@@ -11,9 +12,7 @@ const patchSettingsSchema = z.object({
 export async function GET() {
   try {
     const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!session?.user) return ApiErrors.unauthorized();
     const userId = (session.user as { id: string }).id;
 
     const user = await prisma.user.findUnique({
@@ -21,7 +20,7 @@ export async function GET() {
       select: { settings: true },
     });
 
-    return NextResponse.json({ settings: user?.settings ?? {} });
+    return apiSuccess({ settings: user?.settings ?? {} });
   } catch (error) {
     return errorResponse(error);
   }
@@ -30,15 +29,12 @@ export async function GET() {
 export async function PATCH(request: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!session?.user) return ApiErrors.unauthorized();
     const userId = (session.user as { id: string }).id;
 
     const body = await request.json();
     const { settings: incoming } = patchSettingsSchema.parse(body);
 
-    // Fetch current settings and merge
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { settings: true },
@@ -57,7 +53,7 @@ export async function PATCH(request: NextRequest) {
       select: { settings: true },
     });
 
-    return NextResponse.json({ settings: updated.settings });
+    return apiSuccess({ settings: updated.settings });
   } catch (error) {
     return errorResponse(error);
   }

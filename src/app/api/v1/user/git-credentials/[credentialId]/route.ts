@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/lib/auth';
 import { errorResponse } from '@/lib/errors';
 import { deleteGitCredential } from '@/services/git-service';
+import { apiSuccess, ApiErrors } from '@/lib/api-response';
 
 type RouteParams = { params: Promise<{ credentialId: string }> };
 
@@ -11,14 +12,12 @@ export async function DELETE(
 ) {
   try {
     const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!session?.user) return ApiErrors.unauthorized();
     const userId = (session.user as { id: string }).id;
     const { credentialId } = await params;
 
     await deleteGitCredential(credentialId, userId);
-    return NextResponse.json({ success: true });
+    return apiSuccess({ deleted: true });
   } catch (error) {
     return errorResponse(error);
   }

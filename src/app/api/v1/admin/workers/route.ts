@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { errorResponse } from '@/lib/errors';
+import { ApiErrors, apiSuccess } from '@/lib/api-response';
 import { redis } from '@/lib/redis';
 
 export async function GET() {
@@ -8,7 +8,7 @@ export async function GET() {
     const session = await auth();
     const userRole = (session?.user as { role?: string } | undefined)?.role;
     if (!session?.user || userRole !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return ApiErrors.forbidden();
     }
 
     // Get queue info from Redis (if available)
@@ -22,7 +22,7 @@ export async function GET() {
       ]);
     }
 
-    return NextResponse.json({
+    return apiSuccess({
       queue: {
         name: 'compilation',
         waiting,

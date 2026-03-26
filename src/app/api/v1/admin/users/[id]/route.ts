@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/lib/auth';
 import { errorResponse, ApiError } from '@/lib/errors';
+import { ApiErrors, apiSuccess } from '@/lib/api-response';
 import { prisma } from '@/lib/prisma';
 import { logAuditAction } from '@/services/audit-service';
 import { z } from 'zod';
@@ -18,7 +19,7 @@ export async function PATCH(
     const session = await auth();
     const adminRole = (session?.user as { role?: string } | undefined)?.role;
     if (!session?.user || adminRole !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return ApiErrors.forbidden();
     }
     const adminId = (session.user as { id: string }).id;
     const { id } = await params;
@@ -62,7 +63,7 @@ export async function PATCH(
 
     await logAuditAction(adminId, 'update_user', 'user', id, auditDetails);
 
-    return NextResponse.json(updated);
+    return apiSuccess(updated);
   } catch (error) {
     return errorResponse(error);
   }

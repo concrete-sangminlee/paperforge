@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { errorResponse } from '@/lib/errors';
+import { ApiErrors, apiSuccess } from '@/lib/api-response';
 import { prisma } from '@/lib/prisma';
 
 export async function GET() {
@@ -8,7 +8,7 @@ export async function GET() {
     const session = await auth();
     const userRole = (session?.user as { role?: string } | undefined)?.role;
     if (!session?.user || userRole !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return ApiErrors.forbidden();
     }
 
     const templates = await prisma.template.findMany({
@@ -20,7 +20,7 @@ export async function GET() {
       orderBy: { createdAt: 'asc' },
     });
 
-    return NextResponse.json(templates);
+    return apiSuccess(templates);
   } catch (error) {
     return errorResponse(error);
   }
