@@ -443,6 +443,16 @@ Includes all services: Next.js app, WebSocket server, compilation workers, Postg
 - [x] Security headers & CORS middleware
 - [x] Health check endpoint with dependency monitoring
 - [x] Standardized API error responses
+- [x] Command palette (Cmd+K) with fuzzy search
+- [x] Toast notifications across all operations
+- [x] Error boundaries with graceful recovery
+- [x] Custom 404 and error pages
+- [x] Editor preferences persistence (localStorage)
+- [x] WebSocket connection status indicator
+- [x] Real-time admin dashboard with health monitoring
+- [x] PWA manifest for installability
+- [x] Streaming SSR loading skeletons
+- [x] Worker graceful shutdown & error recovery
 - [ ] Keyboard shortcuts panel
 - [ ] Rich text / WYSIWYG mode
 - [ ] Spell check & grammar

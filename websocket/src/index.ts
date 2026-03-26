@@ -13,6 +13,10 @@ const server = http.createServer((_req, res) => {
 
 const wss = new WebSocketServer({ noServer: true });
 
+wss.on('error', (err) => {
+  console.error('[WS] Server error:', err);
+});
+
 server.on('upgrade', async (req, socket, head) => {
   try {
     // Parse projectId from URL: /ws/:projectId
@@ -54,11 +58,15 @@ server.on('upgrade', async (req, socket, head) => {
 });
 
 wss.on('connection', (ws: WebSocket, _req: http.IncomingMessage, projectId: string, isReadOnly: boolean) => {
-  console.log(`[WS] Client connected to project ${projectId} (readOnly=${isReadOnly})`);
+  console.log(`[WS] Client connected to project ${projectId} (readOnly=${isReadOnly}) (total: ${wss.clients.size})`);
   handleConnection(ws, projectId, isReadOnly);
 
   ws.on('close', () => {
-    console.log(`[WS] Client disconnected from project ${projectId}`);
+    console.log(`[WS] Client disconnected from project ${projectId} (total: ${wss.clients.size})`);
+  });
+
+  ws.on('error', (err) => {
+    console.error('[WS] Client error:', err);
   });
 });
 

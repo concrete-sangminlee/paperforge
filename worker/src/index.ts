@@ -168,12 +168,38 @@ const worker = new Worker<CompilationJobData>(
   { connection },
 );
 
-worker.on('failed', (job, err) => {
-  console.error(`[worker] Job ${job?.id} failed:`, err);
+worker.on('failed', async (job, err) => {
+  console.error(`[worker] Job ${job?.id} failed:`, err?.message);
+  if (job?.data?.compilationId) {
+    try {
+      await prisma.compilation.update({
+        where: { id: job.data.compilationId },
+        data: { status: 'failed', log: `Worker error: ${err?.message ?? 'Unknown'}` },
+      });
+    } catch (e) {
+      console.error('[worker] Failed to update compilation status:', e);
+    }
+  }
+});
+
+worker.on('completed', (job) => {
+  console.log(`[worker] Job ${job.id} completed in ${job.processedOn ? Date.now() - job.processedOn : '?'}ms`);
 });
 
 worker.on('error', (err) => {
   console.error('[worker] Worker error:', err);
 });
+
+// ---------------------------------------------------------------------------
+// Graceful shutdown
+// ---------------------------------------------------------------------------
+async function shutdown() {
+  console.log('[worker] Shutting down gracefully...');
+  await worker.close();
+  await connection.quit();
+  process.exit(0);
+}
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
 
 console.log('[worker] Compilation worker started, listening on queue: compilation');

@@ -82,8 +82,16 @@ export function handleConnection(ws: WebSocket, docName: string, isReadOnly: boo
     conns.delete(ws);
     awarenessProtocol.removeAwarenessStates(awareness, Array.from(controlledIds), null);
     if (conns.size === 0) {
-      // Last client disconnected — could flush to persistent storage here
+      // Last client disconnected — clean up doc to prevent memory leaks
+      awareness.destroy();
+      doc.destroy();
+      docs.delete(docName);
+      console.log(`[WS] Doc ${docName} removed from memory (no remaining connections)`);
     }
+  });
+
+  ws.on('error', (err) => {
+    console.error(`[WS] WebSocket error for ${docName}:`, err);
   });
 
   // Broadcast awareness changes to all other connected clients

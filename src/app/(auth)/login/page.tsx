@@ -30,7 +30,13 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={
+      <div className="flex flex-col gap-4">
+        <div className="h-10 w-full animate-pulse rounded-md bg-muted" />
+        <div className="h-10 w-full animate-pulse rounded-md bg-muted" />
+        <div className="h-10 w-full animate-pulse rounded-md bg-muted" />
+      </div>
+    }>
       <LoginContent />
     </Suspense>
   );

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { MailIcon, LoaderCircleIcon, CheckCircle2Icon, ArrowLeftIcon } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,13 +36,17 @@ export default function ForgotPasswordPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error ?? "Something went wrong. Please try again.");
+        const msg = data.error ?? "Something went wrong. Please try again.";
+        setError(msg);
+        toast.error(msg);
         return;
       }
 
       setSubmitted(true);
+      toast.success("Reset link sent! Check your email.");
     } catch {
       setError("An unexpected error occurred. Please try again.");
+      toast.error("An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -49,18 +55,22 @@ export default function ForgotPasswordPage() {
   if (submitted) {
     return (
       <Card>
-        <CardHeader>
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-green-500/10">
+            <CheckCircle2Icon className="size-6 text-green-500" />
+          </div>
           <CardTitle>Check your email</CardTitle>
           <CardDescription>
-            If an account with that email exists, we&apos;ve sent a password
-            reset link. Please check your inbox and spam folder.
+            If an account with <strong>{email}</strong> exists, we&apos;ve sent a
+            password reset link. Please check your inbox and spam folder.
           </CardDescription>
         </CardHeader>
         <CardFooter className="justify-center">
           <Link
             href="/login"
-            className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+            className="flex items-center gap-1.5 text-sm text-muted-foreground underline-offset-4 hover:underline"
           >
+            <ArrowLeftIcon className="size-3.5" />
             Back to sign in
           </Link>
         </CardFooter>
@@ -85,26 +95,38 @@ export default function ForgotPasswordPage() {
           )}
           <div className="flex flex-col gap-2">
             <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-            />
+            <div className="relative">
+              <MailIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                className="pl-9"
+              />
+            </div>
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Sending..." : "Send reset link"}
+          <Button type="submit" className="w-full gap-2" disabled={loading}>
+            {loading ? (
+              <>
+                <LoaderCircleIcon className="size-4 animate-spin" />
+                Sending...
+              </>
+            ) : (
+              "Send reset link"
+            )}
           </Button>
         </form>
       </CardContent>
       <CardFooter className="justify-center">
         <Link
           href="/login"
-          className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+          className="flex items-center gap-1.5 text-sm text-muted-foreground underline-offset-4 hover:underline"
         >
+          <ArrowLeftIcon className="size-3.5" />
           Back to sign in
         </Link>
       </CardFooter>
