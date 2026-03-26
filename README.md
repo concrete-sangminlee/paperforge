@@ -463,6 +463,13 @@ Includes all services: Next.js app, WebSocket server, compilation workers, Postg
 - [x] Admin real-time dashboards (15s auto-refresh)
 - [x] Comprehensive test suite (46 tests — API, validation, errors, encryption)
 - [x] Email error handling (graceful SMTP failure recovery)
+- [x] LaTeX syntax highlighting (custom StreamLanguage parser)
+- [x] LaTeX autocomplete (70+ commands, Greek letters, environments)
+- [x] Editor status bar (word count, line count, file type)
+- [x] Tab context menu (close others, close all)
+- [x] Bracket auto-closing for LaTeX
+- [x] GitHub Actions CI/CD pipeline
+- [x] Dynamic sitemap generation
 - [ ] Keyboard shortcuts panel
 - [ ] Rich text / WYSIWYG mode
 - [ ] Spell check & grammar
@@ -517,7 +524,7 @@ PaperForge is built on the shoulders of outstanding open-source projects:
 
 **Built with determination by [concrete-sangminlee](https://github.com/concrete-sangminlee)**
 
-**152 TypeScript files · 46 tests · 39 API routes · 13 database models · 8 Docker services**
+**155+ TypeScript files · 53 tests · 39 API routes · 13 database models · 8 Docker services**
 
 If PaperForge helps your research, consider giving it a star!
 
