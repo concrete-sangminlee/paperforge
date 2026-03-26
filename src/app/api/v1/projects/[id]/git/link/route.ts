@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
+import { apiSuccess, ApiErrors } from '@/lib/api-response';
 import { errorResponse } from '@/lib/errors';
 import { assertProjectRole } from '@/services/project-service';
 import { linkGitRemote } from '@/services/git-service';
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return ApiErrors.unauthorized();
     }
     const userId = (session.user as { id: string }).id;
     const { id } = await params;
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const { remoteUrl } = linkSchema.parse(body);
 
     await linkGitRemote(id, remoteUrl);
-    return NextResponse.json({ success: true, remoteUrl });
+    return apiSuccess({ success: true, remoteUrl });
   } catch (error) {
     return errorResponse(error);
   }

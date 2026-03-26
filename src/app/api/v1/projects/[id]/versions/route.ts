@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
+import { apiSuccess, ApiErrors } from '@/lib/api-response';
 import { errorResponse } from '@/lib/errors';
 import { assertProjectRole } from '@/services/project-service';
 import { createVersion, listVersions } from '@/services/version-service';
@@ -15,7 +16,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return ApiErrors.unauthorized();
     }
     const userId = (session.user as { id: string }).id;
     const { id } = await params;
@@ -24,7 +25,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     await assertProjectRole(id, userId, ['owner', 'editor', 'viewer']);
 
     const versions = await listVersions(id);
-    return NextResponse.json(versions);
+    return apiSuccess(versions);
   } catch (error) {
     return errorResponse(error);
   }
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return ApiErrors.unauthorized();
     }
     const userId = (session.user as { id: string }).id;
     const { id } = await params;
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const { label } = createVersionSchema.parse(body);
 
     const version = await createVersion(id, userId, label);
-    return NextResponse.json(version, { status: 201 });
+    return apiSuccess(version, 201);
   } catch (error) {
     return errorResponse(error);
   }

@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
+import { apiSuccess, ApiErrors } from '@/lib/api-response';
 import { errorResponse } from '@/lib/errors';
 import { createShareLink } from '@/services/member-service';
 
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return ApiErrors.unauthorized();
     }
     const userId = (session.user as { id: string }).id;
     const { id } = await params;
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       permission,
       expiresAt ? new Date(expiresAt) : undefined,
     );
-    return NextResponse.json(link, { status: 201 });
+    return apiSuccess(link, 201);
   } catch (error) {
     return errorResponse(error);
   }
