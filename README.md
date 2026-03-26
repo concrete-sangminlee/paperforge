@@ -453,6 +453,11 @@ Includes all services: Next.js app, WebSocket server, compilation workers, Postg
 - [x] PWA manifest for installability
 - [x] Streaming SSR loading skeletons
 - [x] Worker graceful shutdown & error recovery
+- [x] LaTeX formatting toolbar with Cmd+K command palette
+- [x] Rate limiting on all auth endpoints (register, forgot/reset password)
+- [x] Unsaved changes warning (beforeunload)
+- [x] Standardized API responses with rate limit headers
+- [x] Contributing guide & robots.txt
 - [ ] Keyboard shortcuts panel
 - [ ] Rich text / WYSIWYG mode
 - [ ] Spell check & grammar
