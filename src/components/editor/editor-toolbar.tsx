@@ -21,6 +21,7 @@ import {
   ImageIcon,
   KeyboardIcon,
   Share2Icon,
+  ArchiveIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -207,6 +208,17 @@ export function EditorToolbar({ projectId, projectName, onCompileReady }: Editor
           DOCX
         </a>
       )}
+
+      {/* Export ZIP */}
+      <a
+        href={`/api/v1/projects/${projectId}/export`}
+        download
+        className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+        title="Download project as ZIP"
+      >
+        <ArchiveIcon className="size-3.5" />
+        ZIP
+      </a>
 
       {/* Auto-compile toggle */}
       <Button
