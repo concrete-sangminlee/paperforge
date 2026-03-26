@@ -458,6 +458,11 @@ Includes all services: Next.js app, WebSocket server, compilation workers, Postg
 - [x] Unsaved changes warning (beforeunload)
 - [x] Standardized API responses with rate limit headers
 - [x] Contributing guide & robots.txt
+- [x] 100% API standardization (all routes use consistent response format)
+- [x] File upload validation (size limits, blocked extensions, path traversal)
+- [x] Admin real-time dashboards (15s auto-refresh)
+- [x] Comprehensive test suite (46 tests — API, validation, errors, encryption)
+- [x] Email error handling (graceful SMTP failure recovery)
 - [ ] Keyboard shortcuts panel
 - [ ] Rich text / WYSIWYG mode
 - [ ] Spell check & grammar
