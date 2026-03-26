@@ -39,7 +39,8 @@ const AUTO_COMPILE_DEBOUNCE_MS = 2000;
 
 export function EditorLayout({ projectId, projectName, initialMainFile, files: initialFiles }: EditorLayoutProps) {
   const { resolvedTheme } = useTheme();
-  const { tabs, activeTab, setActiveTab, closeTab, markSaved, autoCompileEnabled, sidebarCollapsed, toggleSidebar, logPanelCollapsed, toggleLogPanel } = useEditorStore();
+  const { tabs, activeTab, setActiveTab, closeTab, closeOtherTabs, closeAllTabs, markSaved, autoCompileEnabled, sidebarCollapsed, toggleSidebar, logPanelCollapsed, toggleLogPanel } = useEditorStore();
+  const [tabContextMenu, setTabContextMenu] = useState<{ x: number; y: number; path: string } | null>(null);
   const [files, setFiles] = useState<FileEntry[]>(initialFiles);
   const [mainFile, setMainFile] = useState(initialMainFile ?? 'main.tex');
   const [rightPanel, setRightPanel] = useState<RightPanel>('pdf');
@@ -250,6 +251,10 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
                 <button
                   key={tab.path}
                   onClick={() => setActiveTab(tab.path)}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    setTabContextMenu({ x: e.clientX, y: e.clientY, path: tab.path });
+                  }}
                   className={cn(
                     'group flex items-center gap-1.5 rounded-t-md border border-b-0 px-3 py-1.5 text-xs transition-colors',
                     activeTab === tab.path
@@ -286,6 +291,36 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
               ))
             )}
           </div>
+
+          {/* Tab context menu */}
+          {tabContextMenu && (
+            <>
+              <div className="fixed inset-0 z-50" onClick={() => setTabContextMenu(null)} />
+              <div
+                className="fixed z-50 min-w-[160px] rounded-md border bg-popover p-1 shadow-lg"
+                style={{ left: tabContextMenu.x, top: tabContextMenu.y }}
+              >
+                <button
+                  className="flex w-full items-center rounded-sm px-2 py-1.5 text-xs hover:bg-accent"
+                  onClick={() => { closeTab(tabContextMenu.path); setTabContextMenu(null); }}
+                >
+                  Close
+                </button>
+                <button
+                  className="flex w-full items-center rounded-sm px-2 py-1.5 text-xs hover:bg-accent"
+                  onClick={() => { closeOtherTabs(tabContextMenu.path); setTabContextMenu(null); }}
+                >
+                  Close Others
+                </button>
+                <button
+                  className="flex w-full items-center rounded-sm px-2 py-1.5 text-xs hover:bg-accent text-destructive"
+                  onClick={() => { closeAllTabs(); setTabContextMenu(null); }}
+                >
+                  Close All
+                </button>
+              </div>
+            </>
+          )}
 
           {/* Editor area */}
           <div className="min-h-0 flex-1">

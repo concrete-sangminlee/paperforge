@@ -5,7 +5,7 @@ import { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightAc
 import { EditorState, Compartment } from '@codemirror/state';
 import { history, defaultKeymap, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { foldGutter, foldKeymap, syntaxHighlighting, defaultHighlightStyle, bracketMatching } from '@codemirror/language';
-import { autocompletion, completionKeymap } from '@codemirror/autocomplete';
+import { autocompletion, completionKeymap, closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
 import { search, searchKeymap } from '@codemirror/search';
 import { oneDark } from '@codemirror/theme-one-dark';
 import * as Y from 'yjs';
@@ -89,6 +89,7 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
         history(),
         foldGutter(),
         bracketMatching(),
+        closeBrackets(),
         latexLanguage,
         autocompletion({ override: [latexCompletionSource] }),
         search({ top: true }),
@@ -99,6 +100,7 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
           ...foldKeymap,
           ...searchKeymap,
           ...completionKeymap,
+          ...closeBracketsKeymap,
           indentWithTab,
         ]),
         saveKeymap,
