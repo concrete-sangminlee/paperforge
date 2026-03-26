@@ -13,7 +13,7 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square)](https://github.com/concrete-sangminlee/paperforge/actions)
+[![CI](https://github.com/concrete-sangminlee/paperforge/actions/workflows/ci.yml/badge.svg)](https://github.com/concrete-sangminlee/paperforge/actions/workflows/ci.yml)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](https://github.com/concrete-sangminlee/paperforge/pulls)
 [![Code Quality](https://img.shields.io/badge/code%20quality-A-brightgreen?style=flat-square)](https://github.com/concrete-sangminlee/paperforge)
 [![DOCX Export](https://img.shields.io/badge/export-DOCX%20%7C%20PDF-blue?style=flat-square)](https://github.com/concrete-sangminlee/paperforge)
