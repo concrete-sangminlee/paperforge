@@ -427,24 +427,36 @@ export function CompilationLog() {
             {compilationLog ? (
               <div className="p-1">
                 {filteredLines.length > 0 ? (
-                  filteredLines.map((line) => (
-                    <div
-                      key={line.lineNumber}
-                      className={cn(
-                        'flex border-l-2 font-mono text-[11px] leading-5',
-                        levelStyles[line.level],
-                      )}
-                    >
-                      {/* Line number gutter */}
-                      <span className="w-9 shrink-0 select-none pr-2 text-right text-zinc-600">
-                        {line.lineNumber}
-                      </span>
-                      {/* Line content */}
-                      <span className="min-w-0 break-all whitespace-pre-wrap pr-2">
-                        {highlightMatch(line.text)}
-                      </span>
-                    </div>
-                  ))
+                  filteredLines.map((line) => {
+                    // Check if line contains a LaTeX line reference (e.g., "l.42")
+                    const lineRef = line.text.match(/^l\.(\d+)/);
+                    const isClickable = line.level === 'error' && lineRef;
+
+                    return (
+                      <div
+                        key={line.lineNumber}
+                        className={cn(
+                          'flex border-l-2 font-mono text-[11px] leading-5',
+                          levelStyles[line.level],
+                          isClickable && 'cursor-pointer hover:brightness-125',
+                        )}
+                        onClick={isClickable ? () => {
+                          const targetLine = parseInt(lineRef[1], 10);
+                          window.dispatchEvent(new CustomEvent('editor-goto-line', { detail: targetLine }));
+                        } : undefined}
+                        title={isClickable ? `Go to line ${lineRef[1]}` : undefined}
+                      >
+                        {/* Line number gutter */}
+                        <span className="w-9 shrink-0 select-none pr-2 text-right text-zinc-600">
+                          {line.lineNumber}
+                        </span>
+                        {/* Line content */}
+                        <span className="min-w-0 break-all whitespace-pre-wrap pr-2">
+                          {highlightMatch(line.text)}
+                        </span>
+                      </div>
+                    );
+                  })
                 ) : (
                   <div className="flex items-center justify-center py-6 text-xs text-zinc-600">
                     No lines match your current filters.
