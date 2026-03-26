@@ -20,9 +20,16 @@ import {
   LinkIcon,
   ImageIcon,
   KeyboardIcon,
+  Share2Icon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useEditorStore } from '@/store/editor-store';
 import { toast } from 'sonner';
 
@@ -63,13 +70,6 @@ const STRUCTURE_BUTTONS = [
   { label: 'Link', icon: LinkIcon, command: '\\href{}{}' },
   { label: 'Image', icon: ImageIcon, command: '\\includegraphics{}' },
 ] as const;
-
-const SHORTCUTS_HELP = `Keyboard Shortcuts:
-Ctrl+B  Bold
-Ctrl+I  Italic
-Ctrl+M  Math mode
-Ctrl+S  Save
-Ctrl+Enter  Compile`;
 
 export function EditorToolbar({ projectId, projectName, onCompileReady }: EditorToolbarProps) {
   const { compilationStatus, setCompilationStatus, setCompilationLog, setLatestPdfUrl, autoCompileEnabled, toggleAutoCompile } =
@@ -262,15 +262,73 @@ export function EditorToolbar({ projectId, projectName, onCompileReady }: Editor
 
       <ToolbarSeparator />
 
-      {/* Keyboard shortcuts help */}
+      {/* Share button */}
       <Button
         size="icon-xs"
         variant="ghost"
-        title={SHORTCUTS_HELP}
+        title="Share project"
+        onClick={() => {
+          // Open share dialog via custom event (handled by editor-layout)
+          window.dispatchEvent(new CustomEvent('open-share-dialog'));
+        }}
+      >
+        <Share2Icon className="size-3.5" />
+      </Button>
+
+      {/* Keyboard shortcuts help */}
+      <KeyboardShortcutsButton />
+    </div>
+  );
+}
+
+function KeyboardShortcutsButton() {
+  const [open, setOpen] = useState(false);
+
+  const shortcuts = [
+    { keys: 'Ctrl+S / Cmd+S', action: 'Save file' },
+    { keys: 'Ctrl+K / Cmd+K', action: 'Command palette' },
+    { keys: 'Ctrl+B', action: 'Bold text' },
+    { keys: 'Ctrl+I', action: 'Italic text' },
+    { keys: 'Ctrl+Enter', action: 'Compile project' },
+    { keys: 'Ctrl+/', action: 'Toggle comment' },
+    { keys: 'Ctrl+F', action: 'Find in file' },
+    { keys: 'Ctrl+H', action: 'Find and replace' },
+    { keys: 'Ctrl+Z', action: 'Undo' },
+    { keys: 'Ctrl+Shift+Z', action: 'Redo' },
+    { keys: 'Tab', action: 'Indent' },
+    { keys: 'Shift+Tab', action: 'Outdent' },
+  ];
+
+  return (
+    <>
+      <Button
+        size="icon-xs"
+        variant="ghost"
+        title="Keyboard shortcuts"
+        onClick={() => setOpen(true)}
       >
         <KeyboardIcon className="size-3.5" />
       </Button>
-    </div>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyboardIcon className="size-5" />
+              Keyboard Shortcuts
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-1">
+            {shortcuts.map(({ keys, action }) => (
+              <div key={keys} className="flex items-center justify-between rounded-md px-3 py-2 hover:bg-muted/50">
+                <span className="text-sm text-muted-foreground">{action}</span>
+                <kbd className="rounded bg-muted px-2 py-0.5 font-mono text-xs font-medium">{keys}</kbd>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
