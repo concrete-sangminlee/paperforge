@@ -20,6 +20,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { useEditorStore } from '@/store/editor-store';
 import { cn } from '@/lib/utils';
+import { parseLatexLog, diagnosticSummary } from '@/lib/latex-error-parser';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -87,6 +88,10 @@ export function CompilationLog() {
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Structured diagnostics from LaTeX error parser
+  const diagnostics = useMemo(() => parseLatexLog(compilationLog), [compilationLog]);
+  const summary = useMemo(() => diagnosticSummary(diagnostics), [diagnostics]);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // -----------------------------------------------------------------------
@@ -355,6 +360,29 @@ export function CompilationLog() {
           </Button>
         </div>
       </div>
+
+      {/* ---- Diagnostics summary ---- */}
+      {diagnostics.length > 0 && compilationStatus !== 'compiling' && (
+        <div className="flex items-center gap-2 border-t border-zinc-800/60 bg-zinc-900/60 px-3 py-1">
+          {summary.errors > 0 && (
+            <span className="flex items-center gap-1 text-[10px] text-red-400">
+              <AlertCircleIcon className="size-2.5" />
+              {summary.errors} error{summary.errors !== 1 ? 's' : ''}
+            </span>
+          )}
+          {summary.warnings > 0 && (
+            <span className="flex items-center gap-1 text-[10px] text-yellow-400">
+              <AlertTriangleIcon className="size-2.5" />
+              {summary.warnings} warning{summary.warnings !== 1 ? 's' : ''}
+            </span>
+          )}
+          {diagnostics.filter(d => d.line).length > 0 && (
+            <span className="text-[10px] text-zinc-500">
+              (click errors in log to see line numbers)
+            </span>
+          )}
+        </div>
+      )}
 
       {/* ---- Search bar (collapsible) ---- */}
       {showSearch && (
