@@ -20,9 +20,14 @@ try {
 export async function triggerCompilation(projectId: string, userId: string) {
   const project = await prisma.project.findUnique({
     where: { id: projectId },
-    include: { files: { where: { deletedAt: null } } }, // ALL files, not just text
+    include: { files: { where: { deletedAt: null } } },
   });
   if (!project) throw new ApiError(404, 'Project not found');
+
+  // Validate mainFile path (prevent directory traversal)
+  if (project.mainFile.includes('..') || project.mainFile.startsWith('/')) {
+    throw new ApiError(400, 'Invalid main file path');
+  }
 
   const compilation = await prisma.compilation.create({
     data: { projectId, userId, status: 'queued', compiler: project.compiler },

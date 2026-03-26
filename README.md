@@ -467,7 +467,7 @@ Includes all services: Next.js app, WebSocket server, compilation workers, Postg
 
 ## Contributing
 
-Contributions are welcome! Please read our contributing guidelines before submitting PRs.
+Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) before submitting PRs.
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feat/amazing-feature`)
