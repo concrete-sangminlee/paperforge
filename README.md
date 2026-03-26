@@ -517,6 +517,8 @@ PaperForge is built on the shoulders of outstanding open-source projects:
 
 **Built with determination by [concrete-sangminlee](https://github.com/concrete-sangminlee)**
 
+**152 TypeScript files · 46 tests · 39 API routes · 13 database models · 8 Docker services**
+
 If PaperForge helps your research, consider giving it a star!
 
 <a href="https://github.com/concrete-sangminlee/paperforge/stargazers">
