@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useEditorStore } from '@/store/editor-store';
 
 function getFileType(path: string): string {
@@ -17,6 +17,19 @@ function getFileType(path: string): string {
   }
 }
 
+interface DocStats {
+  lines: number;
+  words: number;
+  chars: number;
+}
+
+function computeStats(content: string): DocStats {
+  const lines = content.split('\n').length;
+  const chars = content.length;
+  const words = content.trim() ? content.trim().split(/\s+/).length : 0;
+  return { lines, chars, words };
+}
+
 export function EditorStatusBar() {
   const activeTab = useEditorStore((s) => s.activeTab);
   const tabs = useEditorStore((s) => s.tabs);
@@ -24,14 +37,18 @@ export function EditorStatusBar() {
 
   const tabData = tabs.find((t) => t.path === activeTab);
 
-  const stats = useMemo(() => {
-    if (!tabData) return null;
-    const content = tabData.content;
-    const lines = content.split('\n').length;
-    const chars = content.length;
-    const words = content.trim() ? content.trim().split(/\s+/).length : 0;
-    return { lines, chars, words };
-  }, [tabData]);
+  // Debounce stats calculation to avoid recomputing on every keystroke
+  const [stats, setStats] = useState<DocStats | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    if (!tabData) { setStats(null); return; }
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      setStats(computeStats(tabData.content));
+    }, 300);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, [tabData?.content, tabData]);
 
   if (!tabData || !stats) return null;
 
