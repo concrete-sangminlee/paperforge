@@ -58,6 +58,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { toast } from 'sonner';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -272,9 +273,11 @@ export default function SettingsPage() {
         if (!res.ok) {
           const d = await res.json();
           setProfileMsg(d.error ?? 'Failed to save');
+          toast.error(d.error ?? 'Failed to save profile');
         } else {
           setProfileMsg('Saved!');
           mutate(PROFILE_KEY);
+          toast.success('Settings saved');
           setTimeout(() => setProfileMsg(''), 2000);
         }
       } finally {
@@ -306,11 +309,13 @@ export default function SettingsPage() {
         if (!res.ok) {
           const d = await res.json().catch(() => ({}));
           setPasswordMsg(d.error ?? 'Failed to change password');
+          toast.error(d.error ?? 'Failed to change password');
         } else {
           setPasswordMsg('Password changed successfully!');
           setCurrentPassword('');
           setNewPassword('');
           setConfirmPassword('');
+          toast.success('Settings saved');
           setTimeout(() => setPasswordMsg(''), 3000);
         }
       } finally {
@@ -344,9 +349,11 @@ export default function SettingsPage() {
         });
         if (!res.ok) {
           setPrefsMsg('Preferences saved locally.');
+          toast.error('Failed to save preferences to server');
         } else {
           setPrefsMsg('Saved!');
           mutate(PROFILE_KEY);
+          toast.success('Settings saved');
         }
         setTimeout(() => setPrefsMsg(''), 2000);
       } finally {
@@ -385,9 +392,11 @@ export default function SettingsPage() {
         });
         if (!res.ok) {
           setNotifMsg('Preferences saved locally.');
+          toast.error('Failed to save notification preferences to server');
         } else {
           setNotifMsg('Saved!');
           mutate(PROFILE_KEY);
+          toast.success('Settings saved');
         }
         setTimeout(() => setNotifMsg(''), 2000);
       } finally {
@@ -414,9 +423,11 @@ export default function SettingsPage() {
         });
         if (!res.ok) {
           setAppearanceMsg('Theme saved locally.');
+          toast.error('Failed to save appearance to server');
         } else {
           setAppearanceMsg('Saved!');
           mutate(PROFILE_KEY);
+          toast.success('Settings saved');
         }
         setTimeout(() => setAppearanceMsg(''), 2000);
       } finally {
