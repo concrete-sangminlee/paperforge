@@ -413,15 +413,17 @@ Includes all services: Next.js app, WebSocket server, compilation workers, Postg
 
 | Feature | Implementation |
 |:---|:---|
-| **Compilation Sandbox** | nsjail process isolation, no shell escape, resource limits |
-| **Process Isolation** | Each compilation runs in an isolated temp directory, cleaned up after completion |
+| **Security Headers** | HSTS, X-Content-Type-Options, X-Frame-Options, CSP, Permissions-Policy |
+| **CORS Middleware** | Request-level CORS validation with origin whitelist |
+| **Request Tracing** | Unique X-Request-ID header on every response for debugging |
+| **Compilation Sandbox** | Process isolation with temp directories, resource limits |
 | **Authentication** | NextAuth.js v5 with JWT, OAuth (Google, GitHub), bcrypt |
 | **Encryption** | AES-256-GCM for OAuth tokens & Git credentials |
 | **Rate Limiting** | Redis sliding window (100 req/min API, 10 compiles/min) |
 | **Brute Force Protection** | Progressive delay + account lockout after 20 failures |
-| **Input Validation** | Zod schemas on all endpoints |
+| **Input Validation** | Zod schemas with XSS prevention on all endpoints |
 | **CSRF/XSS Prevention** | NextAuth CSRF tokens, React escaping, CSP headers |
-| **File Upload Guards** | Type validation, 50MB/file, 500MB/project, 2GB/user |
+| **File Upload Guards** | MIME whitelist, extension blocking, 50MB/file, 500MB/project, 2GB/user |
 
 ---
 
@@ -438,6 +440,9 @@ Includes all services: Next.js app, WebSocket server, compilation workers, Postg
 - [x] Admin panel with audit log
 - [x] Real-time auto-compile with debounce
 - [x] DOCX export via Pandoc
+- [x] Security headers & CORS middleware
+- [x] Health check endpoint with dependency monitoring
+- [x] Standardized API error responses
 - [ ] Keyboard shortcuts panel
 - [ ] Rich text / WYSIWYG mode
 - [ ] Spell check & grammar

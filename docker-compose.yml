@@ -5,7 +5,7 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: paperforge
-      POSTGRES_PASSWORD: paperforge
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-paperforge}
       POSTGRES_DB: paperforge
     ports:
       - "5432:5432"
@@ -16,6 +16,11 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
 
   redis:
     image: redis:7-alpine
@@ -23,18 +28,28 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    command: redis-server --appendonly yes --save 120 1
+    command: >
+      redis-server
+      --appendonly yes
+      --save 120 1
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
 
   minio:
     image: minio/minio:latest
     environment:
-      MINIO_ROOT_USER: paperforge
-      MINIO_ROOT_PASSWORD: paperforge123
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-paperforge}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-paperforge123}
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -46,12 +61,23 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
 
   mailhog:
     image: mailhog/mailhog:latest
     ports:
       - "1025:1025"
       - "8025:8025"
+    profiles:
+      - dev
+    deploy:
+      resources:
+        limits:
+          memory: 256M
 
   worker:
     build: ./worker
@@ -66,10 +92,17 @@ services:
       REDIS_URL: redis://redis:6379
       MINIO_ENDPOINT: minio
       MINIO_PORT: "9000"
-      MINIO_ACCESS_KEY: paperforge
-      MINIO_SECRET_KEY: paperforge123
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-paperforge}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-paperforge123}
       MINIO_BUCKET: paperforge
-      DATABASE_URL: postgresql://paperforge:paperforge@postgres:5432/paperforge
+      DATABASE_URL: postgresql://paperforge:${POSTGRES_PASSWORD:-paperforge}@postgres:5432/paperforge
+      NODE_ENV: ${NODE_ENV:-production}
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+      replicas: ${WORKER_REPLICAS:-1}
 
   websocket:
     build: ./websocket
@@ -83,8 +116,14 @@ services:
     environment:
       WS_PORT: "4001"
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
-      DATABASE_URL: postgresql://paperforge:paperforge@postgres:5432/paperforge
+      DATABASE_URL: postgresql://paperforge:${POSTGRES_PASSWORD:-paperforge}@postgres:5432/paperforge
       REDIS_URL: redis://redis:6379
+      NODE_ENV: ${NODE_ENV:-production}
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
 
   app:
     build: .
@@ -96,28 +135,47 @@ services:
       minio:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://paperforge:paperforge@postgres:5432/paperforge
+      DATABASE_URL: postgresql://paperforge:${POSTGRES_PASSWORD:-paperforge}@postgres:5432/paperforge
       REDIS_URL: redis://redis:6379
       MINIO_ENDPOINT: minio
       MINIO_PORT: "9000"
-      MINIO_ACCESS_KEY: paperforge
-      MINIO_SECRET_KEY: paperforge123
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-paperforge}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-paperforge123}
       MINIO_BUCKET: paperforge
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
-      NEXTAUTH_URL: http://localhost
-      SMTP_HOST: mailhog
-      SMTP_PORT: "1025"
-      NEXT_PUBLIC_WS_URL: ws://localhost/ws
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost}
+      SMTP_HOST: ${SMTP_HOST:-mailhog}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      NEXT_PUBLIC_WS_URL: ${WS_URL:-ws://localhost/ws}
+      NODE_ENV: ${NODE_ENV:-production}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 4G
 
   nginx:
     image: nginx:alpine
     ports:
-      - "80:80"
+      - "${HTTP_PORT:-80}:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
     depends_on:
-      - app
-      - websocket
+      app:
+        condition: service_healthy
+      websocket:
+        condition: service_started
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
 
 volumes:
   postgres_data:

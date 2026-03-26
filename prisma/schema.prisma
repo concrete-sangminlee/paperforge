@@ -110,6 +110,7 @@ model File {
 
   @@index([projectId])
   @@index([projectId, path])
+  @@index([projectId, deletedAt])
   @@map("files")
 }
 
@@ -132,6 +133,8 @@ model Compilation {
   @@index([projectId])
   @@index([userId, createdAt])
   @@index([projectId, createdAt(sort: Desc)])
+  @@index([projectId, userId, status])
+  @@index([status, createdAt(sort: Desc)])
   @@map("compilations")
 }
 
@@ -147,6 +150,7 @@ model Version {
   user    User?   @relation(fields: [userId], references: [id])
 
   @@index([projectId])
+  @@index([projectId, createdAt(sort: Desc)])
   @@map("versions")
 }
 
@@ -180,6 +184,7 @@ model GitCredential {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
   @@map("git_credentials")
 }
 
@@ -208,6 +213,8 @@ model AuditLog {
   admin User @relation(fields: [adminId], references: [id])
 
   @@index([adminId])
+  @@index([adminId, createdAt(sort: Desc)])
   @@index([targetType, targetId])
+  @@index([createdAt(sort: Desc)])
   @@map("audit_log")
 }
