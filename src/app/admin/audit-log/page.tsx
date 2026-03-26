@@ -39,6 +39,7 @@ export default function AdminAuditLogPage() {
   const { data } = useSWR<{ entries: AuditEntry[]; total: number; page: number; limit: number }>(
     `/api/v1/admin/audit-log?page=${page}&limit=${limit}`,
     fetcher,
+    { refreshInterval: 15000 },
   );
 
   const totalPages = data ? Math.ceil(data.total / limit) : 1;

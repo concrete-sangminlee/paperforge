@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/lib/auth';
+import { apiSuccess, ApiErrors } from '@/lib/api-response';
 import { errorResponse } from '@/lib/errors';
 import { assertProjectRole } from '@/services/project-service';
 import {
@@ -14,14 +15,14 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return ApiErrors.unauthorized();
     }
     const userId = (session.user as { id: string }).id;
     const { id, path } = await params;
     await assertProjectRole(id, userId, ['owner', 'editor', 'viewer']);
     const filePath = path.join('/');
     const content = await getFileContent(id, filePath);
-    return NextResponse.json({ content });
+    return apiSuccess({ content });
   } catch (error) {
     return errorResponse(error);
   }
@@ -31,7 +32,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return ApiErrors.unauthorized();
     }
     const userId = (session.user as { id: string }).id;
     const { id, path } = await params;
@@ -39,7 +40,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const filePath = path.join('/');
     const body = await request.json();
     const file = await createFile(id, filePath, body.content);
-    return NextResponse.json({ file });
+    return apiSuccess({ file });
   } catch (error) {
     return errorResponse(error);
   }
@@ -49,14 +50,14 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return ApiErrors.unauthorized();
     }
     const userId = (session.user as { id: string }).id;
     const { id, path } = await params;
     await assertProjectRole(id, userId, ['owner', 'editor']);
     const filePath = path.join('/');
     await deleteFile(id, filePath);
-    return NextResponse.json({ message: 'Deleted' });
+    return apiSuccess({ message: 'Deleted' });
   } catch (error) {
     return errorResponse(error);
   }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import useSWR, { mutate } from 'swr';
 import { SearchIcon, ShieldAlertIcon, ShieldCheckIcon, ShieldIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -37,12 +37,14 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [actioning, setActioning] = useState<string | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setSearch(e.target.value);
-    clearTimeout((handleSearchChange as { _t?: ReturnType<typeof setTimeout> })._t);
-    (handleSearchChange as { _t?: ReturnType<typeof setTimeout> })._t = setTimeout(() => {
-      setDebouncedSearch(e.target.value);
+    const value = e.target.value;
+    setSearch(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(value);
     }, 300);
   }
 
@@ -50,6 +52,7 @@ export default function AdminUsersPage() {
   const { data } = useSWR<{ users: User[]; total: number }>(
     `/api/v1/admin/users${params}`,
     fetcher,
+    { refreshInterval: 15000 },
   );
 
   async function toggleSuspend(user: User) {

@@ -29,7 +29,7 @@ interface PendingTemplate {
 const KEY = '/api/v1/admin/templates/pending';
 
 export default function AdminTemplatesPage() {
-  const { data: templates } = useSWR<PendingTemplate[]>(KEY, fetcher);
+  const { data: templates } = useSWR<PendingTemplate[]>(KEY, fetcher, { refreshInterval: 15000 });
   const [actioning, setActioning] = useState<string | null>(null);
 
   async function handleAction(id: string, approved: boolean) {

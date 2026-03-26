@@ -1,14 +1,14 @@
-import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { errorResponse } from '@/lib/errors';
 import { prisma } from '@/lib/prisma';
+import { apiSuccess, ApiErrors } from '@/lib/api-response';
 
 export async function GET() {
   try {
     const session = await auth();
     const userRole = (session?.user as { role?: string } | undefined)?.role;
     if (!session?.user || userRole !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return ApiErrors.forbidden();
     }
 
     const [userCount, projectCount, compilationCount, storageResult] = await Promise.all([
@@ -18,7 +18,7 @@ export async function GET() {
       prisma.user.aggregate({ _sum: { storageUsedBytes: true } }),
     ]);
 
-    return NextResponse.json({
+    return apiSuccess({
       userCount,
       projectCount,
       compilationCount,
