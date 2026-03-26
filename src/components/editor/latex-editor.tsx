@@ -13,6 +13,7 @@ import { WebsocketProvider } from 'y-websocket';
 import { yCollab } from 'y-codemirror.next';
 import { useEditorStore } from '@/store/editor-store';
 import { latexCompletionSource } from '@/lib/latex-completions';
+import { latexLanguage } from '@/lib/latex-language';
 
 interface LaTeXEditorProps {
   initialContent: string;
@@ -88,6 +89,7 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
         history(),
         foldGutter(),
         bracketMatching(),
+        latexLanguage,
         autocompletion({ override: [latexCompletionSource] }),
         search({ top: true }),
         syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
