@@ -487,6 +487,12 @@ Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md)
 
 ---
 
+## Security
+
+Found a vulnerability? Please see our [Security Policy](SECURITY.md) for responsible disclosure guidelines.
+
+---
+
 ## License
 
 Distributed under the **MIT License**. See `LICENSE` for more information.
