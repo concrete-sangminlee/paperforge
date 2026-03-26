@@ -35,9 +35,10 @@ describe('latexCompletionSource', () => {
     expect(result!.options.some(o => o.label === '\\alpha')).toBe(true);
   });
 
-  it('returns null for non-command text', () => {
-    const result = getCompletions('hello world', 11);
-    expect(result).toBeNull();
+  it('provides snippet completions for plain text', () => {
+    const result = getCompletions('fig', 3);
+    expect(result).not.toBeNull();
+    expect(result!.options.some(o => o.label === 'fig')).toBe(true);
   });
 
   it('provides environment completions after \\begin{', () => {

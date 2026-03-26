@@ -1,4 +1,5 @@
 import { CompletionContext, type Completion } from '@codemirror/autocomplete';
+import { LATEX_SNIPPETS } from './latex-snippets';
 
 const LATEX_COMMANDS: Completion[] = [
   // Document structure
@@ -121,6 +122,17 @@ export function latexCompletionSource(context: CompletionContext) {
       from: envMatch.from + bracePos + 1,
       options: LATEX_ENVIRONMENTS,
       validFor: /^[a-zA-Z*]*$/,
+    };
+  }
+
+  // Match snippet abbreviations (plain text at start of line or after whitespace)
+  const snippetMatch = context.matchBefore(/(?:^|\s)[a-z]+/);
+  if (snippetMatch && !context.matchBefore(/\\[a-zA-Z]*/)) {
+    const wordStart = snippetMatch.text.search(/[a-z]/);
+    return {
+      from: snippetMatch.from + wordStart,
+      options: LATEX_SNIPPETS,
+      validFor: /^[a-z]*$/,
     };
   }
 
