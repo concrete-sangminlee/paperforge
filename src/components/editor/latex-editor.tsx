@@ -32,6 +32,20 @@ const themeCompartment = new Compartment();
 
 const WS_BASE = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4001';
 
+/** Wrap the current selection with prefix/suffix, or insert at cursor if no selection. */
+function wrapSelection(view: EditorView, prefix: string, suffix: string): boolean {
+  const { from, to } = view.state.selection.main;
+  const selected = view.state.sliceDoc(from, to);
+  const wrapped = `${prefix}${selected}${suffix}`;
+  view.dispatch({
+    changes: { from, to, insert: wrapped },
+    selection: selected
+      ? { anchor: from, head: from + wrapped.length }
+      : { anchor: from + prefix.length },
+  });
+  return true;
+}
+
 export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'light', onSave, onProviderReady, onConnectionChange }: LaTeXEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -104,6 +118,26 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
           view.focus();
           return true;
         },
+      },
+      {
+        key: 'Ctrl-b',
+        mac: 'Cmd-b',
+        run(view) { return wrapSelection(view, '\\textbf{', '}'); },
+      },
+      {
+        key: 'Ctrl-i',
+        mac: 'Cmd-i',
+        run(view) { return wrapSelection(view, '\\textit{', '}'); },
+      },
+      {
+        key: 'Ctrl-u',
+        mac: 'Cmd-u',
+        run(view) { return wrapSelection(view, '\\underline{', '}'); },
+      },
+      {
+        key: 'Ctrl-m',
+        mac: 'Cmd-m',
+        run(view) { return wrapSelection(view, '$', '$'); },
       },
       {
         key: 'Ctrl-/',
