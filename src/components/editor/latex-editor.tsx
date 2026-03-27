@@ -78,6 +78,44 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
           return true;
         },
       },
+      {
+        key: 'Ctrl-/',
+        mac: 'Cmd-/',
+        run(view) {
+          const { from, to } = view.state.selection.main;
+          const fromLine = view.state.doc.lineAt(from).number;
+          const toLine = view.state.doc.lineAt(to).number;
+          const changes: Array<{ from: number; to?: number; insert?: string }> = [];
+
+          // Check if all selected lines are already commented
+          let allCommented = true;
+          for (let l = fromLine; l <= toLine; l++) {
+            const line = view.state.doc.line(l);
+            if (!line.text.trimStart().startsWith('%')) {
+              allCommented = false;
+              break;
+            }
+          }
+
+          for (let l = fromLine; l <= toLine; l++) {
+            const line = view.state.doc.line(l);
+            if (allCommented) {
+              // Uncomment: remove first % (and optional space after)
+              const idx = line.text.indexOf('%');
+              if (idx !== -1) {
+                const end = line.text[idx + 1] === ' ' ? idx + 2 : idx + 1;
+                changes.push({ from: line.from + idx, to: line.from + end });
+              }
+            } else {
+              // Comment: add % at start
+              changes.push({ from: line.from, insert: '% ' });
+            }
+          }
+
+          view.dispatch({ changes });
+          return true;
+        },
+      },
     ]);
 
     const startState = EditorState.create({
