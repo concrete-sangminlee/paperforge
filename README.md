@@ -486,7 +486,8 @@ Includes all services: Next.js app, WebSocket server, compilation workers, Postg
 - [x] BibTeX entry type autocomplete (@article, @book, etc.)
 - [x] Inline LaTeX linter (unclosed braces, mismatched environments, typos)
 - [x] LaTeX comment toggle (Ctrl+/)
-- [x] 122 tests across 16 suites
+- [x] LaTeX code folding (environments + sections)
+- [x] 126 tests across 17 suites
 - [ ] Rich text / WYSIWYG mode
 - [ ] Spell check & grammar
 - [ ] Bibliography manager (BibTeX GUI)
@@ -540,7 +541,7 @@ PaperForge is built on the shoulders of outstanding open-source projects:
 
 **Built with determination by [concrete-sangminlee](https://github.com/concrete-sangminlee)**
 
-**170+ TypeScript files · 122 tests · 40 API routes · 13 database models · 8 Docker services**
+**170+ TypeScript files · 126 tests · 40 API routes · 13 database models · 8 Docker services · v1.1.0**
 
 If PaperForge helps your research, consider giving it a star!
 

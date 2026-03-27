@@ -5,6 +5,35 @@ All notable changes to PaperForge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-03-27
+
+### Added
+- **Inline LaTeX Linter**: Real-time error detection in editor gutter — unclosed braces, mismatched environments, common typos (\being → \begin), $$ deprecation warnings
+- **LaTeX Code Folding**: Fold \begin{env}...\end{env} blocks and section ranges with nested depth tracking via foldGutter
+- **Comment Toggle**: Ctrl+/ (Cmd+/) to toggle % comments on selected lines with smart uncomment detection
+- **Find in Project**: Ctrl+Shift+F cross-file search with highlighted results and click-to-navigate
+- **Word Count Goal**: Set target word count with progress bar (blue → amber → green) persisted to localStorage
+- **Smart Word Count**: Strips LaTeX commands for accurate text-only counting
+- **BibTeX Autocomplete**: 7 entry types (@article, @inproceedings, @book, etc.) with full template expansion
+- **Document Outline Panel**: Real-time section parsing with click-to-navigate and hierarchical indentation
+- **Editor Status Bar**: File type, line/word/char count, encoding, font size, modified indicator
+- **Clickable Errors**: Click compilation error lines (l.42) to jump to source in editor
+- **Dynamic Imports**: React.lazy for right-panel components (VersionHistory, GitPanel, DocumentOutline)
+- **ZIP Export**: One-click project download with rate limiting (10/hour)
+- **Tab Context Menu**: Right-click for Close, Close Others, Close All
+- **Bracket Auto-close**: Auto-pair {}, [], (), "", $$
+
+### Changed
+- Smart word count now strips LaTeX commands before counting
+- Status bar stats debounced (300ms) for large document performance
+
+### Security
+- Login rate limiting: 10 attempts per 5 minutes per email
+- Session cookie hardening: httpOnly, sameSite:lax, secure in production
+- ZIP export rate limiting: 10 per hour per user
+
+---
+
 ## [1.0.0] - 2026-03-27
 
 ### Added
