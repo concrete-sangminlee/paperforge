@@ -483,7 +483,8 @@ Includes all services: Next.js app, WebSocket server, compilation workers, Postg
 - [x] Word count goal with progress bar
 - [x] Smart LaTeX-aware word counting
 - [x] Find in Project via command palette
-- [x] 109 tests across 14 suites
+- [x] BibTeX entry type autocomplete (@article, @book, etc.)
+- [x] 114 tests across 15 suites
 - [ ] Rich text / WYSIWYG mode
 - [ ] Spell check & grammar
 - [ ] Bibliography manager (BibTeX GUI)
@@ -537,7 +538,7 @@ PaperForge is built on the shoulders of outstanding open-source projects:
 
 **Built with determination by [concrete-sangminlee](https://github.com/concrete-sangminlee)**
 
-**165+ TypeScript files · 109 tests · 40 API routes · 13 database models · 8 Docker services**
+**165+ TypeScript files · 114 tests · 40 API routes · 13 database models · 8 Docker services**
 
 If PaperForge helps your research, consider giving it a star!
 
