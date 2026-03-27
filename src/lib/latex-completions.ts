@@ -99,9 +99,20 @@ const LATEX_ENVIRONMENTS: Completion[] = [
   { label: 'lemma', type: 'type', detail: 'Lemma' },
 ];
 
+const BIBTEX_ENTRIES: Completion[] = [
+  { label: '@article', type: 'type', detail: 'Journal article', apply: '@article{key,\n  author = {},\n  title = {},\n  journal = {},\n  year = {},\n  volume = {},\n  pages = {},\n}' },
+  { label: '@inproceedings', type: 'type', detail: 'Conference paper', apply: '@inproceedings{key,\n  author = {},\n  title = {},\n  booktitle = {},\n  year = {},\n  pages = {},\n}' },
+  { label: '@book', type: 'type', detail: 'Book', apply: '@book{key,\n  author = {},\n  title = {},\n  publisher = {},\n  year = {},\n}' },
+  { label: '@misc', type: 'type', detail: 'Miscellaneous', apply: '@misc{key,\n  author = {},\n  title = {},\n  year = {},\n  howpublished = {},\n}' },
+  { label: '@phdthesis', type: 'type', detail: 'PhD thesis', apply: '@phdthesis{key,\n  author = {},\n  title = {},\n  school = {},\n  year = {},\n}' },
+  { label: '@techreport', type: 'type', detail: 'Technical report', apply: '@techreport{key,\n  author = {},\n  title = {},\n  institution = {},\n  year = {},\n}' },
+  { label: '@online', type: 'type', detail: 'Online resource', apply: '@online{key,\n  author = {},\n  title = {},\n  url = {},\n  year = {},\n  urldate = {},\n}' },
+];
+
 /**
  * LaTeX autocompletion source for CodeMirror.
- * Triggers on backslash for commands and after \\begin{ for environments.
+ * Triggers on backslash for commands, after \\begin{ for environments,
+ * and after @ for BibTeX entry types.
  */
 export function latexCompletionSource(context: CompletionContext) {
   // Match \command patterns
@@ -122,6 +133,16 @@ export function latexCompletionSource(context: CompletionContext) {
       from: envMatch.from + bracePos + 1,
       options: LATEX_ENVIRONMENTS,
       validFor: /^[a-zA-Z*]*$/,
+    };
+  }
+
+  // Match BibTeX entry types after @
+  const bibMatch = context.matchBefore(/@[a-zA-Z]*/);
+  if (bibMatch) {
+    return {
+      from: bibMatch.from,
+      options: BIBTEX_ENTRIES,
+      validFor: /^@[a-zA-Z]*$/,
     };
   }
 
