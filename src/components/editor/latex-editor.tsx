@@ -135,6 +135,57 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
           return true;
         },
       },
+      {
+        key: 'Ctrl-Shift-d',
+        mac: 'Cmd-Shift-d',
+        run(view) {
+          const { from, to } = view.state.selection.main;
+          const fromLine = view.state.doc.lineAt(from);
+          const toLine = view.state.doc.lineAt(to);
+          const text = view.state.sliceDoc(fromLine.from, toLine.to);
+          view.dispatch({
+            changes: { from: toLine.to, insert: '\n' + text },
+            selection: { anchor: toLine.to + 1 + (from - fromLine.from), head: toLine.to + 1 + (to - fromLine.from) },
+          });
+          return true;
+        },
+      },
+      {
+        key: 'Alt-ArrowUp',
+        run(view) {
+          const { from, to } = view.state.selection.main;
+          const fromLine = view.state.doc.lineAt(from);
+          if (fromLine.number <= 1) return true;
+          const toLine = view.state.doc.lineAt(to);
+          const prevLine = view.state.doc.line(fromLine.number - 1);
+          const selected = view.state.sliceDoc(fromLine.from, toLine.to);
+          view.dispatch({
+            changes: [
+              { from: prevLine.from, to: toLine.to, insert: selected + '\n' + prevLine.text },
+            ],
+            selection: { anchor: prevLine.from + (from - fromLine.from), head: prevLine.from + (to - fromLine.from) },
+          });
+          return true;
+        },
+      },
+      {
+        key: 'Alt-ArrowDown',
+        run(view) {
+          const { from, to } = view.state.selection.main;
+          const fromLine = view.state.doc.lineAt(from);
+          const toLine = view.state.doc.lineAt(to);
+          if (toLine.number >= view.state.doc.lines) return true;
+          const nextLine = view.state.doc.line(toLine.number + 1);
+          const selected = view.state.sliceDoc(fromLine.from, toLine.to);
+          view.dispatch({
+            changes: [
+              { from: fromLine.from, to: nextLine.to, insert: nextLine.text + '\n' + selected },
+            ],
+            selection: { anchor: fromLine.from + nextLine.text.length + 1 + (from - fromLine.from), head: fromLine.from + nextLine.text.length + 1 + (to - fromLine.from) },
+          });
+          return true;
+        },
+      },
     ]);
 
     const startState = EditorState.create({
