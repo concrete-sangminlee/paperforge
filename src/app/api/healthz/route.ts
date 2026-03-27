@@ -28,8 +28,9 @@ export async function GET() {
   // Check Redis
   try {
     const start = Date.now();
-    const { redis } = await import('@/lib/redis');
-    await redis.ping();
+    const mod = await import('@/lib/redis');
+    if (!mod.redis) throw new Error('Redis not configured');
+    await mod.redis.ping();
     checks.redis = { status: 'ok', latency: Date.now() - start };
   } catch {
     checks.redis = { status: 'error', message: 'Redis unreachable' };
@@ -39,8 +40,9 @@ export async function GET() {
   // Check MinIO
   try {
     const start = Date.now();
-    const { minioClient } = await import('@/lib/minio');
-    await minioClient.listBuckets();
+    const mod = await import('@/lib/minio');
+    if (!mod.minioClient) throw new Error('MinIO not configured');
+    await mod.minioClient.listBuckets();
     checks.storage = { status: 'ok', latency: Date.now() - start };
   } catch {
     checks.storage = { status: 'error', message: 'Storage unreachable' };
@@ -53,7 +55,7 @@ export async function GET() {
 
   const health: HealthStatus = {
     status: overallStatus,
-    version: process.env.npm_package_version || '0.1.0',
+    version: process.env.npm_package_version || '1.9.0',
     timestamp: new Date().toISOString(),
     uptime: Math.floor((Date.now() - startTime) / 1000),
     checks,

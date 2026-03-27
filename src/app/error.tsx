@@ -37,12 +37,12 @@ export default function ErrorPage({
           <RefreshCcw className="size-4" />
           Try Again
         </Button>
-        <Button asChild className="gap-2">
-          <Link href="/">
+        <Link href="/">
+          <Button className="gap-2">
             <Home className="size-4" />
             Go Home
-          </Link>
-        </Button>
+          </Button>
+        </Link>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { FileQuestion, Home, ArrowLeft } from 'lucide-react';
+import { FileQuestion, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
@@ -16,18 +16,12 @@ export default function NotFoundPage() {
         </p>
       </div>
       <div className="flex gap-3">
-        <Button variant="outline" asChild className="gap-2">
-          <Link href="javascript:history.back()">
-            <ArrowLeft className="size-4" />
-            Go Back
-          </Link>
-        </Button>
-        <Button asChild className="gap-2">
-          <Link href="/">
+        <Link href="/">
+          <Button className="gap-2">
             <Home className="size-4" />
             Home
-          </Link>
-        </Button>
+          </Button>
+        </Link>
       </div>
     </div>
   );
