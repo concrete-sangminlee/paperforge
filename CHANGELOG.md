@@ -5,6 +5,15 @@ All notable changes to PaperForge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-03-27
+
+### Added
+- **Delete Line**: Ctrl+Shift+K to delete current line (21 shortcuts total)
+- **211 Tests**: Store persistence, IEEE/Beamer document validation, API format integration
+- **v1.3.0 & v1.4.0 Git Tags**: First tagged releases on GitHub
+
+---
+
 ## [1.4.0] - 2026-03-27
 
 ### Added
