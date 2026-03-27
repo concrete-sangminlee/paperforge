@@ -80,6 +80,14 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
         },
       },
       {
+        key: 'Ctrl-Enter',
+        mac: 'Cmd-Enter',
+        run() {
+          window.dispatchEvent(new CustomEvent('latex-compile'));
+          return true;
+        },
+      },
+      {
         key: 'Ctrl-g',
         mac: 'Cmd-g',
         run(view) {
