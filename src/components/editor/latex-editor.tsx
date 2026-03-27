@@ -7,6 +7,7 @@ import { history, defaultKeymap, historyKeymap, indentWithTab } from '@codemirro
 import { foldGutter, foldKeymap, syntaxHighlighting, defaultHighlightStyle, bracketMatching } from '@codemirror/language';
 import { autocompletion, completionKeymap, closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
 import { search, searchKeymap } from '@codemirror/search';
+import { linter, lintGutter } from '@codemirror/lint';
 import { oneDark } from '@codemirror/theme-one-dark';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
@@ -14,6 +15,7 @@ import { yCollab } from 'y-codemirror.next';
 import { useEditorStore } from '@/store/editor-store';
 import { latexCompletionSource } from '@/lib/latex-completions';
 import { latexLanguage } from '@/lib/latex-language';
+import { latexLinter } from '@/lib/latex-linter';
 
 interface LaTeXEditorProps {
   initialContent: string;
@@ -91,6 +93,8 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
         bracketMatching(),
         closeBrackets(),
         latexLanguage,
+        lintGutter(),
+        linter((view) => latexLinter(view.state.doc.toString()), { delay: 1000 }),
         autocompletion({ override: [latexCompletionSource] }),
         search({ top: true }),
         syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
