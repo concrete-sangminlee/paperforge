@@ -5,6 +5,19 @@ All notable changes to PaperForge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-03-27
+
+### Added
+- **Select Line**: Ctrl+L (Cmd+L) to select entire current line
+- **Compile Shortcut**: Ctrl+Enter (Cmd+Enter) now triggers compilation from editor
+- **Duplicate Line**: Ctrl+Shift+D to duplicate current line/selection
+- **Move Line**: Alt+Up/Down to move lines up or down
+- **Go to Line**: Ctrl+G (Cmd+G) with prompt dialog
+- **18 Keyboard Shortcuts**: All verified functional and listed in dialog
+- **150 Tests**: Comprehensive coverage across 20 test suites
+
+---
+
 ## [1.1.0] - 2026-03-27
 
 ### Added
