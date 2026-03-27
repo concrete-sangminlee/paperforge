@@ -186,6 +186,15 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
           return true;
         },
       },
+      {
+        key: 'Ctrl-l',
+        mac: 'Cmd-l',
+        run(view) {
+          const line = view.state.doc.lineAt(view.state.selection.main.head);
+          view.dispatch({ selection: { anchor: line.from, head: line.to } });
+          return true;
+        },
+      },
     ]);
 
     const startState = EditorState.create({

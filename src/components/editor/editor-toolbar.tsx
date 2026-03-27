@@ -311,6 +311,7 @@ function KeyboardShortcutsButton() {
     { keys: 'Ctrl+G / Cmd+G', action: 'Go to line' },
     { keys: 'Ctrl+Shift+D', action: 'Duplicate line' },
     { keys: 'Alt+Up/Down', action: 'Move line up/down' },
+    { keys: 'Ctrl+L / Cmd+L', action: 'Select line' },
     { keys: 'Tab', action: 'Indent' },
     { keys: 'Shift+Tab', action: 'Outdent' },
   ];
