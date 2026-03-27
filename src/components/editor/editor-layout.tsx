@@ -171,7 +171,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
     };
   }, []);
 
-  // Ctrl+Shift+F to open Find in Project
+  // Ctrl+Shift+F or command palette event to open Find in Project
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'f') {
@@ -179,8 +179,18 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
         setFindOpen(true);
       }
     }
+    function handleFindEvent() { setFindOpen(true); }
+    function handleShareEvent() {
+      // Share dialog could be wired here in the future
+    }
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('find-in-files', handleFindEvent);
+    window.addEventListener('open-share-dialog', handleShareEvent);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('find-in-files', handleFindEvent);
+      window.removeEventListener('open-share-dialog', handleShareEvent);
+    };
   }, []);
 
   // Warn before leaving with unsaved changes
