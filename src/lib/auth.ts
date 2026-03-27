@@ -4,6 +4,7 @@ import Google from 'next-auth/providers/google';
 import GitHub from 'next-auth/providers/github';
 import { verifyCredentials } from '@/services/user-service';
 import { loginSchema } from '@/lib/validation';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 import type { Provider } from 'next-auth/providers';
 
@@ -16,6 +17,11 @@ const providers: Provider[] = [
     async authorize(credentials) {
       const parsed = loginSchema.safeParse(credentials);
       if (!parsed.success) return null;
+
+      // Rate limit login attempts: 10 per 5 minutes per email
+      const rateLimitKey = `rate:login:${parsed.data.email.toLowerCase()}`;
+      const rateLimit = await checkRateLimit(rateLimitKey, 10, 300);
+      if (!rateLimit.allowed) return null;
 
       const user = await verifyCredentials(parsed.data.email, parsed.data.password);
       if (!user) return null;
@@ -50,12 +56,25 @@ if (process.env.AUTH_GITHUB_ID && process.env.AUTH_GITHUB_SECRET) {
   );
 }
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers,
   basePath: '/api/v1/auth',
   session: {
     strategy: 'jwt',
     maxAge: 7 * 24 * 60 * 60, // 7 days
+  },
+  cookies: {
+    sessionToken: {
+      name: isProduction ? '__Secure-next-auth.session-token' : 'next-auth.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: isProduction,
+      },
+    },
   },
   pages: {
     signIn: '/login',
