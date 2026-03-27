@@ -229,6 +229,26 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
         },
       },
       {
+        key: 'Enter',
+        run(view) {
+          // Auto-close \begin{env} → insert \end{env}
+          const pos = view.state.selection.main.head;
+          const line = view.state.doc.lineAt(pos);
+          const match = line.text.match(/^(\s*)\\begin\{([^}]+)\}\s*$/);
+          if (match && pos === line.to) {
+            const indent = match[1];
+            const env = match[2];
+            const insert = `\n${indent}  \n${indent}\\end{${env}}`;
+            view.dispatch({
+              changes: { from: pos, insert },
+              selection: { anchor: pos + indent.length + 3 },
+            });
+            return true;
+          }
+          return false; // fall through to default Enter
+        },
+      },
+      {
         key: 'Ctrl-l',
         mac: 'Cmd-l',
         run(view) {
