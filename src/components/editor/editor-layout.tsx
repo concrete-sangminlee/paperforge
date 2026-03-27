@@ -8,6 +8,7 @@ import { EditorToolbar } from './editor-toolbar';
 import { CompilationLog } from './compilation-log';
 import { EditorStatusBar } from './editor-status-bar';
 import { DocumentOutline } from './document-outline';
+import { FindInProject } from './find-in-project';
 import { PdfViewer } from './pdf-viewer';
 import { VersionHistory } from './version-history';
 import { GitPanel } from './git-panel';
@@ -42,6 +43,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
   const { resolvedTheme } = useTheme();
   const { tabs, activeTab, setActiveTab, closeTab, closeOtherTabs, closeAllTabs, markSaved, autoCompileEnabled, sidebarCollapsed, toggleSidebar, logPanelCollapsed, toggleLogPanel } = useEditorStore();
   const [tabContextMenu, setTabContextMenu] = useState<{ x: number; y: number; path: string } | null>(null);
+  const [findOpen, setFindOpen] = useState(false);
   const [files, setFiles] = useState<FileEntry[]>(initialFiles);
   const [mainFile, setMainFile] = useState(initialMainFile ?? 'main.tex');
   const [rightPanel, setRightPanel] = useState<RightPanel>('pdf');
@@ -167,6 +169,18 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
     return () => {
       if (autoCompileTimer.current) clearTimeout(autoCompileTimer.current);
     };
+  }, []);
+
+  // Ctrl+Shift+F to open Find in Project
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'f') {
+        e.preventDefault();
+        setFindOpen(true);
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   // Warn before leaving with unsaved changes
@@ -428,6 +442,9 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
           </div>
         </div>
       </div>
+
+      {/* Find in Project dialog */}
+      <FindInProject projectId={projectId} open={findOpen} onOpenChange={setFindOpen} />
     </div>
   );
 }
