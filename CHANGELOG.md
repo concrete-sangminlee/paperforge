@@ -5,6 +5,18 @@ All notable changes to PaperForge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-03-27
+
+### Added
+- **Ctrl+B/I/U/M**: Wrap selection in bold/italic/underline/math with smart cursor placement
+- **173 Tests**: Comprehensive security integration tests (XSS, path traversal, password policy)
+- **API Integration Tests**: Response format consistency verification across all presets
+
+### Changed
+- Keyboard shortcuts dialog updated to 20 entries with LaTeX command hints
+
+---
+
 ## [1.2.0] - 2026-03-27
 
 ### Added

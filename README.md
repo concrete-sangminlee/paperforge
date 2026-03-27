@@ -541,7 +541,7 @@ PaperForge is built on the shoulders of outstanding open-source projects:
 
 **Built with determination by [concrete-sangminlee](https://github.com/concrete-sangminlee)**
 
-**170+ TypeScript files · 161 tests · 40 API routes · 13 database models · 8 Docker services · v1.2.0**
+**170+ TypeScript files · 173 tests · 40 API routes · 13 database models · 8 Docker services · v1.3.0**
 
 If PaperForge helps your research, consider giving it a star!
 
