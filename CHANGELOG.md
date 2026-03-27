@@ -5,6 +5,15 @@ All notable changes to PaperForge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-03-27
+
+### Added
+- **Environment Auto-close**: Press Enter after `\begin{env}` to auto-insert matching `\end{env}` with indentation
+- **205 Tests**: Environment auto-close, LaTeX pipeline integration, completions coverage
+- **Git Tag v1.3.0**: First tagged release on GitHub
+
+---
+
 ## [1.3.0] - 2026-03-27
 
 ### Added
