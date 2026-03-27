@@ -5,6 +5,27 @@ All notable changes to PaperForge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-03-27
+
+### Added
+- **256 Tests**: Real-world document validation (ACM, letter, CV), API consistency, full system coverage
+- **Environment Auto-close**: Press Enter after `\begin{env}` → auto-inserts `\end{env}`
+- **Delete Line**: Ctrl+Shift+K keyboard shortcut
+- **22 Keyboard Shortcuts**: All fully functional and documented
+
+### Stats
+- 200+ source files, 256 tests, 38 suites, 93 commits
+- 85 iterations of continuous improvement
+
+---
+
+## [1.6.0] - 2026-03-27
+
+### Added
+- 250 tests milestone with full system coverage suite
+
+---
+
 ## [1.5.0] - 2026-03-27
 
 ### Added
