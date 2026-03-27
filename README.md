@@ -475,7 +475,8 @@ Includes all services: Next.js app, WebSocket server, compilation workers, Postg
 - [x] LaTeX error parser with structured diagnostics
 - [x] Keyboard shortcuts dialog
 - [x] Project ZIP export (download entire project)
-- [x] 90 unit tests across 12 suites
+- [x] 100 unit tests across 13 suites
+- [x] Login rate limiting + cookie hardening
 - [ ] Rich text / WYSIWYG mode
 - [ ] Spell check & grammar
 - [ ] Bibliography manager (BibTeX GUI)
@@ -529,7 +530,7 @@ PaperForge is built on the shoulders of outstanding open-source projects:
 
 **Built with determination by [concrete-sangminlee](https://github.com/concrete-sangminlee)**
 
-**160+ TypeScript files · 90 tests · 40 API routes · 13 database models · 8 Docker services**
+**160+ TypeScript files · 100 tests · 40 API routes · 13 database models · 8 Docker services**
 
 If PaperForge helps your research, consider giving it a star!
 
