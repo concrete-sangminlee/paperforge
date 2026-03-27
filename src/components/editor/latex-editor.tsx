@@ -257,6 +257,18 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
           return true;
         },
       },
+      {
+        key: 'Ctrl-Shift-k',
+        mac: 'Cmd-Shift-k',
+        run(view) {
+          const pos = view.state.selection.main.head;
+          const line = view.state.doc.lineAt(pos);
+          const from = line.from;
+          const to = line.number < view.state.doc.lines ? line.to + 1 : line.from > 0 ? line.from - 1 : line.to;
+          view.dispatch({ changes: { from: Math.min(from, to), to: Math.max(from, to) } });
+          return true;
+        },
+      },
     ]);
 
     const startState = EditorState.create({
