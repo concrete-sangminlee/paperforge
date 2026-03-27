@@ -1,18 +1,20 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { FileIcon, GitBranchIcon, HistoryIcon, XIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, ChevronDownIcon, ChevronUpIcon, FileTextIcon, CodeIcon, WifiOff, ListTreeIcon } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react';
+import { FileIcon, GitBranchIcon, HistoryIcon, XIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, ChevronDownIcon, ChevronUpIcon, FileTextIcon, CodeIcon, WifiOff, ListTreeIcon, LoaderCircleIcon } from 'lucide-react';
 import { FileTree } from './file-tree';
 import { LaTeXEditor } from './latex-editor';
 import { EditorToolbar } from './editor-toolbar';
 import { CompilationLog } from './compilation-log';
 import { EditorStatusBar } from './editor-status-bar';
-import { DocumentOutline } from './document-outline';
 import { FindInProject } from './find-in-project';
 import { PdfViewer } from './pdf-viewer';
-import { VersionHistory } from './version-history';
-import { GitPanel } from './git-panel';
 import { Collaborators } from './collaborators';
+
+// Lazy-load right-panel components for code splitting
+const VersionHistory = lazy(() => import('./version-history').then(m => ({ default: m.VersionHistory })));
+const GitPanel = lazy(() => import('./git-panel').then(m => ({ default: m.GitPanel })));
+const DocumentOutline = lazy(() => import('./document-outline').then(m => ({ default: m.DocumentOutline })));
 import { useEditorStore } from '@/store/editor-store';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
@@ -446,9 +448,11 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
           {/* Panel content */}
           <div className="min-h-0 flex-1">
             {rightPanel === 'pdf' && <PdfViewer refreshKey={pdfRefreshKey} />}
-            {rightPanel === 'history' && <VersionHistory projectId={projectId} />}
-            {rightPanel === 'git' && <GitPanel projectId={projectId} />}
-            {rightPanel === 'outline' && <DocumentOutline />}
+            <Suspense fallback={<div className="flex h-full items-center justify-center"><LoaderCircleIcon className="size-5 animate-spin text-muted-foreground" /></div>}>
+              {rightPanel === 'history' && <VersionHistory projectId={projectId} />}
+              {rightPanel === 'git' && <GitPanel projectId={projectId} />}
+              {rightPanel === 'outline' && <DocumentOutline />}
+            </Suspense>
           </div>
         </div>
       </div>

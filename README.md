@@ -477,6 +477,9 @@ Includes all services: Next.js app, WebSocket server, compilation workers, Postg
 - [x] Project ZIP export (download entire project)
 - [x] 100 unit tests across 13 suites
 - [x] Login rate limiting + cookie hardening
+- [x] Find in Project (Ctrl+Shift+F) with cross-file search
+- [x] Clickable compilation errors (jump to source line)
+- [x] Dynamic imports for code splitting (lazy-loaded panels)
 - [ ] Rich text / WYSIWYG mode
 - [ ] Spell check & grammar
 - [ ] Bibliography manager (BibTeX GUI)
