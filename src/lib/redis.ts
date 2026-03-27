@@ -1,21 +1,37 @@
 import Redis from 'ioredis';
 
-const globalForRedis = globalThis as unknown as { redis: Redis | null };
+const globalForRedis = globalThis as unknown as { _redis?: Redis | null; _redisInit?: boolean };
 
 function createRedisClient(): Redis | null {
   const url = process.env.REDIS_URL;
   if (!url) return null;
+
+  // Skip during Next.js build phase
+  if (process.env.NEXT_PHASE === 'phase-production-build') return null;
+
   try {
-    return new Redis(url, {
+    const client = new Redis(url, {
       maxRetriesPerRequest: 3,
       lazyConnect: true,
+      enableOfflineQueue: false,
+      retryStrategy(times) {
+        if (times > 3) return null;
+        return Math.min(times * 200, 2000);
+      },
     });
+    // Suppress unhandled error events to prevent build/runtime crashes
+    client.on('error', () => {});
+    return client;
   } catch {
-    console.warn('Redis connection failed, running without Redis');
     return null;
   }
 }
 
-export const redis = globalForRedis.redis ?? createRedisClient();
+function getRedis(): Redis | null {
+  if (globalForRedis._redisInit) return globalForRedis._redis ?? null;
+  globalForRedis._redisInit = true;
+  globalForRedis._redis = createRedisClient();
+  return globalForRedis._redis ?? null;
+}
 
-if (process.env.NODE_ENV !== 'production') globalForRedis.redis = redis;
+export const redis = getRedis();

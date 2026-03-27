@@ -20,6 +20,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXTAUTH_URL || "https://paperforge.dev"),
   title: {
     default: "PaperForge — Open-Source Collaborative LaTeX Editor",
     template: "%s | PaperForge",
