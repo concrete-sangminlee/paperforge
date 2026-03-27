@@ -5,6 +5,7 @@ import { foldService } from '@codemirror/language';
  * Enables folding of \begin{env}...\end{env} blocks and
  * multi-line comments.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const latexFoldService = foldService.of((state, lineStart, _lineEnd) => {
   const line = state.doc.lineAt(lineStart);
   const text = line.text;

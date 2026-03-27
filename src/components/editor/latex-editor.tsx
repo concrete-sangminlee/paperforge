@@ -80,6 +80,24 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
         },
       },
       {
+        key: 'Ctrl-g',
+        mac: 'Cmd-g',
+        run(view) {
+          const input = prompt('Go to line:');
+          if (!input) return true;
+          const line = parseInt(input, 10);
+          if (isNaN(line) || line < 1) return true;
+          const target = Math.min(line, view.state.doc.lines);
+          const lineInfo = view.state.doc.line(target);
+          view.dispatch({
+            selection: { anchor: lineInfo.from },
+            effects: EditorView.scrollIntoView(lineInfo.from, { y: 'center' }),
+          });
+          view.focus();
+          return true;
+        },
+      },
+      {
         key: 'Ctrl-/',
         mac: 'Cmd-/',
         run(view) {

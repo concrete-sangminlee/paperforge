@@ -308,6 +308,7 @@ function KeyboardShortcutsButton() {
     { keys: 'Ctrl+Z', action: 'Undo' },
     { keys: 'Ctrl+Shift+Z', action: 'Redo' },
     { keys: 'Ctrl+Shift+F', action: 'Find in project' },
+    { keys: 'Ctrl+G / Cmd+G', action: 'Go to line' },
     { keys: 'Tab', action: 'Indent' },
     { keys: 'Shift+Tab', action: 'Outdent' },
   ];
