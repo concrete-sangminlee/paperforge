@@ -29,6 +29,7 @@ interface LaTeXEditorProps {
 }
 
 const themeCompartment = new Compartment();
+const wrapCompartment = new Compartment();
 
 const WS_BASE = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4001';
 
@@ -299,6 +300,7 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
         ]),
         saveKeymap,
         themeCompartment.of(theme === 'dark' ? oneDark : []),
+        wrapCompartment.of(useEditorStore.getState().wordWrap ? EditorView.lineWrapping : []),
         EditorView.theme({
           '&': { height: '100%', minHeight: '0' },
           '.cm-scroller': { overflow: 'auto', fontFamily: 'var(--font-mono, monospace)' },
@@ -412,6 +414,15 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
       effects: themeCompartment.reconfigure(theme === 'dark' ? oneDark : []),
     });
   }, [theme]);
+
+  // Reconfigure word wrap when store value changes
+  const wordWrap = useEditorStore((s) => s.wordWrap);
+  useEffect(() => {
+    if (!viewRef.current) return;
+    viewRef.current.dispatch({
+      effects: wrapCompartment.reconfigure(wordWrap ? EditorView.lineWrapping : []),
+    });
+  }, [wordWrap]);
 
   return (
     <div

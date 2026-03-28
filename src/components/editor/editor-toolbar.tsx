@@ -22,6 +22,7 @@ import {
   KeyboardIcon,
   Share2Icon,
   ArchiveIcon,
+  WrapTextIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -299,9 +300,29 @@ export function EditorToolbar({ projectId, projectName, onCompileReady }: Editor
         <Share2Icon className="size-3.5" />
       </Button>
 
+      {/* Word wrap toggle */}
+      <WordWrapToggle />
+
       {/* Keyboard shortcuts help */}
       <KeyboardShortcutsButton />
     </div>
+  );
+}
+
+function WordWrapToggle() {
+  const wordWrap = useEditorStore((s) => s.wordWrap);
+  const setWordWrap = useEditorStore((s) => s.setWordWrap);
+  return (
+    <Button
+      size="icon-xs"
+      variant={wordWrap ? 'secondary' : 'ghost'}
+      onClick={() => setWordWrap(!wordWrap)}
+      title={wordWrap ? 'Word wrap ON — click to disable' : 'Word wrap OFF — click to enable'}
+      aria-label={wordWrap ? 'Disable word wrap' : 'Enable word wrap'}
+      aria-pressed={wordWrap}
+    >
+      <WrapTextIcon className="size-3.5" />
+    </Button>
   );
 }
 
