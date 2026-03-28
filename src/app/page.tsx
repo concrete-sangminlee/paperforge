@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { auth } from "@/lib/auth";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -267,15 +266,16 @@ function StarRating({ count }: { count: number }) {
 
 /* ───────────────────── page ───────────────────── */
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
   let isLoggedIn = false;
   try {
+    const { auth } = await import('@/lib/auth');
     const session = await auth();
     isLoggedIn = Boolean(session?.user);
   } catch {
-    // Auth may fail if DB is unavailable -- treat as logged out
+    // Auth/DB unavailable — render as logged out
   }
 
   return (
