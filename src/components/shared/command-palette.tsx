@@ -36,7 +36,6 @@ import {
   BookOpen,
   CreditCard,
   Keyboard,
-  Download,
   Share2,
   FileArchive,
   List,

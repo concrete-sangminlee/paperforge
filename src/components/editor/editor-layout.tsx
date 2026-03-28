@@ -244,6 +244,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
       window.removeEventListener('find-in-files', handleFindEvent);
       window.removeEventListener('latex-compile', handleCompileEvent);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Warn before leaving with unsaved changes

@@ -232,8 +232,6 @@ function FileNode({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const iconCls = 'size-3.5 shrink-0';
 
-  const isImage = /\.(png|jpg|jpeg|gif|svg|webp)$/i.test(file.path);
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -247,7 +245,7 @@ function FileNode({
             disabled={file.isBinary || isLoading}
             style={{ paddingLeft: `${depth * 12 + 8}px` }}
             className={cn(
-              'group/file relative flex w-full items-center gap-1.5 rounded-md py-1 pr-2 text-left text-xs transition-colors',
+              'relative flex w-full items-center gap-1.5 rounded-md py-1 pr-2 text-left text-xs transition-colors',
               'hover:bg-accent/60 hover:text-accent-foreground',
               isActive && 'bg-accent text-accent-foreground font-medium',
               isFocused && !isActive && 'ring-1 ring-ring/40',
