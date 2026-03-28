@@ -48,13 +48,13 @@
 
 | Release | Feature | Description |
 |:---:|:---|:---|
-| v4.5 | **Change Password API** | Secure password change from settings (current password verification, bcrypt hashing, strength enforcement) |
-| v4.5 | **Git Remote Persistence** | Previously linked git remotes now display on editor open (fixed data flow: project → layout → GitPanel) |
-| v4.5 | **Mobile Landing Page** | Hamburger menu for mobile nav with full section links + documentation/pricing access |
-| v4.5 | **Command Palette Pro** | 22+ commands with fuzzy search (Cmd+K): navigation, LaTeX, export, sharing, theme, keyboard shortcuts |
-| v4.5 | **File Tree UX** | File sizes (KB/MB), "Copy Path" context menu, staggered skeleton loading, keyboard nav |
-| v4.5 | **Security & Polish** | CSP headers, CORS hardening, 28 blocked extensions, dark mode fixes, route error boundaries, page transitions |
-| v4.5 | **1,500+ Tests** | 128 suites covering linting, completions, error parsing, API responses, validation, and pipeline E2E |
+| v4.5 | **Cursor Position & Status Bar** | Real-time Ln/Col display, LaTeX-aware word count, character count, writing goals with progress bar |
+| v4.5 | **Auto-Open Main File** | Editor automatically opens main.tex on first load — zero-friction onboarding for new projects |
+| v4.5 | **27 LaTeX Snippets** | math (multline, gather, cases, matrix), structure (sec/chap), BibTeX, algorithms, TikZ, subfigures |
+| v4.5 | **Account Management** | Change password + delete account APIs, 22+ command palette commands, mobile hamburger nav |
+| v4.5 | **Complete Toast Feedback** | Every user action now shows success/error toast — no more silent failures |
+| v4.5 | **Security & Polish** | CSP, CORS hardening, 28 blocked extensions, dark mode fixes, route error boundaries, transitions |
+| v4.5 | **1,530+ Tests** | 128 suites covering linting, completions, error parsing, API responses, validation, and pipeline E2E |
 
 ---
 
