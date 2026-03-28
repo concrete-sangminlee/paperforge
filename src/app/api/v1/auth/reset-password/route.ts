@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import { errorResponse, ApiError } from '@/lib/errors';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { apiError, apiSuccess } from '@/lib/api-response';
+import { RATE_LIMITS } from '@/lib/constants';
 
 const resetPasswordSchema = z.object({
   token: z.string().min(1),
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
     // Rate limit: 5 per 15 minutes per IP
     const headersList = await headers();
     const ip = headersList.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
-    const rateLimit = await checkRateLimit(`rate:reset-pw:${ip}`, 5, 900);
+    const rateLimit = await checkRateLimit(`rate:reset-pw:${ip}`, RATE_LIMITS.RESET_PASSWORD.limit, RATE_LIMITS.RESET_PASSWORD.windowSeconds);
     if (!rateLimit.allowed) {
       return apiError('Too many attempts. Please try again later.', 429, 'RATE_LIMITED');
     }

@@ -41,7 +41,8 @@ interface EditorLayoutProps {
 
 type RightPanel = 'pdf' | 'history' | 'git' | 'outline';
 
-const AUTO_COMPILE_DEBOUNCE_MS = 2000;
+import { EDITOR } from '@/lib/constants';
+const AUTO_COMPILE_DEBOUNCE_MS = EDITOR.AUTO_COMPILE_DEBOUNCE_MS;
 
 export function EditorLayout({ projectId, projectName, initialMainFile, files: initialFiles, gitRemoteUrl }: EditorLayoutProps) {
   const { resolvedTheme } = useTheme();

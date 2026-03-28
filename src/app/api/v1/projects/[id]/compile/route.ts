@@ -5,6 +5,7 @@ import { checkRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
 import { assertProjectRole } from '@/services/project-service';
 import { triggerCompilation } from '@/services/compilation-service';
 import { apiSuccess, apiError, ApiErrors } from '@/lib/api-response';
+import { RATE_LIMITS } from '@/lib/constants';
 
 export async function POST(
   request: NextRequest,
@@ -20,7 +21,7 @@ export async function POST(
 
     // Rate limit: 10 compilations per minute per user per project
     const rateLimitKey = `rate:compile:${userId}:${id}`;
-    const rateLimit = await checkRateLimit(rateLimitKey, 10, 60);
+    const rateLimit = await checkRateLimit(rateLimitKey, RATE_LIMITS.COMPILATION.limit, RATE_LIMITS.COMPILATION.windowSeconds);
     if (!rateLimit.allowed) {
       const res = apiError('Too many compilation requests. Please wait before retrying.', 429, 'RATE_LIMITED');
       Object.entries(rateLimitHeaders(10, rateLimit)).forEach(([k, v]) => res.headers.set(k, v));

@@ -7,13 +7,14 @@ import { errorResponse } from '@/lib/errors';
 import { emailTemplate, buttonHtml } from '@/lib/email-templates';
 import { checkRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
 import { apiSuccess, apiError } from '@/lib/api-response';
+import { RATE_LIMITS } from '@/lib/constants';
 
 export async function POST(request: Request) {
   try {
     // Rate limit: 5 registrations per 15 minutes per IP
     const headersList = await headers();
     const ip = headersList.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
-    const rateLimit = await checkRateLimit(`rate:register:${ip}`, 5, 900);
+    const rateLimit = await checkRateLimit(`rate:register:${ip}`, RATE_LIMITS.REGISTER.limit, RATE_LIMITS.REGISTER.windowSeconds);
     if (!rateLimit.allowed) {
       return apiError('Too many registration attempts. Please try again later.', 429, 'RATE_LIMITED', {
         ...rateLimitHeaders(5, rateLimit),

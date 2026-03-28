@@ -5,6 +5,7 @@ import { assertProjectRole, getProject } from '@/services/project-service';
 import { listFiles, getFileContent } from '@/services/file-service';
 import { ApiErrors } from '@/lib/api-response';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { RATE_LIMITS } from '@/lib/constants';
 
 /**
  * GET /api/v1/projects/:id/export
@@ -21,7 +22,7 @@ export async function GET(
     const { id } = await params;
 
     // Rate limit: 10 exports per hour per user
-    const rateLimit = await checkRateLimit(`rate:export:${userId}`, 10, 3600);
+    const rateLimit = await checkRateLimit(`rate:export:${userId}`, RATE_LIMITS.EXPORT.limit, RATE_LIMITS.EXPORT.windowSeconds);
     if (!rateLimit.allowed) return ApiErrors.rateLimited();
 
     await assertProjectRole(id, userId, ['owner', 'editor', 'viewer']);

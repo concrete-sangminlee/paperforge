@@ -41,8 +41,9 @@ interface EditorToolbarProps {
   onCompileReady?: (compileFn: () => Promise<void>) => void;
 }
 
-const STATUS_POLL_INTERVAL_MS = 1000;
-const MAX_POLL_ATTEMPTS = 120; // 2 minutes max
+import { EDITOR } from '@/lib/constants';
+const STATUS_POLL_INTERVAL_MS = EDITOR.STATUS_POLL_INTERVAL_MS;
+const MAX_POLL_ATTEMPTS = EDITOR.MAX_POLL_ATTEMPTS;
 
 type CompilationResponse = {
   id: string;
