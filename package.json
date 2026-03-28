@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:seed": "npx tsx prisma/seed.ts",
+    "db:seed-demo": "npx tsx prisma/seed-demo.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
