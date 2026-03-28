@@ -128,6 +128,8 @@ export function ProjectCard({ project, currentUserId, viewMode = 'grid' }: Proje
 
   async function handleDelete() {
     if (deleting) return;
+    const confirmed = window.confirm(`Delete "${project.name}"? This action cannot be undone.`);
+    if (!confirmed) return;
     setDeleting(true);
     try {
       const res = await fetch(`/api/v1/projects/${project.id}`, {

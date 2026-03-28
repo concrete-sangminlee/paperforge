@@ -20,8 +20,8 @@ export async function GET(
 
     await assertProjectRole(id, userId, ['owner', 'editor', 'viewer']);
 
-    const compilation = await prisma.compilation.findUnique({
-      where: { id: compileId },
+    const compilation = await prisma.compilation.findFirst({
+      where: { id: compileId, projectId: id },
       select: { pdfMinioKey: true, status: true },
     });
 

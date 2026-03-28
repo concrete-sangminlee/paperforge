@@ -56,9 +56,9 @@ export async function triggerCompilation(projectId: string, userId: string) {
   return compilation;
 }
 
-export async function getCompilationStatus(compilationId: string) {
-  return prisma.compilation.findUnique({
-    where: { id: compilationId },
+export async function getCompilationStatus(compilationId: string, projectId?: string) {
+  return prisma.compilation.findFirst({
+    where: { id: compilationId, ...(projectId ? { projectId } : {}) },
     select: {
       id: true,
       status: true,

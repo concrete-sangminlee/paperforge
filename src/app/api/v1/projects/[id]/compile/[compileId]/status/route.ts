@@ -17,7 +17,7 @@ export async function GET(
 
     await assertProjectRole(id, userId, ['owner', 'editor', 'viewer']);
 
-    const compilation = await getCompilationStatus(compileId);
+    const compilation = await getCompilationStatus(compileId, id);
     if (!compilation) return ApiErrors.notFound('Compilation');
 
     return apiSuccess(compilation);
