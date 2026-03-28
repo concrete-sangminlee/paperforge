@@ -1,3 +1,5 @@
+'use client';
+
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -265,8 +267,6 @@ function StarRating({ count }: { count: number }) {
 }
 
 /* ───────────────────── page ───────────────────── */
-
-export const dynamic = 'force-dynamic';
 
 export default function HomePage() {
   const isLoggedIn = false;
