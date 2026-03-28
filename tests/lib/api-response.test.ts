@@ -69,14 +69,12 @@ describe('apiValidationError', () => {
       {
         code: ZodIssueCode.too_small,
         minimum: 1,
-        type: 'string',
         inclusive: true,
         message: 'Required',
         path: ['name'],
-      },
+      } as any,
       {
-        code: ZodIssueCode.invalid_string,
-        validation: 'email',
+        code: ZodIssueCode.custom,
         message: 'Invalid email',
         path: ['email'],
       },

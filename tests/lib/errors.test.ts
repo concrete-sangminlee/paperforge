@@ -47,11 +47,10 @@ describe('errorResponse', () => {
       {
         code: ZodIssueCode.too_small,
         minimum: 1,
-        type: 'string',
         inclusive: true,
         message: 'Required',
         path: ['email'],
-      },
+      } as any,
     ]);
 
     const res = errorResponse(zodError);
