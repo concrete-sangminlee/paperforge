@@ -336,7 +336,8 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
           if (update.selectionSet || update.docChanged) {
             const pos = update.state.selection.main.head;
             const line = update.state.doc.lineAt(pos);
-            useEditorStore.getState().setCursorPosition(line.number, pos - line.from + 1);
+            const sel = update.state.selection.main;
+            useEditorStore.getState().setCursorPosition(line.number, pos - line.from + 1, Math.abs(sel.to - sel.from));
           }
         }),
         // Yjs collaboration extension — binds ytext to CodeMirror and exposes

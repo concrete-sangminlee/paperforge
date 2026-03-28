@@ -54,6 +54,7 @@ export function EditorStatusBar() {
   const cursorCol = useEditorStore((s) => s.cursorCol);
   const compilationDuration = useEditorStore((s) => s.compilationDuration);
   const compilationStatus = useEditorStore((s) => s.compilationStatus);
+  const selectionLength = useEditorStore((s) => s.selectionLength);
 
   const tabData = tabs.find((t) => t.path === activeTab);
 
@@ -121,7 +122,7 @@ export function EditorStatusBar() {
   return (
     <div className="flex h-6 shrink-0 items-center justify-between border-t bg-muted/30 px-3 text-[11px] text-muted-foreground">
       <div className="flex items-center gap-3">
-        <span className="font-medium">Ln {cursorLine}, Col {cursorCol}</span>
+        <span className="font-medium">Ln {cursorLine}, Col {cursorCol}{selectionLength > 0 ? ` (${selectionLength} sel)` : ''}</span>
         {stats && stats.lines > 0 && (
           <>
             <span className="text-border">|</span>
