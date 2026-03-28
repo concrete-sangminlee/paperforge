@@ -49,6 +49,15 @@ export async function POST(request: Request) {
       data: { passwordHash },
     });
 
+    // Audit log for security tracking
+    try {
+      await prisma.auditLog.create({
+        data: { adminId: userId, action: 'change_password', targetType: 'user', targetId: userId },
+      });
+    } catch {
+      // Non-critical — don't fail the password change if audit log fails
+    }
+
     return apiSuccess({ message: 'Password changed successfully.' });
   } catch (error) {
     return errorResponse(error);

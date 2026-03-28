@@ -33,7 +33,7 @@ export async function DELETE() {
     // 4. Delete templates authored by user
     await prisma.template.deleteMany({ where: { authorId: userId } });
 
-    // 5. Delete audit log entries (admin actions by this user)
+    // 5. Delete audit log entries referencing this user (FK constraint)
     await prisma.auditLog.deleteMany({ where: { adminId: userId } });
 
     // 6. Finally delete the user

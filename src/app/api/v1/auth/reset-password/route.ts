@@ -41,6 +41,18 @@ export async function POST(request: Request) {
       throw new ApiError(400, 'Invalid token');
     }
 
+    // Single-use check: if password was changed after token was issued, reject
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { updatedAt: true },
+    });
+    if (!user) throw new ApiError(404, 'User not found');
+    const iat = typeof payload.iat === 'number' ? payload.iat : 0;
+    const tokenIssuedAt = new Date(iat * 1000);
+    if (user.updatedAt > tokenIssuedAt) {
+      throw new ApiError(400, 'This reset link has already been used or has expired');
+    }
+
     const passwordHash = await bcrypt.hash(password, 12);
 
     await prisma.user.update({
