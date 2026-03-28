@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react';
-import { FileIcon, GitBranchIcon, HistoryIcon, XIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, ChevronDownIcon, ChevronUpIcon, FileTextIcon, CodeIcon, WifiOff, ListTreeIcon, LoaderCircleIcon, SigmaIcon, BookOpenIcon, FunctionSquareIcon, SparklesIcon, TableIcon } from 'lucide-react';
+import { FileIcon, GitBranchIcon, HistoryIcon, XIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, ChevronDownIcon, ChevronUpIcon, FileTextIcon, CodeIcon, WifiOff, ListTreeIcon, LoaderCircleIcon, SigmaIcon, BookOpenIcon, FunctionSquareIcon, SparklesIcon, TableIcon, BarChart3Icon } from 'lucide-react';
 import { FileTree } from './file-tree';
 import { LaTeXEditor } from './latex-editor';
 import { EditorToolbar } from './editor-toolbar';
@@ -22,6 +22,7 @@ const AiAssistant = lazy(() => import('./ai-assistant').then(m => ({ default: m.
 const OnboardingTips = lazy(() => import('./onboarding-tips').then(m => ({ default: m.OnboardingTips })));
 const TableGenerator = lazy(() => import('./table-generator').then(m => ({ default: m.TableGenerator })));
 const EquationBuilder = lazy(() => import('./equation-builder').then(m => ({ default: m.EquationBuilder })));
+const DocumentStats = lazy(() => import('./document-stats').then(m => ({ default: m.DocumentStats })));
 import { useEditorStore } from '@/store/editor-store';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
@@ -46,7 +47,7 @@ interface EditorLayoutProps {
   gitRemoteUrl?: string;
 }
 
-type RightPanel = 'pdf' | 'history' | 'git' | 'outline' | 'symbols' | 'cite' | 'math' | 'ai' | 'table' | 'equation';
+type RightPanel = 'pdf' | 'history' | 'git' | 'outline' | 'symbols' | 'cite' | 'math' | 'ai' | 'table' | 'equation' | 'stats';
 
 import { EDITOR } from '@/lib/constants';
 const AUTO_COMPILE_DEBOUNCE_MS = EDITOR.AUTO_COMPILE_DEBOUNCE_MS;
@@ -591,6 +592,16 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
               <FunctionSquareIcon className="size-3.5" />
               Eq
             </Button>
+            <Button
+              size="sm"
+              variant={rightPanel === 'stats' ? 'secondary' : 'ghost'}
+              className="h-7 gap-1.5 px-2 text-xs"
+              onClick={() => setRightPanel('stats')}
+              aria-pressed={rightPanel === 'stats'}
+            >
+              <BarChart3Icon className="size-3.5" />
+              Stats
+            </Button>
           </div>
 
           {/* Panel content */}
@@ -606,6 +617,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
               {rightPanel === 'ai' && <AiAssistant />}
               {rightPanel === 'table' && <TableGenerator />}
               {rightPanel === 'equation' && <EquationBuilder />}
+              {rightPanel === 'stats' && <DocumentStats />}
             </Suspense>
           </div>
         </div>
