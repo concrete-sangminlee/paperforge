@@ -5,6 +5,23 @@ All notable changes to PaperForge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-03-28
+
+### Added
+- **Live Deployment**: https://projectlatexcompiler.vercel.app — all pages verified 200 OK
+- **326 Tests**: Deployment smoke tests, environment completions, Greek letters, math commands
+- **Deployment Fixes**: Client-side landing page, Redis lazy init, cookie hardening, metadataBase
+
+### Fixed
+- Landing page 500 error on Vercel (converted to client component)
+- Redis ECONNREFUSED during build (lazy init + error suppression)
+- NextAuth cookie security (httpOnly, sameSite, secure in production)
+- `asChild` prop incompatibility with base-ui Button
+- Invalid `poweredBy` next.config option
+- `metadataBase` warning for OG images
+
+---
+
 ## [1.7.0] - 2026-03-27
 
 ### Added
