@@ -247,6 +247,21 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
           setActiveTab(t[idx].path);
         }
       }
+      // Ctrl+= / Ctrl+- to zoom editor font
+      if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+')) {
+        e.preventDefault();
+        const s = useEditorStore.getState();
+        s.setFontSize(Math.min(32, s.fontSize + 1));
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === '-') {
+        e.preventDefault();
+        const s = useEditorStore.getState();
+        s.setFontSize(Math.max(8, s.fontSize - 1));
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === '0') {
+        e.preventDefault();
+        useEditorStore.getState().setFontSize(14);
+      }
     }
     function handleFindEvent() { setFindOpen(true); }
     function handleCompileEvent() {
