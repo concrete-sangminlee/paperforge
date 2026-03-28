@@ -170,6 +170,7 @@ model Template {
   author        User?    @relation("TemplateAuthor", fields: [authorId], references: [id])
 
   @@index([category])
+  @@index([authorId])
   @@map("templates")
 }
 
@@ -198,6 +199,7 @@ model ShareLink {
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
+  @@index([projectId])
   @@map("share_links")
 }
 

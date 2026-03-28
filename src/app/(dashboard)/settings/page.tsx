@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import useSWR, { mutate } from 'swr';
+import { fetcher } from '@/lib/fetcher';
 import { useTheme } from 'next-themes';
 import {
   SaveIcon,
@@ -60,7 +61,6 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 interface UserProfile {
   id: string;

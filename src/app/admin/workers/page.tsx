@@ -1,11 +1,11 @@
 'use client';
 
 import useSWR from 'swr';
+import { fetcher } from '@/lib/fetcher';
 import { CpuIcon, AlertCircleIcon, CheckCircleIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 interface QueueInfo {
   name: string;

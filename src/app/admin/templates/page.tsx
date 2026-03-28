@@ -1,6 +1,7 @@
 'use client';
 
 import useSWR, { mutate } from 'swr';
+import { fetcher } from '@/lib/fetcher';
 import { useState } from 'react';
 import { CheckIcon, XIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,7 +15,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 interface PendingTemplate {
   id: string;

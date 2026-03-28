@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import useSWR, { mutate } from 'swr';
+import { fetcher } from '@/lib/fetcher';
 import { SearchIcon, ShieldAlertIcon, ShieldCheckIcon, ShieldIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +16,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 interface User {
   id: string;

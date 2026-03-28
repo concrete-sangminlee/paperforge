@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
+import { fetcher } from '@/lib/fetcher';
 import { SearchIcon, FileTextIcon, BookOpenIcon, PresentationIcon, MailIcon, UserIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,7 +25,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json()).then((result) => result.data ?? result);
 
 interface Template {
   id: string;

@@ -1,6 +1,7 @@
 'use client';
 
 import useSWR from 'swr';
+import { fetcher } from '@/lib/fetcher';
 import Link from 'next/link';
 import {
   UsersIcon,
@@ -21,7 +22,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 function formatBytes(bytes: string | number): string {
   const n = typeof bytes === 'string' ? parseFloat(bytes) : bytes;

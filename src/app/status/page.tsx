@@ -3,13 +3,21 @@
 import { FlameIcon, CheckCircleIcon, AlertTriangleIcon, XCircleIcon, RefreshCcwIcon } from 'lucide-react';
 import Link from 'next/link';
 import useSWR from 'swr';
+import { fetcher } from '@/lib/fetcher';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
-const fetcher = (url: string) => fetch(url).then(r => r.json());
+
+interface HealthData {
+  status: string;
+  version?: string;
+  timestamp?: string;
+  uptime?: number;
+  checks?: Record<string, { status: string; latency?: number }>;
+}
 
 export default function StatusPage() {
-  const { data, isLoading, mutate } = useSWR('/api/healthz', fetcher, { refreshInterval: 10000 });
+  const { data, isLoading, mutate } = useSWR<HealthData>('/api/healthz', fetcher, { refreshInterval: 10000 });
 
   const Icon = data?.status === 'ok' ? CheckCircleIcon : data?.status === 'degraded' ? AlertTriangleIcon : XCircleIcon;
   const color = data?.status === 'ok' ? 'text-green-500' : data?.status === 'degraded' ? 'text-amber-500' : 'text-red-500';
@@ -43,7 +51,7 @@ export default function StatusPage() {
             </div>
 
             <div className="mt-6 space-y-2">
-              {Object.entries(data.checks as Record<string, { status: string; latency?: number }>).map(([name, check]) => (
+              {Object.entries(data.checks ?? {}).map(([name, check]) => (
                 <div key={name} className="flex items-center justify-between rounded-lg border px-4 py-3">
                   <div className="flex items-center gap-2">
                     {check.status === 'ok' ? (
@@ -64,7 +72,7 @@ export default function StatusPage() {
             </div>
 
             <p className="mt-6 text-center text-xs text-muted-foreground">
-              Uptime: {Math.floor(data.uptime / 3600)}h {Math.floor((data.uptime % 3600) / 60)}m · Auto-refreshes every 10s
+              Uptime: {Math.floor((data.uptime ?? 0) / 3600)}h {Math.floor(((data.uptime ?? 0) % 3600) / 60)}m · Auto-refreshes every 10s
             </p>
           </>
         ) : null}
