@@ -48,11 +48,12 @@
 
 | Release | Feature | Description |
 |:---:|:---|:---|
-| v4.5 | **Security Hardening** | CSP headers, production-only CORS, restricted image domains, expanded blocked extension list (28 types), AbortController on all async operations |
-| v4.5 | **Memory Leak Fixes** | WebSocket sync/awareness cleanup, polling interval cleanup on unmount, AbortController for find-in-project, proper event listener teardown |
-| v4.5 | **Scroll Animations & Animated Counters** | Premium landing page with scroll-triggered reveals, staggered card animations, and animated stat counters |
-| v4.5 | **100% API Standardization** | Every API route uses `apiSuccess()`/`ApiErrors` pattern with input validation and pagination bounds |
-| v4.5 | **WCAG Accessibility** | `aria-live` alerts, `role="meter"` password strength, `aria-label` on all toolbar buttons, `role="log"` on compilation output |
+| v4.5 | **Command Palette Pro** | 22+ commands with fuzzy search (Cmd+K): navigation, LaTeX insertion, export, sharing, theme switching, keyboard shortcut reference |
+| v4.5 | **Page Transition Indicator** | NProgress-style orange progress bar on route navigation for seamless UX |
+| v4.5 | **Enhanced File Tree** | File size display, "Copy Path" context menu, staggered skeleton loading, full keyboard navigation |
+| v4.5 | **Route Error Boundaries** | Dedicated error pages for auth, dashboard, and editor routes with error digest + retry/navigate actions |
+| v4.5 | **Dark Mode Polish** | Compilation log, status badges, search highlights all properly themed for light and dark modes |
+| v4.5 | **Security Hardening** | CSP headers, production-only CORS, restricted image domains, 28 blocked extensions, AbortController on async ops |
 | v4.5 | **1,500+ Tests** | 128 test suites covering linting, completions, error parsing, API responses, validation, and full pipeline E2E |
 
 ---
