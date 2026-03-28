@@ -26,6 +26,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { ShareDialog } from './share-dialog';
+import { toast } from 'sonner';
 
 interface ProjectMember {
   userId: string;
@@ -117,9 +118,11 @@ export function ProjectCard({ project, currentUserId, viewMode = 'grid' }: Proje
         const result = await res.json();
         const newProject = result.data ?? result;
         router.push(`/editor/${newProject.id}`);
+      } else {
+        toast.error('Failed to duplicate project');
       }
     } catch {
-      // silently fail
+      toast.error('Failed to duplicate project');
     }
   }
 
@@ -131,11 +134,13 @@ export function ProjectCard({ project, currentUserId, viewMode = 'grid' }: Proje
         method: 'DELETE',
       });
       if (res.ok) {
-        // Force SWR to revalidate by dispatching a focus event
+        toast.success('Project deleted');
         window.dispatchEvent(new Event('focus'));
+      } else {
+        toast.error('Failed to delete project');
       }
     } catch {
-      // silently fail
+      toast.error('Failed to delete project');
     } finally {
       setDeleting(false);
     }

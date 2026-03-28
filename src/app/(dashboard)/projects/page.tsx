@@ -51,9 +51,10 @@ function formatBytes(bytes: number): string {
 
 export default function ProjectsPage() {
   const { data: session } = useSession();
-  const { data: projects, isLoading } = useSWR<ProjectData[]>(
+  const { data: projects, isLoading, error: fetchError } = useSWR<ProjectData[]>(
     '/api/v1/projects',
     fetcher,
+    { shouldRetryOnError: true, errorRetryCount: 3 },
   );
 
   // ── Local UI state ─────────────────────────────────────────
@@ -223,6 +224,22 @@ export default function ProjectsPage() {
         <div className="mt-6">
           <CreateProjectDialog />
         </div>
+      </div>
+    );
+  }
+
+  // ── Error state ───────────────────────────────────────────
+  if (fetchError && !projects) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-destructive/30 py-16">
+        <AlertTriangleIcon className="mb-4 size-12 text-destructive/60" />
+        <h3 className="text-lg font-medium">Failed to load projects</h3>
+        <p className="mt-1 max-w-sm text-center text-sm text-muted-foreground">
+          We couldn&apos;t fetch your projects. Please check your connection and try again.
+        </p>
+        <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
+          Retry
+        </Button>
       </div>
     );
   }

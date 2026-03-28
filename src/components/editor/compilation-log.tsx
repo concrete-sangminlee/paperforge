@@ -198,7 +198,7 @@ export function CompilationLog() {
       const parts = text.split(re);
       return parts.map((part, i) =>
         re.test(part) ? (
-          <mark key={i} className="rounded-sm bg-yellow-400/30 px-0.5 text-yellow-200">
+          <mark key={i} className="rounded-sm bg-yellow-200 text-yellow-900 dark:bg-yellow-400/30 dark:text-yellow-200">
             {part}
           </mark>
         ) : (
@@ -214,33 +214,33 @@ export function CompilationLog() {
   // -----------------------------------------------------------------------
 
   const levelStyles: Record<LogLevel, string> = {
-    error: 'border-l-red-500 bg-red-950/40 text-red-300',
-    warning: 'border-l-yellow-500 bg-yellow-950/30 text-yellow-300',
-    info: 'border-l-transparent text-zinc-400',
+    error: 'border-l-red-500 bg-red-500/10 text-red-700 dark:bg-red-950/40 dark:text-red-300',
+    warning: 'border-l-yellow-500 bg-yellow-500/10 text-yellow-700 dark:bg-yellow-950/30 dark:text-yellow-300',
+    info: 'border-l-transparent text-zinc-600 dark:text-zinc-400',
   };
 
   return (
     <div
       className={cn(
-        'flex flex-col bg-[#0d1117] transition-all duration-200',
+        'flex flex-col bg-zinc-50 dark:bg-[#0d1117] transition-all duration-200',
         expanded ? 'h-[22rem]' : 'h-40',
       )}
     >
       {/* ---- Header ---- */}
-      <div className="flex items-center gap-1 border-t border-zinc-800 px-2 py-1">
+      <div className="flex items-center gap-1 border-t border-zinc-200 dark:border-zinc-800 px-2 py-1">
         {/* Title + status */}
         <div className="flex items-center gap-1.5">
-          <TerminalIcon className="size-3.5 text-zinc-500" />
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+          <TerminalIcon className="size-3.5 text-zinc-400 dark:text-zinc-500" />
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
             Log
           </span>
           {compilationStatus !== 'idle' && (
             <span
               className={cn(
                 'rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
-                compilationStatus === 'success' && 'bg-emerald-900/60 text-emerald-400',
-                compilationStatus === 'error' && 'bg-red-900/60 text-red-400',
-                compilationStatus === 'compiling' && 'bg-zinc-800 text-zinc-300',
+                compilationStatus === 'success' && 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-400',
+                compilationStatus === 'error' && 'bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-400',
+                compilationStatus === 'compiling' && 'bg-zinc-200 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300',
               )}
             >
               {compilationStatus === 'compiling' ? 'Compiling...' : compilationStatus}
@@ -447,7 +447,7 @@ export function CompilationLog() {
                         title={isClickable ? `Go to line ${lineRef[1]}` : undefined}
                       >
                         {/* Line number gutter */}
-                        <span className="w-9 shrink-0 select-none pr-2 text-right text-zinc-600">
+                        <span className="w-9 shrink-0 select-none pr-2 text-right text-zinc-400 dark:text-zinc-600">
                           {line.lineNumber}
                         </span>
                         {/* Line content */}

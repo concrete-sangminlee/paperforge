@@ -46,7 +46,7 @@ import {
 const navLinks = [
   { href: '/projects', label: 'Projects', icon: FolderOpenIcon },
   { href: '/templates', label: 'Templates', icon: LayoutTemplateIcon },
-  { href: '#', label: 'Docs', icon: BookOpenIcon },
+  { href: '/docs', label: 'Docs', icon: BookOpenIcon },
 ] as const;
 
 /* ────────────────────────── breadcrumb map ────────────────────── */
@@ -107,7 +107,7 @@ export function Navbar() {
         <nav className="hidden items-center gap-1 md:flex">
           {navLinks.map(({ href, label }) => {
             const isActive =
-              href !== '#' && pathname.startsWith(href);
+              pathname.startsWith(href);
             return (
               <Link
                 key={href}
@@ -273,7 +273,7 @@ export function Navbar() {
             <nav className="flex flex-col gap-1 p-3">
               {navLinks.map(({ href, label, icon: Icon }) => {
                 const isActive =
-                  href !== '#' && pathname.startsWith(href);
+                  pathname.startsWith(href);
                 return (
                   <SheetClose key={href} render={<span />}>
                     <Link
