@@ -304,6 +304,11 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
           if (update.docChanged) {
             updateContent(filePath, update.state.doc.toString());
           }
+          if (update.selectionSet || update.docChanged) {
+            const pos = update.state.selection.main.head;
+            const line = update.state.doc.lineAt(pos);
+            useEditorStore.getState().setCursorPosition(line.number, pos - line.from + 1);
+          }
         }),
         // Yjs collaboration extension — binds ytext to CodeMirror and exposes
         // remote cursors/selections via awareness

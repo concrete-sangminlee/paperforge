@@ -41,6 +41,8 @@ export function EditorStatusBar() {
   const activeTab = useEditorStore((s) => s.activeTab);
   const tabs = useEditorStore((s) => s.tabs);
   const fontSize = useEditorStore((s) => s.fontSize);
+  const cursorLine = useEditorStore((s) => s.cursorLine);
+  const cursorCol = useEditorStore((s) => s.cursorCol);
 
   const tabData = tabs.find((t) => t.path === activeTab);
 
@@ -86,6 +88,8 @@ export function EditorStatusBar() {
   return (
     <div className="flex h-6 shrink-0 items-center justify-between border-t bg-muted/30 px-3 text-[11px] text-muted-foreground">
       <div className="flex items-center gap-3">
+        <span className="font-medium">Ln {cursorLine}, Col {cursorCol}</span>
+        <span className="text-border">|</span>
         <span>{getFileType(tabData.path)}</span>
         <span className="text-border">|</span>
         <span>{stats.lines} lines</span>

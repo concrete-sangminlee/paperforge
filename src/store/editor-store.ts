@@ -21,6 +21,8 @@ interface EditorState {
   fontSize: number;
   wordWrap: boolean;
   showLineNumbers: boolean;
+  cursorLine: number;
+  cursorCol: number;
 
   openFile: (path: string, content: string) => void;
   closeTab: (path: string) => void;
@@ -40,6 +42,7 @@ interface EditorState {
   setFontSize: (size: number) => void;
   setWordWrap: (enabled: boolean) => void;
   setShowLineNumbers: (enabled: boolean) => void;
+  setCursorPosition: (line: number, col: number) => void;
   hasUnsavedChanges: () => boolean;
   reorderTab: (fromIndex: number, toIndex: number) => void;
 }
@@ -83,6 +86,8 @@ export const useEditorStore = create<EditorState>()(
   fontSize: 14,
   wordWrap: true,
   showLineNumbers: true,
+  cursorLine: 1,
+  cursorCol: 1,
 
   openFile: (path, content) => set((state) => {
     if (state.tabs.find(t => t.path === path)) return { activeTab: path };
@@ -134,6 +139,7 @@ export const useEditorStore = create<EditorState>()(
   setFontSize: (size) => set({ fontSize: size }),
   setWordWrap: (enabled) => set({ wordWrap: enabled }),
   setShowLineNumbers: (enabled) => set({ showLineNumbers: enabled }),
+  setCursorPosition: (line, col) => set({ cursorLine: line, cursorCol: col }),
 
   hasUnsavedChanges: () => get().tabs.some(t => t.dirty),
 

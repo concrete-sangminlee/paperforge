@@ -68,6 +68,27 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
   const autoCompileTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const activeTabData = tabs.find((t) => t.path === activeTab);
+  const openFile = useEditorStore((s) => s.openFile);
+
+  // Auto-open the main file on first load if no tabs are open
+  useEffect(() => {
+    if (tabs.length === 0 && files.length > 0) {
+      const main = files.find((f) => f.path === mainFile) ?? files.find((f) => f.path.endsWith('.tex')) ?? files[0];
+      if (main && !main.isBinary) {
+        fetch(`/api/v1/projects/${projectId}/files/${main.path}`)
+          .then((r) => r.json())
+          .then((data) => {
+            const content = data.data?.content ?? data.content ?? '';
+            openFile(main.path, content);
+          })
+          .catch(() => {
+            openFile(main.path, '');
+          });
+      }
+    }
+    // Only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleProviderReady = useCallback((p: WebsocketProvider) => {
     providerRef.current = p;

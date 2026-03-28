@@ -344,9 +344,14 @@ export function PdfViewer({ refreshKey }: PdfViewerProps) {
   // ── No PDF URL – empty state ──────────────────────────────────────────
   if (!latestPdfUrl) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 bg-muted/30 text-muted-foreground">
+      <div className="flex h-full flex-col items-center justify-center gap-4 bg-muted/30 text-muted-foreground px-6 text-center">
         <FileTextIcon className="size-12 opacity-30" />
-        <p className="text-sm">Compile your project to view the PDF</p>
+        <div>
+          <p className="text-sm font-medium">No PDF preview yet</p>
+          <p className="mt-1 text-xs text-muted-foreground/70">
+            Press <kbd className="rounded border bg-muted px-1 py-0.5 text-[10px] font-mono">Ctrl+Enter</kbd> to compile, or enable auto-compile in the toolbar
+          </p>
+        </div>
       </div>
     );
   }

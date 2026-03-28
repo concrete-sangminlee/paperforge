@@ -105,6 +105,9 @@ export function CreateProjectDialog() {
                   <SelectItem value="lualatex">LuaLaTeX</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                pdfLaTeX is recommended for most documents. Use XeLaTeX or LuaLaTeX for Unicode fonts.
+              </p>
             </div>
 
             {error && (
