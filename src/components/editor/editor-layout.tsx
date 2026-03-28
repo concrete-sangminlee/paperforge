@@ -247,6 +247,15 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
           setActiveTab(t[idx].path);
         }
       }
+      // Ctrl+Shift+C to compile
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'c') {
+        e.preventDefault();
+        if (compileFnRef.current) {
+          void compileFnRef.current();
+          setPdfRefreshKey((k) => k + 1);
+        }
+        return;
+      }
       // Ctrl+J to toggle log panel
       if ((e.ctrlKey || e.metaKey) && e.key === 'j') {
         e.preventDefault();
