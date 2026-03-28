@@ -6,7 +6,7 @@ describe('file upload route', () => {
   const u = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/files/upload/route.ts'), 'utf-8');
   it('validates file size', () => { expect(u).toContain('MAX_FILE_SIZE'); });
   it('blocks dangerous extensions', () => { expect(u).toContain('BLOCKED_EXTENSIONS'); });
-  it('checks path traversal', () => { expect(u).toContain('..'); });
+  it('checks path traversal', () => { expect(u).toContain('isValidFilePath'); });
   it('uses apiSuccess', () => { expect(u).toContain('apiSuccess'); });
   it('uses ApiErrors', () => { expect(u).toContain('ApiErrors'); });
 });

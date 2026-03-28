@@ -14,7 +14,7 @@ describe('project-service safety', () => {
 
 describe('compilation-service safety', () => {
   const src = read('src/services/compilation-service.ts');
-  it('validates main file path (no traversal)', () => { expect(src).toContain("includes('..')"); });
+  it('validates main file path (no traversal)', () => { expect(src).toContain('isValidFilePath'); });
   it('filters files without minioKey', () => { expect(src).toContain('filter'); });
   it('has retry strategy', () => { expect(src).toContain('exponential'); });
   it('queues compilation jobs', () => { expect(src).toContain('compilationQueue'); });

@@ -5,6 +5,7 @@ import GitHub from 'next-auth/providers/github';
 import { verifyCredentials } from '@/services/user-service';
 import { loginSchema } from '@/lib/validation';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { RATE_LIMITS } from '@/lib/constants';
 
 import type { Provider } from 'next-auth/providers';
 
@@ -20,7 +21,7 @@ const providers: Provider[] = [
 
       // Rate limit login attempts: 10 per 5 minutes per email
       const rateLimitKey = `rate:login:${parsed.data.email.toLowerCase()}`;
-      const rateLimit = await checkRateLimit(rateLimitKey, 10, 300);
+      const rateLimit = await checkRateLimit(rateLimitKey, RATE_LIMITS.LOGIN.limit, RATE_LIMITS.LOGIN.windowSeconds);
       if (!rateLimit.allowed) return null;
 
       const user = await verifyCredentials(parsed.data.email, parsed.data.password);

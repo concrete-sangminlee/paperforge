@@ -1,6 +1,7 @@
 import { Queue } from 'bullmq';
 import { prisma } from '@/lib/prisma';
 import { ApiError } from '@/lib/errors';
+import { isValidFilePath } from '@/lib/constants';
 
 let compilationQueue: Queue | null = null;
 try {
@@ -25,7 +26,7 @@ export async function triggerCompilation(projectId: string, userId: string) {
   if (!project) throw new ApiError(404, 'Project not found');
 
   // Validate mainFile path (prevent directory traversal)
-  if (project.mainFile.includes('..') || project.mainFile.startsWith('/')) {
+  if (!isValidFilePath(project.mainFile)) {
     throw new ApiError(400, 'Invalid main file path');
   }
 

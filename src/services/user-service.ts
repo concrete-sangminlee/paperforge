@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { ApiError } from '@/lib/errors';
+import { AUTH } from '@/lib/constants';
 
 export async function createUser(email: string, name: string, password: string) {
   const existing = await prisma.user.findUnique({ where: { email } });
@@ -33,8 +34,8 @@ export async function verifyCredentials(email: string, password: string) {
   if (!valid) {
     const attempts = user.failedLoginAttempts + 1;
     const update: Record<string, unknown> = { failedLoginAttempts: attempts };
-    if (attempts >= 20) {
-      update.lockedUntil = new Date(Date.now() + 60 * 60 * 1000);
+    if (attempts >= AUTH.MAX_FAILED_ATTEMPTS) {
+      update.lockedUntil = new Date(Date.now() + AUTH.LOCKOUT_DURATION_MS);
     }
     await prisma.user.update({ where: { id: user.id }, data: update });
     return null;

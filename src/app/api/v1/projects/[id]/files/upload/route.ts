@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { errorResponse } from '@/lib/errors';
 import { assertProjectRole } from '@/services/project-service';
 import { uploadBinaryFile } from '@/services/file-service';
+import { isValidFilePath } from '@/lib/constants';
 import { apiSuccess, apiError, ApiErrors } from '@/lib/api-response';
 import { BLOCKED_EXTENSIONS, MAX_FILE_SIZE } from '@/lib/validation';
 
@@ -28,7 +29,7 @@ export async function POST(
     const mimeType = uploaded.type || 'application/octet-stream';
 
     // Validate file path (prevent directory traversal)
-    if (filePath.includes('..') || filePath.startsWith('/')) {
+    if (!isValidFilePath(filePath)) {
       return apiError('Invalid file path', 400, 'INVALID_PATH');
     }
 
