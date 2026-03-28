@@ -23,7 +23,13 @@ export async function POST(request: Request) {
     const reqBody = await request.json();
     const { email, name, password } = registerSchema.parse(reqBody);
 
-    const user = await createUser(email, name, password);
+    let user;
+    try {
+      user = await createUser(email, name, password);
+    } catch {
+      // Always return success to prevent email enumeration
+      return apiSuccess({ message: 'If this email is available, a verification link has been sent.' }, 201);
+    }
 
     const token = createSignedToken(
       { sub: user.id, purpose: 'email-verify' },

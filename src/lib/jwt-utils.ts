@@ -5,6 +5,9 @@ function getSecret(): string {
   if (!secret) {
     throw new Error('NEXTAUTH_SECRET environment variable is not set');
   }
+  if (secret.length < 32) {
+    throw new Error('NEXTAUTH_SECRET must be at least 32 characters for secure token signing');
+  }
   return secret;
 }
 

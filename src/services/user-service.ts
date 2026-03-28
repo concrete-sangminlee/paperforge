@@ -13,9 +13,17 @@ export async function createUser(email: string, name: string, password: string) 
   });
 }
 
+// Precomputed dummy hash for constant-time response when user doesn't exist
+const DUMMY_HASH = '$2a$12$LJ3m4ys3Lg2JFMg.Vy1GNe8dOJGCqW2Yqz8Hb7MxFZLkXQdKLWy6';
+
 export async function verifyCredentials(email: string, password: string) {
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user || !user.passwordHash) return null;
+
+  // Always perform bcrypt compare to prevent timing-based user enumeration
+  if (!user || !user.passwordHash) {
+    await bcrypt.compare(password, DUMMY_HASH);
+    return null;
+  }
 
   if (user.lockedUntil && user.lockedUntil > new Date()) {
     throw new ApiError(423, 'Account temporarily locked. Try again later or reset password.');
