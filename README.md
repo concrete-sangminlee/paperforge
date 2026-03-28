@@ -48,13 +48,13 @@
 
 | Release | Feature | Description |
 |:---:|:---|:---|
-| v4.5 | **Pro Status Bar** | Real-time Ln/Col cursor position, compilation time display, LaTeX-aware word count, writing goals with progress bar |
-| v4.5 | **Zero-Friction Onboarding** | Auto-open main.tex on first load, compiler help text, contextual PDF empty state with shortcut hints |
-| v4.5 | **27 LaTeX Snippets** | math (multline, gather, cases, matrix), structure (sec/chap), BibTeX, algorithms, TikZ, subfigures |
-| v4.5 | **Performance Optimization** | Lazy-loaded CommandPalette, 11 tree-shaken packages, AVIF/WebP images, NProgress page transitions |
-| v4.5 | **Env Validation & Type Safety** | Typed env module with build-phase safety, removed dangerous non-null assertions, service pattern tests |
-| v4.5 | **Security & Polish** | CSP, CORS hardening, 28 blocked extensions, dark mode, route error boundaries, complete toast feedback |
-| v4.5 | **1,550+ Tests** | 130 suites covering linting, completions, error parsing, API responses, validation, services, and E2E |
+| v4.6 | **160+ LaTeX Completions** | Full Greek alphabet, math functions (sin/cos/log), set theory, booktabs, cleveref, colors, meta-programming |
+| v4.6 | **VS Code-Quality Tabs** | Middle-click close, Ctrl+Tab cycling, Ctrl+1-9 jump, full path tooltip, filename-only labels |
+| v4.6 | **Pro Status Bar** | Ln/Col cursor, compilation time, word count, writing goals, file type, encoding, dirty indicator |
+| v4.6 | **Shared Data Layer** | Unified SWR fetcher across all pages, Prisma index optimization, typed API responses |
+| v4.6 | **27 LaTeX Snippets** | math (multline, gather, cases, matrix), structure (sec/chap), BibTeX, algorithms, TikZ, subfigures |
+| v4.6 | **Security & Governance** | CSP, CORS, 28 blocked extensions, CODE_OF_CONDUCT, FUNDING.yml, aria-labels, route error boundaries |
+| v4.6 | **1,550+ Tests** | 130 suites covering linting, completions, error parsing, API responses, validation, services, and E2E |
 
 ---
 
