@@ -39,6 +39,7 @@
 | DOCX Export | - | - | **Yes (via Pandoc)** |
 | Auto-Compile | - | Yes | **Yes (2s debounce)** |
 | Self-Hostable | - | - | **Yes** |
+| ZIP Import | - | - | **Yes (migrate from Overleaf)** |
 | Templates | Limited | Limited | **Extensible** |
 | Cost | Free | $199/yr | **$0 Forever** |
 
@@ -48,6 +49,7 @@
 
 | Release | Feature | Description |
 |:---:|:---|:---|
+| v4.7 | **ZIP Project Import** | Upload a ZIP from Overleaf/GitHub → instant project with all files imported automatically |
 | v4.7 | **Cross-File Error Navigation** | Click error in compilation log → opens referenced file at exact line (multi-file debugging) |
 | v4.7 | **Bracket Pair Colorization** | Orange/red matching bracket highlighting, active line tint, centralized constants module |
 | v4.7 | **PDF Click-to-Source** | Double-click PDF → jump to approximate source line; numbered document outline (1, 1.1, 1.1.1) |
@@ -321,6 +323,7 @@ paperforge/
 | `DELETE` | `/api/v1/projects/:id` | Soft-delete project |
 | `POST`   | `/api/v1/projects/:id/clone` | Clone project |
 | `POST`   | `/api/v1/projects/from-template/:id` | Create from template |
+| `POST`   | `/api/v1/projects/import` | Import from ZIP (multipart) |
 
 </details>
 
@@ -482,7 +485,7 @@ Includes all services: Next.js app, WebSocket server, compilation workers, Postg
 - [x] 100% API standardization (all routes use consistent response format)
 - [x] File upload validation (size limits, blocked extensions, path traversal)
 - [x] Admin real-time dashboards (15s auto-refresh)
-- [x] Comprehensive test suite (1,566 tests — linting, completions, error parsing, API, services, E2E)
+- [x] Comprehensive test suite (1,568 tests — linting, completions, error parsing, API, services, E2E)
 - [x] Email error handling (graceful SMTP failure recovery)
 - [x] LaTeX syntax highlighting (custom StreamLanguage parser)
 - [x] LaTeX autocomplete (70+ commands, Greek letters, environments)
@@ -562,7 +565,7 @@ PaperForge is built on the shoulders of outstanding open-source projects:
 
 **Built with determination by [concrete-sangminlee](https://github.com/concrete-sangminlee)**
 
-**230+ source files · 1,566 tests (131 suites) · 40+ API routes · 24 pages · 8 Docker services · v4.7.0 · [Live Demo](https://projectlatexcompiler.vercel.app)**
+**230+ source files · 1,568 tests (131 suites) · 40+ API routes · 24 pages · 8 Docker services · v4.7.0 · [Live Demo](https://projectlatexcompiler.vercel.app)**
 
 [Pricing](https://projectlatexcompiler.vercel.app/pricing) · [Getting Started](https://projectlatexcompiler.vercel.app/docs/getting-started) · [Docs](https://projectlatexcompiler.vercel.app/docs) · [API](https://projectlatexcompiler.vercel.app/docs/api) · [Symbols](https://projectlatexcompiler.vercel.app/docs/symbols) · [Templates](https://projectlatexcompiler.vercel.app/docs/templates) · [Status](https://projectlatexcompiler.vercel.app/status) · [Changelog](https://projectlatexcompiler.vercel.app/changelog)
 
