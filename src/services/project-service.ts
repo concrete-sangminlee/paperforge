@@ -17,7 +17,7 @@ export async function createProject(
   return project;
 }
 
-export async function listProjects(userId: string) {
+export async function listProjects(userId: string, limit = 200) {
   return prisma.project.findMany({
     where: { deletedAt: null, members: { some: { userId } } },
     include: {
@@ -25,10 +25,12 @@ export async function listProjects(userId: string) {
         include: {
           user: { select: { id: true, name: true, avatarUrl: true } },
         },
+        take: 10, // Limit members per project to avoid large payloads
       },
       _count: { select: { files: true } },
     },
     orderBy: { updatedAt: 'desc' },
+    take: limit,
   });
 }
 

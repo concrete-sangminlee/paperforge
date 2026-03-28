@@ -328,6 +328,9 @@ function KeyboardShortcutsButton() {
     { keys: 'Ctrl+Shift+K', action: 'Delete line' },
     { keys: 'Tab', action: 'Indent' },
     { keys: 'Shift+Tab', action: 'Outdent' },
+    { keys: 'Ctrl+Tab', action: 'Next tab' },
+    { keys: 'Ctrl+Shift+Tab', action: 'Previous tab' },
+    { keys: 'Ctrl+1-9', action: 'Jump to tab' },
   ];
 
   return (

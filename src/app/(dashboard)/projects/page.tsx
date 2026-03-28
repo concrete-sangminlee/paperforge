@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useDeferredValue } from 'react';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/fetcher';
 import {
@@ -50,11 +50,12 @@ export default function ProjectsPage() {
   const { data: projects, isLoading, error: fetchError } = useSWR<ProjectData[]>(
     '/api/v1/projects',
     fetcher,
-    { shouldRetryOnError: true, errorRetryCount: 3 },
+    { shouldRetryOnError: true, errorRetryCount: 3, revalidateOnFocus: false, dedupingInterval: 10000 },
   );
 
   // ── Local UI state ─────────────────────────────────────────
   const [search, setSearch] = useState('');
+  const deferredSearch = useDeferredValue(search);
   const [sort, setSort] = useState<SortOption>('updated');
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -92,9 +93,9 @@ export default function ProjectsPage() {
       );
     }
 
-    // Search
-    if (search.trim()) {
-      const q = search.trim().toLowerCase();
+    // Search (uses deferred value to avoid blocking UI during typing)
+    if (deferredSearch.trim()) {
+      const q = deferredSearch.trim().toLowerCase();
       result = result.filter((p) => p.name.toLowerCase().includes(q));
     }
 
@@ -115,7 +116,7 @@ export default function ProjectsPage() {
     });
 
     return result;
-  }, [projects, search, sort, roleFilter, currentUserId]);
+  }, [projects, deferredSearch, sort, roleFilter, currentUserId]);
 
   // ── Skeleton loading state ─────────────────────────────────
   function renderSkeletons() {
