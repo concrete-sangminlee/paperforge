@@ -23,6 +23,7 @@ import {
   Share2Icon,
   ArchiveIcon,
   WrapTextIcon,
+  FileTextIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -228,6 +229,32 @@ export function EditorToolbar({ projectId, projectName, onCompileReady }: Editor
         <ArchiveIcon className="size-3.5" />
         ZIP
       </a>
+
+      {/* Export as Markdown */}
+      <Button
+        size="sm"
+        variant="ghost"
+        className="gap-1 text-xs text-muted-foreground hover:text-foreground"
+        title="Export current file as Markdown"
+        onClick={() => {
+          import('@/lib/latex-to-markdown').then(({ latexToMarkdown }) => {
+            const tab = useEditorStore.getState().tabs.find(t => t.path === useEditorStore.getState().activeTab);
+            if (!tab) return;
+            const md = latexToMarkdown(tab.content);
+            const blob = new Blob([md], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = tab.path.replace(/\.tex$/, '.md');
+            a.click();
+            URL.revokeObjectURL(url);
+            toast.success('Exported as Markdown');
+          });
+        }}
+      >
+        <FileTextIcon className="size-3.5" />
+        MD
+      </Button>
 
       {/* Auto-compile toggle */}
       <Button
