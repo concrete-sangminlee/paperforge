@@ -49,16 +49,14 @@
 
 | Release | Feature | Description |
 |:---:|:---|:---|
-| v4.9 | **Citation Picker** | Browse .bib entries visually — search by author/title/year, click to insert \\cite{key} |
-| v4.9 | **Symbol Picker** | 70+ LaTeX symbols (Greek, operators, arrows, calculus) — click-to-insert visual grid |
-| v4.9 | **GitHub + ZIP Import** | Paste GitHub URL or upload ZIP → one-click project import with auto branch detection |
-| v4.9 | **Project Rename** | Inline rename from dashboard — Enter/Escape/blur to save, owner-only |
-| v4.8 | **Quick Open (Ctrl+P)** | Jump to any file by name — VS Code trifecta: Ctrl+P (files), Ctrl+K (commands), Ctrl+Shift+F (search) |
-| v4.8 | **Cross-File Error Nav** | Click compilation log → opens referenced file at exact line; bracket colorization; PDF click-to-source |
-| v4.8 | **Enterprise Security** | Single-use tokens, IDOR prevention, anti-enumeration, timing mitigation, zero magic numbers |
-| v4.8 | **160+ Completions** | BibTeX syntax, Greek alphabet, math, booktabs, cleveref, TikZ, 27 snippets, smart linter |
-| v4.8 | **Production Hardened** | Soft-delete enforcement, WebSocket hardening, centralized constants, ESLint 0 errors |
-| v4.8 | **1,569 Tests** | 131 suites: linting, completions, error parsing, API, validation, services, constants, E2E |
+| v5.0 | **Live Math Preview** | KaTeX-rendered equations in real-time — click any formula to jump to source line |
+| v5.0 | **Citation Picker** | Browse .bib entries visually — search by author/title/year, click to insert \\cite{key} |
+| v5.0 | **Symbol Picker** | 70+ LaTeX symbols in searchable grid — Greek, operators, arrows, calculus, logic |
+| v5.0 | **GitHub + ZIP Import** | Paste GitHub URL or upload ZIP → instant project import with auto branch detection |
+| v5.0 | **8 Editor Panels** | PDF, History, Git, Outline, Symbols, Citations, Math Preview, + Quick Open (Ctrl+P) |
+| v5.0 | **Enterprise Security** | Single-use tokens, IDOR prevention, anti-enumeration, timing mitigation, audit logging |
+| v5.0 | **160+ Completions** | BibTeX syntax, 27 snippets, smart linter (7 checks), regex search, cross-file error nav |
+| v5.0 | **1,569 Tests** | 131 suites · 0 type errors · 0 lint errors · 0 dead code · centralized constants |
 
 ---
 
@@ -567,7 +565,7 @@ PaperForge is built on the shoulders of outstanding open-source projects:
 
 **Built with determination by [concrete-sangminlee](https://github.com/concrete-sangminlee)**
 
-**230+ source files · 1,569 tests (131 suites) · 45 API routes · 24 pages · 8 Docker services · v4.9.0 · [Live Demo](https://projectlatexcompiler.vercel.app)**
+**230+ source files · 1,569 tests (131 suites) · 45 API routes · 24 pages · 8 Docker services · v5.0.0 · [Live Demo](https://projectlatexcompiler.vercel.app)**
 
 [Pricing](https://projectlatexcompiler.vercel.app/pricing) · [Getting Started](https://projectlatexcompiler.vercel.app/docs/getting-started) · [Docs](https://projectlatexcompiler.vercel.app/docs) · [API](https://projectlatexcompiler.vercel.app/docs/api) · [Symbols](https://projectlatexcompiler.vercel.app/docs/symbols) · [Templates](https://projectlatexcompiler.vercel.app/docs/templates) · [Status](https://projectlatexcompiler.vercel.app/status) · [Changelog](https://projectlatexcompiler.vercel.app/changelog)
 
