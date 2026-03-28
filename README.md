@@ -39,7 +39,7 @@
 | DOCX Export | - | - | **Yes (via Pandoc)** |
 | Auto-Compile | - | Yes | **Yes (2s debounce)** |
 | Self-Hostable | - | - | **Yes** |
-| ZIP Import | - | - | **Yes (migrate from Overleaf)** |
+| Import (ZIP + GitHub) | - | - | **Yes (Overleaf + GitHub)** |
 | Templates | Limited | Limited | **Extensible** |
 | Cost | Free | $199/yr | **$0 Forever** |
 
@@ -49,14 +49,14 @@
 
 | Release | Feature | Description |
 |:---:|:---|:---|
-| v4.7 | **Quick Open (Ctrl+P)** | Jump to any file by name with fuzzy search — VS Code navigation trifecta (Ctrl+P/K/Shift+F) |
-| v4.7 | **ZIP Project Import** | Upload ZIP from Overleaf/GitHub → instant project with all files imported automatically |
-| v4.7 | **Cross-File Error Nav** | Click compilation log error → opens referenced file at exact line (multi-file debugging) |
-| v4.7 | **PDF Click-to-Source** | Double-click PDF → jump to source line; numbered outline (1, 1.1, 1.1.1); bracket colorization |
-| v4.7 | **Enterprise Security** | Single-use tokens, IDOR prevention, anti-enumeration, timing mitigation, zero magic numbers |
-| v4.7 | **160+ Completions** | BibTeX syntax, Greek alphabet, math, booktabs, cleveref, TikZ, 27 snippets, advanced linter |
-| v4.7 | **Production Hardened** | Soft-delete enforcement, WebSocket hardening, centralized constants, ESLint 0 errors |
-| v4.7 | **1,568 Tests** | 131 suites: linting, completions, error parsing, API, validation, services, constants, E2E |
+| v4.8 | **GitHub Import** | Paste a GitHub URL → one-click import any public repo; tab-style dialog with ZIP + GitHub modes |
+| v4.8 | **Word Wrap Toggle** | Quick toolbar button wired live to CodeMirror — no editor restart needed |
+| v4.8 | **Quick Open (Ctrl+P)** | Jump to any file by name — VS Code trifecta: Ctrl+P (files), Ctrl+K (commands), Ctrl+Shift+F (search) |
+| v4.8 | **Cross-File Error Nav** | Click compilation log → opens referenced file at exact line; bracket colorization; PDF click-to-source |
+| v4.8 | **Enterprise Security** | Single-use tokens, IDOR prevention, anti-enumeration, timing mitigation, zero magic numbers |
+| v4.8 | **160+ Completions** | BibTeX syntax, Greek alphabet, math, booktabs, cleveref, TikZ, 27 snippets, smart linter |
+| v4.8 | **Production Hardened** | Soft-delete enforcement, WebSocket hardening, centralized constants, ESLint 0 errors |
+| v4.8 | **1,569 Tests** | 131 suites: linting, completions, error parsing, API, validation, services, constants, E2E |
 
 ---
 
@@ -323,6 +323,7 @@ paperforge/
 | `POST`   | `/api/v1/projects/:id/clone` | Clone project |
 | `POST`   | `/api/v1/projects/from-template/:id` | Create from template |
 | `POST`   | `/api/v1/projects/import` | Import from ZIP (multipart) |
+| `POST`   | `/api/v1/projects/import-url` | Import from GitHub URL |
 
 </details>
 
@@ -484,7 +485,7 @@ Includes all services: Next.js app, WebSocket server, compilation workers, Postg
 - [x] 100% API standardization (all routes use consistent response format)
 - [x] File upload validation (size limits, blocked extensions, path traversal)
 - [x] Admin real-time dashboards (15s auto-refresh)
-- [x] Comprehensive test suite (1,568 tests — linting, completions, error parsing, API, services, E2E)
+- [x] Comprehensive test suite (1,569 tests — linting, completions, error parsing, API, services, E2E)
 - [x] Email error handling (graceful SMTP failure recovery)
 - [x] LaTeX syntax highlighting (custom StreamLanguage parser)
 - [x] LaTeX autocomplete (70+ commands, Greek letters, environments)
@@ -564,7 +565,7 @@ PaperForge is built on the shoulders of outstanding open-source projects:
 
 **Built with determination by [concrete-sangminlee](https://github.com/concrete-sangminlee)**
 
-**230+ source files · 1,568 tests (131 suites) · 40+ API routes · 24 pages · 8 Docker services · v4.8.0 · [Live Demo](https://projectlatexcompiler.vercel.app)**
+**230+ source files · 1,569 tests (131 suites) · 45 API routes · 24 pages · 8 Docker services · v4.8.0 · [Live Demo](https://projectlatexcompiler.vercel.app)**
 
 [Pricing](https://projectlatexcompiler.vercel.app/pricing) · [Getting Started](https://projectlatexcompiler.vercel.app/docs/getting-started) · [Docs](https://projectlatexcompiler.vercel.app/docs) · [API](https://projectlatexcompiler.vercel.app/docs/api) · [Symbols](https://projectlatexcompiler.vercel.app/docs/symbols) · [Templates](https://projectlatexcompiler.vercel.app/docs/templates) · [Status](https://projectlatexcompiler.vercel.app/status) · [Changelog](https://projectlatexcompiler.vercel.app/changelog)
 
