@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react';
-import { FileIcon, GitBranchIcon, HistoryIcon, XIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, ChevronDownIcon, ChevronUpIcon, FileTextIcon, CodeIcon, WifiOff, ListTreeIcon, LoaderCircleIcon, SigmaIcon, BookOpenIcon, FunctionSquareIcon } from 'lucide-react';
+import { FileIcon, GitBranchIcon, HistoryIcon, XIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, ChevronDownIcon, ChevronUpIcon, FileTextIcon, CodeIcon, WifiOff, ListTreeIcon, LoaderCircleIcon, SigmaIcon, BookOpenIcon, FunctionSquareIcon, SparklesIcon } from 'lucide-react';
 import { FileTree } from './file-tree';
 import { LaTeXEditor } from './latex-editor';
 import { EditorToolbar } from './editor-toolbar';
@@ -18,6 +18,7 @@ const DocumentOutline = lazy(() => import('./document-outline').then(m => ({ def
 const SymbolPicker = lazy(() => import('./symbol-picker').then(m => ({ default: m.SymbolPicker })));
 const CitationPicker = lazy(() => import('./citation-picker').then(m => ({ default: m.CitationPicker })));
 const MathPreview = lazy(() => import('./math-preview').then(m => ({ default: m.MathPreview })));
+const AiAssistant = lazy(() => import('./ai-assistant').then(m => ({ default: m.AiAssistant })));
 import { useEditorStore } from '@/store/editor-store';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
@@ -42,7 +43,7 @@ interface EditorLayoutProps {
   gitRemoteUrl?: string;
 }
 
-type RightPanel = 'pdf' | 'history' | 'git' | 'outline' | 'symbols' | 'cite' | 'math';
+type RightPanel = 'pdf' | 'history' | 'git' | 'outline' | 'symbols' | 'cite' | 'math' | 'ai';
 
 import { EDITOR } from '@/lib/constants';
 const AUTO_COMPILE_DEBOUNCE_MS = EDITOR.AUTO_COMPILE_DEBOUNCE_MS;
@@ -557,6 +558,16 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
               <FunctionSquareIcon className="size-3.5" />
               Math
             </Button>
+            <Button
+              size="sm"
+              variant={rightPanel === 'ai' ? 'secondary' : 'ghost'}
+              className="h-7 gap-1.5 px-2 text-xs"
+              onClick={() => setRightPanel('ai')}
+              aria-pressed={rightPanel === 'ai'}
+            >
+              <SparklesIcon className="size-3.5 text-orange-500" />
+              AI
+            </Button>
           </div>
 
           {/* Panel content */}
@@ -569,6 +580,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
               {rightPanel === 'symbols' && <SymbolPicker />}
               {rightPanel === 'cite' && <CitationPicker />}
               {rightPanel === 'math' && <MathPreview />}
+              {rightPanel === 'ai' && <AiAssistant />}
             </Suspense>
           </div>
         </div>

@@ -49,11 +49,11 @@
 
 | Release | Feature | Description |
 |:---:|:---|:---|
+| v5.0 | **AI LaTeX Assistant** | Claude-powered: write, fix, explain, or convert LaTeX — 4 modes with file context |
 | v5.0 | **Live Math Preview** | KaTeX-rendered equations in real-time — click any formula to jump to source line |
-| v5.0 | **Citation Picker** | Browse .bib entries visually — search by author/title/year, click to insert \\cite{key} |
-| v5.0 | **Symbol Picker** | 70+ LaTeX symbols in searchable grid — Greek, operators, arrows, calculus, logic |
+| v5.0 | **Citation + Symbol Pickers** | Browse .bib entries, 70+ visual symbols — click to insert |
 | v5.0 | **GitHub + ZIP Import** | Paste GitHub URL or upload ZIP → instant project import with auto branch detection |
-| v5.0 | **8 Editor Panels** | PDF, History, Git, Outline, Symbols, Citations, Math Preview, + Quick Open (Ctrl+P) |
+| v5.0 | **9 Editor Panels** | PDF, History, Git, Outline, Symbols, Citations, Math Preview, + Quick Open (Ctrl+P) |
 | v5.0 | **Enterprise Security** | Single-use tokens, IDOR prevention, anti-enumeration, timing mitigation, audit logging |
 | v5.0 | **160+ Completions** | BibTeX syntax, 27 snippets, smart linter (7 checks), regex search, cross-file error nav |
 | v5.0 | **1,569 Tests** | 131 suites · 0 type errors · 0 lint errors · 0 dead code · centralized constants |
