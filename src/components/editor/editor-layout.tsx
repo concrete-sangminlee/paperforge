@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react';
-import { FileIcon, GitBranchIcon, HistoryIcon, XIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, ChevronDownIcon, ChevronUpIcon, FileTextIcon, CodeIcon, WifiOff, ListTreeIcon, LoaderCircleIcon, SigmaIcon } from 'lucide-react';
+import { FileIcon, GitBranchIcon, HistoryIcon, XIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, ChevronDownIcon, ChevronUpIcon, FileTextIcon, CodeIcon, WifiOff, ListTreeIcon, LoaderCircleIcon, SigmaIcon, BookOpenIcon } from 'lucide-react';
 import { FileTree } from './file-tree';
 import { LaTeXEditor } from './latex-editor';
 import { EditorToolbar } from './editor-toolbar';
@@ -16,6 +16,7 @@ const VersionHistory = lazy(() => import('./version-history').then(m => ({ defau
 const GitPanel = lazy(() => import('./git-panel').then(m => ({ default: m.GitPanel })));
 const DocumentOutline = lazy(() => import('./document-outline').then(m => ({ default: m.DocumentOutline })));
 const SymbolPicker = lazy(() => import('./symbol-picker').then(m => ({ default: m.SymbolPicker })));
+const CitationPicker = lazy(() => import('./citation-picker').then(m => ({ default: m.CitationPicker })));
 import { useEditorStore } from '@/store/editor-store';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
@@ -40,7 +41,7 @@ interface EditorLayoutProps {
   gitRemoteUrl?: string;
 }
 
-type RightPanel = 'pdf' | 'history' | 'git' | 'outline' | 'symbols';
+type RightPanel = 'pdf' | 'history' | 'git' | 'outline' | 'symbols' | 'cite';
 
 import { EDITOR } from '@/lib/constants';
 const AUTO_COMPILE_DEBOUNCE_MS = EDITOR.AUTO_COMPILE_DEBOUNCE_MS;
@@ -535,6 +536,16 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
               <SigmaIcon className="size-3.5" />
               Symbols
             </Button>
+            <Button
+              size="sm"
+              variant={rightPanel === 'cite' ? 'secondary' : 'ghost'}
+              className="h-7 gap-1.5 px-2 text-xs"
+              onClick={() => setRightPanel('cite')}
+              aria-pressed={rightPanel === 'cite'}
+            >
+              <BookOpenIcon className="size-3.5" />
+              Cite
+            </Button>
           </div>
 
           {/* Panel content */}
@@ -545,6 +556,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
               {rightPanel === 'git' && <GitPanel projectId={projectId} remoteUrl={gitRemoteUrl} />}
               {rightPanel === 'outline' && <DocumentOutline />}
               {rightPanel === 'symbols' && <SymbolPicker />}
+              {rightPanel === 'cite' && <CitationPicker />}
             </Suspense>
           </div>
         </div>
