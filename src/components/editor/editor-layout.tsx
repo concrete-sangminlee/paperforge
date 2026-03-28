@@ -247,6 +247,12 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
           setActiveTab(t[idx].path);
         }
       }
+      // Ctrl+N to create new file
+      if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('new-file'));
+        return;
+      }
       // Ctrl+W to close current tab
       if ((e.ctrlKey || e.metaKey) && e.key === 'w') {
         e.preventDefault();

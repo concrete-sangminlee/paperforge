@@ -23,6 +23,13 @@ interface NewFileDialogProps {
 
 export function NewFileDialog({ projectId, onCreated }: NewFileDialogProps) {
   const [open, setOpen] = useState(false);
+
+  // Listen for Ctrl+N event
+  useState(() => {
+    function handleNewFile() { setOpen(true); }
+    window.addEventListener('new-file', handleNewFile);
+    return () => window.removeEventListener('new-file', handleNewFile);
+  });
   const [filePath, setFilePath] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
