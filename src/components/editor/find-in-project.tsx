@@ -32,6 +32,8 @@ export function FindInProject({ projectId, open, onOpenChange }: FindInProjectPr
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [caseSensitive, setCaseSensitive] = useState(false);
+  const [useRegex, setUseRegex] = useState(false);
   const openFile = useEditorStore((s) => s.openFile);
   const setActiveTab = useEditorStore((s) => s.setActiveTab);
   const abortRef = useRef<AbortController | null>(null);
@@ -60,7 +62,10 @@ export function FindInProject({ projectId, open, onOpenChange }: FindInProjectPr
       const files: Array<{ path: string }> = data.data ?? data;
 
       const found: SearchResult[] = [];
-      const lowerQuery = query.toLowerCase();
+      let regex: RegExp | null = null;
+      if (useRegex) {
+        try { regex = new RegExp(query, caseSensitive ? 'g' : 'gi'); } catch { /* invalid regex — fall through to string search */ }
+      }
 
       // Search through each text file
       for (const file of files) {
@@ -75,15 +80,24 @@ export function FindInProject({ projectId, open, onOpenChange }: FindInProjectPr
 
           const lines = content.split('\n');
           for (let i = 0; i < lines.length; i++) {
-            const lowerLine = lines[i].toLowerCase();
-            const idx = lowerLine.indexOf(lowerQuery);
+            let idx = -1;
+            let matchLen = query.length;
+            if (regex) {
+              regex.lastIndex = 0;
+              const m = regex.exec(lines[i]);
+              if (m) { idx = m.index; matchLen = m[0].length; }
+            } else if (caseSensitive) {
+              idx = lines[i].indexOf(query);
+            } else {
+              idx = lines[i].toLowerCase().indexOf(query.toLowerCase());
+            }
             if (idx !== -1) {
               found.push({
                 path: file.path,
                 line: i + 1,
                 text: lines[i],
                 matchStart: idx,
-                matchEnd: idx + query.length,
+                matchEnd: idx + matchLen,
               });
               if (found.length >= 100) break; // Limit results
             }
@@ -104,7 +118,7 @@ export function FindInProject({ projectId, open, onOpenChange }: FindInProjectPr
     } finally {
       if (!controller.signal.aborted) setSearching(false);
     }
-  }, [query, projectId]);
+  }, [query, projectId, caseSensitive, useRegex]);
 
   function handleResultClick(result: SearchResult) {
     // Open the file in editor and go to line
@@ -140,11 +154,30 @@ export function FindInProject({ projectId, open, onOpenChange }: FindInProjectPr
         <div className="flex gap-2">
           <Input
             placeholder="Search across all files..."
+            aria-label="Search query"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
             autoFocus
           />
+          <Button
+            size="icon-xs"
+            variant={caseSensitive ? 'secondary' : 'ghost'}
+            onClick={() => setCaseSensitive((v) => !v)}
+            title="Match case"
+            aria-label="Match case"
+            aria-pressed={caseSensitive}
+            className="shrink-0 text-xs font-bold"
+          >Aa</Button>
+          <Button
+            size="icon-xs"
+            variant={useRegex ? 'secondary' : 'ghost'}
+            onClick={() => setUseRegex((v) => !v)}
+            title="Use regular expression"
+            aria-label="Use regular expression"
+            aria-pressed={useRegex}
+            className="shrink-0 text-xs font-mono"
+          >.*</Button>
           <Button onClick={handleSearch} disabled={searching || !query.trim()} size="sm" className="gap-1.5">
             {searching ? <LoaderCircleIcon className="size-3.5 animate-spin" /> : <SearchIcon className="size-3.5" />}
             Search

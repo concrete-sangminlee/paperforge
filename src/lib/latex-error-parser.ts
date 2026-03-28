@@ -69,6 +69,57 @@ export function parseLatexLog(log: string): LatexDiagnostic[] {
         raw: line,
       });
     }
+
+    // Reference/citation warnings
+    if (line.includes('Reference') && line.includes('undefined')) {
+      const refMatch = line.match(/`([^']+)'/);
+      diagnostics.push({
+        type: 'warning',
+        message: refMatch ? `Undefined reference: ${refMatch[1]}` : line.trim(),
+        raw: line,
+      });
+    }
+    if (line.includes('Citation') && (line.includes('undefined') || line.includes('not found'))) {
+      const citeMatch = line.match(/`([^']+)'/);
+      diagnostics.push({
+        type: 'warning',
+        message: citeMatch ? `Undefined citation: ${citeMatch[1]}` : line.trim(),
+        raw: line,
+      });
+    }
+    if (line.includes('Empty bibliography')) {
+      diagnostics.push({ type: 'warning', message: 'Empty bibliography — no entries found', raw: line });
+    }
+
+    // Badbox details with measurements
+    if (line.match(/^(Over|Under)full \\[hv]box/)) {
+      const ptMatch = line.match(/([\d.]+)pt/);
+      const lineMatch = line.match(/at lines? (\d+)/);
+      diagnostics.push({
+        type: 'warning',
+        message: `${line.match(/Overfull/) ? 'Overfull' : 'Underfull'} box${ptMatch ? ` (${ptMatch[1]}pt)` : ''}`,
+        line: lineMatch ? parseInt(lineMatch[1], 10) : undefined,
+        raw: line,
+      });
+    }
+
+    // Runaway argument / paragraph ended
+    if (line.startsWith('Runaway argument?') || line.includes('Paragraph ended before')) {
+      diagnostics.push({
+        type: 'error',
+        message: line.trim(),
+        raw: line,
+      });
+    }
+
+    // Missing number / illegal unit
+    if (line.includes('Missing number') || line.includes('Illegal unit')) {
+      diagnostics.push({
+        type: 'error',
+        message: line.trim(),
+        raw: line,
+      });
+    }
   }
 
   return diagnostics;
