@@ -28,6 +28,7 @@ interface FileEntry {
   path: string;
   mimeType: string | null;
   isBinary: boolean;
+  sizeBytes?: number;
 }
 
 interface EditorLayoutProps {
@@ -35,13 +36,14 @@ interface EditorLayoutProps {
   projectName: string;
   initialMainFile?: string;
   files: FileEntry[];
+  gitRemoteUrl?: string;
 }
 
 type RightPanel = 'pdf' | 'history' | 'git' | 'outline';
 
 const AUTO_COMPILE_DEBOUNCE_MS = 2000;
 
-export function EditorLayout({ projectId, projectName, initialMainFile, files: initialFiles }: EditorLayoutProps) {
+export function EditorLayout({ projectId, projectName, initialMainFile, files: initialFiles, gitRemoteUrl }: EditorLayoutProps) {
   const { resolvedTheme } = useTheme();
   const { tabs, activeTab, setActiveTab, closeTab, closeOtherTabs, closeAllTabs, markSaved, autoCompileEnabled, sidebarCollapsed, toggleSidebar, logPanelCollapsed, toggleLogPanel } = useEditorStore();
   const [tabContextMenu, setTabContextMenu] = useState<{ x: number; y: number; path: string } | null>(null);
@@ -457,7 +459,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
             {rightPanel === 'pdf' && <PdfViewer refreshKey={pdfRefreshKey} />}
             <Suspense fallback={<div className="flex h-full items-center justify-center"><LoaderCircleIcon className="size-5 animate-spin text-muted-foreground" /></div>}>
               {rightPanel === 'history' && <VersionHistory projectId={projectId} />}
-              {rightPanel === 'git' && <GitPanel projectId={projectId} />}
+              {rightPanel === 'git' && <GitPanel projectId={projectId} remoteUrl={gitRemoteUrl} />}
               {rightPanel === 'outline' && <DocumentOutline />}
             </Suspense>
           </div>

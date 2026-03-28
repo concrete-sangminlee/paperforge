@@ -47,8 +47,8 @@ export default async function EditorPage({ params }: EditorPageProps) {
   const { projectId } = await params;
   const userId = (session.user as { id: string }).id;
 
-  let project;
-  let fileEntries: Array<{ id: string; path: string; mimeType: string | null; isBinary: boolean }> = [];
+  let project: { name: string; mainFile: string; gitRepoPath?: string | null };
+  let fileEntries: Array<{ id: string; path: string; mimeType: string | null; isBinary: boolean; sizeBytes?: number }> = [];
 
   try {
     project = await getProject(projectId, userId);
@@ -68,6 +68,7 @@ export default async function EditorPage({ params }: EditorPageProps) {
       path: f.path,
       mimeType: f.mimeType,
       isBinary: f.isBinary,
+      sizeBytes: f.sizeBytes != null ? Number(f.sizeBytes) : undefined,
     }));
   } catch {
     redirect('/projects');
@@ -80,6 +81,7 @@ export default async function EditorPage({ params }: EditorPageProps) {
         projectName={project.name}
         initialMainFile={project.mainFile}
         files={fileEntries}
+        gitRemoteUrl={project.gitRepoPath ?? undefined}
       />
     </ErrorBoundary>
   );

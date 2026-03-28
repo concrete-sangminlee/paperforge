@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +44,7 @@ import {
   Building2,
   Clock,
   Heart,
+  Menu,
 } from "lucide-react";
 
 /* ───────────────────── hooks ───────────────────── */
@@ -417,6 +418,7 @@ function FeaturesSection() {
 
 export default function HomePage() {
   const isLoggedIn = false;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Observe all landing-stagger containers to reveal their children
   useEffect(() => {
@@ -477,6 +479,16 @@ export default function HomePage() {
           </nav>
 
           <nav className="flex items-center gap-2">
+            {/* Mobile hamburger */}
+            <button
+              className="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-foreground md:hidden"
+              onClick={() => setMobileMenuOpen((v) => !v)}
+              aria-label="Toggle navigation menu"
+              aria-expanded={mobileMenuOpen}
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+
             {isLoggedIn ? (
               <Link
                 href="/projects"
@@ -505,6 +517,20 @@ export default function HomePage() {
             )}
           </nav>
         </div>
+
+        {/* Mobile nav dropdown */}
+        {mobileMenuOpen && (
+          <div className="border-t bg-background px-4 py-3 md:hidden">
+            <nav className="flex flex-col gap-2 text-sm font-medium">
+              <Link href="#features" className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Features</Link>
+              <Link href="#how-it-works" className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>How It Works</Link>
+              <Link href="#comparison" className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Comparison</Link>
+              <Link href="#testimonials" className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Testimonials</Link>
+              <Link href="/docs" className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Documentation</Link>
+              <Link href="/pricing" className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Pricing</Link>
+            </nav>
+          </div>
+        )}
       </header>
 
       <main className="flex-1">
