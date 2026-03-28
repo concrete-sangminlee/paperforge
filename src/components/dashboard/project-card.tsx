@@ -114,7 +114,8 @@ export function ProjectCard({ project, currentUserId, viewMode = 'grid' }: Proje
         }),
       });
       if (res.ok) {
-        const newProject = await res.json();
+        const result = await res.json();
+        const newProject = result.data ?? result;
         router.push(`/editor/${newProject.id}`);
       }
     } catch {

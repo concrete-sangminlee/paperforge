@@ -105,7 +105,8 @@ export function EditorToolbar({ projectId, projectName, onCompileReady }: Editor
         return;
       }
 
-      const compilation = await res.json() as { id: string };
+      const compileResult = await res.json();
+      const compilation = compileResult.data ?? compileResult;
       const compileId = compilation.id;
 
       let attempts = 0;
@@ -125,7 +126,8 @@ export function EditorToolbar({ projectId, projectName, onCompileReady }: Editor
           );
           if (!statusRes.ok) return;
 
-          const data = await statusRes.json() as CompilationResponse;
+          const statusResult = await statusRes.json();
+          const data = (statusResult.data ?? statusResult) as CompilationResponse;
 
           if (data.status === 'success') {
             stopPolling();

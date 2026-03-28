@@ -76,7 +76,8 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
     try {
       const res = await fetch(`/api/v1/projects/${projectId}/files`);
       if (res.ok) {
-        const data = await res.json() as FileEntry[];
+        const result = await res.json();
+        const data = (result.data ?? result) as FileEntry[];
         setFiles(data);
       }
     } catch {
