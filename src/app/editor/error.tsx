@@ -17,28 +17,30 @@ export default function EditorError({
   }, [error]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 text-center">
-      <div className="rounded-full bg-destructive/10 p-4">
-        <AlertTriangleIcon className="size-8 text-destructive" />
+    <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-background px-6 text-center">
+      <div className="flex size-20 items-center justify-center rounded-2xl bg-destructive/10">
+        <AlertTriangleIcon className="size-10 text-destructive" />
       </div>
-      <h2 className="mt-6 text-xl font-semibold">Editor Error</h2>
-      <p className="mt-2 max-w-md text-sm text-muted-foreground">
-        The editor encountered an unexpected error. This may be caused by a
-        connection issue or an invalid project. Please try reloading.
-      </p>
-      {error.digest && (
-        <p className="mt-2 font-mono text-xs text-muted-foreground/60">
-          Error ID: {error.digest}
+      <div>
+        <h2 className="text-2xl font-bold">Editor Error</h2>
+        <p className="mx-auto mt-3 max-w-md text-base text-muted-foreground">
+          The editor encountered an unexpected error. This may be caused by a
+          connection issue or an invalid project. Please try reloading.
         </p>
-      )}
-      <div className="mt-6 flex gap-3">
-        <Button variant="outline" onClick={reset}>
-          <RotateCcwIcon className="mr-2 size-4" />
+        {error.digest && (
+          <p className="mt-2 font-mono text-xs text-muted-foreground/60">
+            Error ID: {error.digest}
+          </p>
+        )}
+      </div>
+      <div className="flex gap-3">
+        <Button variant="outline" onClick={reset} className="gap-2">
+          <RotateCcwIcon className="size-4" />
           Reload Editor
         </Button>
         <Link href="/projects">
-          <Button>
-            <FolderIcon className="mr-2 size-4" />
+          <Button className="gap-2">
+            <FolderIcon className="size-4" />
             Back to Projects
           </Button>
         </Link>

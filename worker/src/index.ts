@@ -55,7 +55,17 @@ async function downloadProjectFiles(
 ): Promise<void> {
   await Promise.all(
     files.map(async (file) => {
+      // Validate file path to prevent directory traversal
+      if (file.path.includes('..') || file.path.startsWith('/')) {
+        console.warn(`[Worker] Skipping unsafe file path: ${file.path}`);
+        return;
+      }
       const destPath = path.join(workDir, file.path);
+      // Ensure resolved path stays within workDir
+      if (!path.resolve(destPath).startsWith(path.resolve(workDir))) {
+        console.warn(`[Worker] Path escape attempt blocked: ${file.path}`);
+        return;
+      }
       const destDir = path.dirname(destPath);
       fs.mkdirSync(destDir, { recursive: true });
       await minioClient.fGetObject(BUCKET, file.minioKey, destPath);
@@ -196,6 +206,7 @@ worker.on('error', (err) => {
 async function shutdown() {
   console.log('[worker] Shutting down gracefully...');
   await worker.close();
+  await publisher.quit();
   await connection.quit();
   process.exit(0);
 }
