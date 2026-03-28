@@ -49,18 +49,15 @@
 
 | Release | Feature | Description |
 |:---:|:---|:---|
-| v6.2 | **Share Snippet** | Copy shareable URL with LaTeX code preview — like GitHub Gists for LaTeX |
-| v6.2 | **1,622 Tests** | 50 new panel tests covering equation builder, table gen, citation picker, stats, AI, search |
-| v6.2 | **Global Project Search** | Ctrl+Shift+P — search across ALL projects and files from dashboard |
-| v6.1 | **Document Statistics** | Words by section bar chart, element counts (figures/tables/equations/citations), reading time |
-| v6.0 | **Equation Builder** | 19 visual templates with live KaTeX preview — fractions, matrices, integrals, accents |
-| v6.0 | **Table Generator** | Interactive grid with booktabs toggle — generates complete LaTeX table code |
-| v6.0 | **AI LaTeX Assistant** | Claude-powered: write, fix, explain, convert — 4 modes with file context |
-| v6.0 | **12 Editor Panels** | PDF, History, Git, Outline, Symbols, Cite, Math, AI, Table, Equation, Stats |
-| v6.0 | **Quick-Fix + Spellcheck** | One-click typo fixes + browser-native spell checking |
-| v6.0 | **GitHub + ZIP Import** | Paste GitHub URL or upload ZIP → instant project creation |
-| v6.0 | **160+ Completions** | BibTeX syntax, 27 snippets, 70+ symbols, smart linter, cross-file error nav |
-| v6.0 | **1,572 Tests** | 0 type errors · 0 lint errors · 0 dead code · 48 API routes · 58 components |
+| v7.0 | **Crash Recovery** | Open tabs persist to localStorage — zero data loss on browser crash, refresh, or power failure |
+| v7.0 | **Public Share Pages** | /share page renders LaTeX with syntax highlighting + KaTeX math preview |
+| v7.0 | **LaTeX Render API** | POST /api/v1/render → server-side KaTeX HTML for embedding/screenshots |
+| v7.0 | **AI LaTeX Assistant** | Claude-powered: write, fix, explain, convert — 4 modes with file context |
+| v7.0 | **Equation + Table Builders** | Visual equation (19 templates + KaTeX) + table generator (booktabs) |
+| v7.0 | **Document Statistics** | Words by section, figures/tables/equations count, reading time estimate |
+| v7.0 | **12 Editor Panels** | PDF, History, Git, Outline, Symbols, Cite, Math, AI, Table, Equation, Stats |
+| v7.0 | **160+ Completions** | BibTeX syntax, 27 snippets, 70+ symbols, quick-fix, spellcheck, global search |
+| v7.0 | **1,623 Tests** | 0 type errors · 0 lint errors · 0 dead code · 48 API routes · 59 components |
 
 ---
 
@@ -569,7 +566,7 @@ PaperForge is built on the shoulders of outstanding open-source projects:
 
 **Built with determination by [concrete-sangminlee](https://github.com/concrete-sangminlee)**
 
-**230+ source files · 1,623 tests (131 suites) · 48 API routes · 25 pages · 8 Docker services · v7.0.0 · [Live Demo](https://projectlatexcompiler.vercel.app)**
+**230+ source files · 1,623 tests (132 suites) · 48 API routes · 25 pages · 8 Docker services · v7.0.0 · [Live Demo](https://projectlatexcompiler.vercel.app)**
 
 [Pricing](https://projectlatexcompiler.vercel.app/pricing) · [Getting Started](https://projectlatexcompiler.vercel.app/docs/getting-started) · [Docs](https://projectlatexcompiler.vercel.app/docs) · [API](https://projectlatexcompiler.vercel.app/docs/api) · [Symbols](https://projectlatexcompiler.vercel.app/docs/symbols) · [Templates](https://projectlatexcompiler.vercel.app/docs/templates) · [Status](https://projectlatexcompiler.vercel.app/status) · [Changelog](https://projectlatexcompiler.vercel.app/changelog)
 
