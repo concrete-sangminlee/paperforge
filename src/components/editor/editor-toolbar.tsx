@@ -389,6 +389,8 @@ function KeyboardShortcutsButton() {
     { keys: 'Ctrl+\\', action: 'Toggle sidebar' },
     { keys: 'Ctrl+J', action: 'Toggle log panel' },
     { keys: 'Ctrl+Shift+C', action: 'Compile' },
+    { keys: 'F11', action: 'Focus mode' },
+    { keys: 'Escape', action: 'Exit focus mode' },
   ];
 
   return (
