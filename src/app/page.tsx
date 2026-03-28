@@ -32,8 +32,6 @@ import {
   Flame,
   Star,
   Github,
-  Twitter,
-  Linkedin,
   Mail,
   ArrowRight,
   Zap,
@@ -922,22 +920,6 @@ export default function HomePage() {
                   className="flex h-9 w-9 items-center justify-center rounded-lg border bg-background text-muted-foreground transition-colors hover:border-orange-500/30 hover:text-foreground"
                 >
                   <Github className="h-4 w-4" />
-                </Link>
-                <Link
-                  href="https://twitter.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border bg-background text-muted-foreground transition-colors hover:border-orange-500/30 hover:text-foreground"
-                >
-                  <Twitter className="h-4 w-4" />
-                </Link>
-                <Link
-                  href="https://linkedin.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border bg-background text-muted-foreground transition-colors hover:border-orange-500/30 hover:text-foreground"
-                >
-                  <Linkedin className="h-4 w-4" />
                 </Link>
                 <Link
                   href="mailto:hello@paperforge.dev"
