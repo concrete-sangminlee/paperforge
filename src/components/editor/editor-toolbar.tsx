@@ -386,6 +386,7 @@ function KeyboardShortcutsButton() {
     { keys: 'Ctrl+0', action: 'Reset zoom' },
     { keys: 'Ctrl+N', action: 'New file' },
     { keys: 'Ctrl+Shift+P', action: 'Global search' },
+    { keys: 'Ctrl+\\', action: 'Toggle sidebar' },
   ];
 
   return (
