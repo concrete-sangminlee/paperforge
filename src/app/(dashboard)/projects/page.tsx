@@ -95,10 +95,15 @@ export default function ProjectsPage() {
       );
     }
 
-    // Search (uses deferred value to avoid blocking UI during typing)
+    // Search by name or tags (uses deferred value to avoid blocking UI)
     if (deferredSearch.trim()) {
       const q = deferredSearch.trim().toLowerCase();
-      result = result.filter((p) => p.name.toLowerCase().includes(q));
+      const allTags = (() => { try { return JSON.parse(localStorage.getItem('paperforge-project-tags') || '{}'); } catch { return {}; } })();
+      result = result.filter((p) => {
+        if (p.name.toLowerCase().includes(q)) return true;
+        const tags: string[] = allTags[p.id] || [];
+        return tags.some(t => t.toLowerCase().includes(q));
+      });
     }
 
     // Sort (starred projects first, then by selected order)
