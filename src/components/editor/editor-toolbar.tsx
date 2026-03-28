@@ -311,6 +311,7 @@ function KeyboardShortcutsButton() {
   const shortcuts = [
     { keys: 'Ctrl+S / Cmd+S', action: 'Save file' },
     { keys: 'Ctrl+K / Cmd+K', action: 'Command palette' },
+    { keys: 'Ctrl+P / Cmd+P', action: 'Quick open file' },
     { keys: 'Ctrl+B', action: 'Bold (\\textbf)' },
     { keys: 'Ctrl+I', action: 'Italic (\\textit)' },
     { keys: 'Ctrl+U', action: 'Underline (\\underline)' },

@@ -49,15 +49,14 @@
 
 | Release | Feature | Description |
 |:---:|:---|:---|
-| v4.7 | **ZIP Project Import** | Upload a ZIP from Overleaf/GitHub → instant project with all files imported automatically |
-| v4.7 | **Cross-File Error Navigation** | Click error in compilation log → opens referenced file at exact line (multi-file debugging) |
-| v4.7 | **Bracket Pair Colorization** | Orange/red matching bracket highlighting, active line tint, centralized constants module |
-| v4.7 | **PDF Click-to-Source** | Double-click PDF → jump to approximate source line; numbered document outline (1, 1.1, 1.1.1) |
-| v4.7 | **Enterprise Security** | Single-use reset tokens, IDOR prevention, anti-enumeration, timing-attack mitigation, audit logging |
-| v4.7 | **BibTeX + 160+ Completions** | Dedicated .bib syntax, Greek alphabet, math functions, booktabs, cleveref, TikZ, 27 snippets |
-| v4.7 | **Zero Magic Numbers** | All rate limits, timeouts, thresholds centralized in constants.ts with isValidFilePath() utility |
-| v4.7 | **Production Hardened** | Soft-delete enforcement, WebSocket hardening, worker path traversal fix, ESLint 0 errors |
-| v4.7 | **1,566 Tests** | 131 suites: linting, completions, error parsing, API, validation, services, constants, E2E |
+| v4.7 | **Quick Open (Ctrl+P)** | Jump to any file by name with fuzzy search — VS Code navigation trifecta (Ctrl+P/K/Shift+F) |
+| v4.7 | **ZIP Project Import** | Upload ZIP from Overleaf/GitHub → instant project with all files imported automatically |
+| v4.7 | **Cross-File Error Nav** | Click compilation log error → opens referenced file at exact line (multi-file debugging) |
+| v4.7 | **PDF Click-to-Source** | Double-click PDF → jump to source line; numbered outline (1, 1.1, 1.1.1); bracket colorization |
+| v4.7 | **Enterprise Security** | Single-use tokens, IDOR prevention, anti-enumeration, timing mitigation, zero magic numbers |
+| v4.7 | **160+ Completions** | BibTeX syntax, Greek alphabet, math, booktabs, cleveref, TikZ, 27 snippets, advanced linter |
+| v4.7 | **Production Hardened** | Soft-delete enforcement, WebSocket hardening, centralized constants, ESLint 0 errors |
+| v4.7 | **1,568 Tests** | 131 suites: linting, completions, error parsing, API, validation, services, constants, E2E |
 
 ---
 
