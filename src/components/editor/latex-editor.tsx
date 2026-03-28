@@ -14,7 +14,7 @@ import { WebsocketProvider } from 'y-websocket';
 import { yCollab } from 'y-codemirror.next';
 import { useEditorStore } from '@/store/editor-store';
 import { latexCompletionSource } from '@/lib/latex-completions';
-import { latexLanguage } from '@/lib/latex-language';
+import { getLanguageForFile } from '@/lib/latex-language';
 import { latexLinter } from '@/lib/latex-linter';
 import { latexFoldService } from '@/lib/latex-fold';
 
@@ -278,7 +278,7 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
         foldGutter(),
         bracketMatching(),
         closeBrackets(),
-        latexLanguage,
+        getLanguageForFile(filePath),
         latexFoldService,
         lintGutter(),
         linter((view) => latexLinter(view.state.doc.toString()), { delay: 1000 }),

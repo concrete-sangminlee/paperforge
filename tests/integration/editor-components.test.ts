@@ -16,7 +16,7 @@ describe('editor components', () => {
 
   it('latex-editor has LaTeX language', () => {
     const c = readFileSync(join(process.cwd(), 'src/components/editor/latex-editor.tsx'), 'utf-8');
-    expect(c).toContain('latexLanguage');
+    expect(c).toContain('getLanguageForFile');
     expect(c).toContain('latexCompletionSource');
     expect(c).toContain('latexLinter');
     expect(c).toContain('latexFoldService');

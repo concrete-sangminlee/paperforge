@@ -5,7 +5,7 @@ import { join } from 'path';
 describe('complete feature map', () => {
   // Editor features
   const ed = readFileSync(join(process.cwd(), 'src/components/editor/latex-editor.tsx'), 'utf-8');
-  it('syntax highlighting', () => { expect(ed).toContain('latexLanguage'); });
+  it('syntax highlighting', () => { expect(ed).toContain('getLanguageForFile'); });
   it('autocomplete', () => { expect(ed).toContain('latexCompletionSource'); });
   it('linter', () => { expect(ed).toContain('latexLinter'); });
   it('code folding', () => { expect(ed).toContain('latexFoldService'); });
