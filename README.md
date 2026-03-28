@@ -48,13 +48,13 @@
 
 | Release | Feature | Description |
 |:---:|:---|:---|
-| v4.6 | **Advanced Error Parser** | Undefined references/citations, badbox measurements, runaway arguments, missing number detection |
-| v4.6 | **Smart Linter** | Floating label warnings, \usepackage typo detection, empty \cite{}/\ref{} checks, paragraph break anti-patterns |
-| v4.6 | **Regex Project Search** | Case sensitivity toggle, regex mode (.* button), aria-labels — VS Code-style find-in-project |
-| v4.6 | **Smart Download Filenames** | PDF/DOCX/ZIP exports use project name, ZIP includes .paperforge.json metadata, @media print stylesheet |
-| v4.6 | **160+ LaTeX Completions** | Full Greek alphabet, math functions, set theory, booktabs, cleveref, colors, meta-programming |
-| v4.6 | **VS Code-Quality Editor** | Tabs (middle-click, Ctrl+Tab, Ctrl+1-9), Ln/Col cursor, compilation time, word goals, 27 snippets |
-| v4.6 | **1,550+ Tests** | 130 suites: linting, completions, error parsing, API responses, validation, services, E2E |
+| v4.6 | **BibTeX Language Support** | Dedicated syntax highlighting for .bib files (entry types, field names, keys), file-extension-based language detection |
+| v4.6 | **Advanced Error Parser** | Undefined references/citations, badbox measurements (pt), runaway arguments, missing number/illegal unit |
+| v4.6 | **Smart Linter** | Floating label, \usepackage typos, empty \cite{}/\ref{}, paragraph break anti-patterns |
+| v4.6 | **Regex Project Search** | Case sensitivity (Aa) + regex (.* ) toggles, VS Code-style find-in-project |
+| v4.6 | **Smart Exports** | PDF/DOCX/ZIP use project name, ZIP metadata (.paperforge.json), @media print stylesheet |
+| v4.6 | **160+ Completions + 27 Snippets** | Greek alphabet, math, booktabs, cleveref, TikZ, algorithms, subfigures |
+| v4.6 | **1,558 Tests** | 130 suites: linting, completions, error parsing, API, validation, services, BibTeX, E2E |
 
 ---
 
