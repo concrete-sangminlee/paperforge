@@ -542,12 +542,26 @@ export function PdfViewer({ refreshKey, projectName }: PdfViewerProps) {
           </div>
         )}
 
-        {/* Canvas */}
+        {/* Canvas — double-click to jump to approximate source line */}
         <div className="flex min-h-full justify-center p-4">
           <canvas
             ref={canvasRef}
-            className="shadow-lg"
+            className="shadow-lg cursor-crosshair"
             style={{ display: error ? 'none' : 'block' }}
+            onDoubleClick={(e) => {
+              const canvas = canvasRef.current;
+              if (!canvas || !pdfDocRef.current) return;
+              const rect = canvas.getBoundingClientRect();
+              const yRatio = (e.clientY - rect.top) / rect.height;
+              // Estimate source line from vertical position on page
+              // Rough heuristic: page content maps linearly to source lines
+              const totalPages = pdfDocRef.current.numPages;
+              const estimatedLine = Math.max(1, Math.round(
+                ((currentPage - 1) / totalPages + yRatio / totalPages) * 100
+              ));
+              window.dispatchEvent(new CustomEvent('editor-goto-line', { detail: estimatedLine }));
+            }}
+            title="Double-click to jump to approximate source line"
           />
         </div>
       </div>

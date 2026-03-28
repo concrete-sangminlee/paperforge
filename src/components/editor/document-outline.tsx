@@ -80,6 +80,17 @@ export const DocumentOutline = memo(function DocumentOutline() {
   // Find the minimum level to normalize indentation
   const minLevel = Math.min(...outline.map(o => o.level));
 
+  // Generate section numbers (e.g., 1, 1.1, 1.1.1)
+  const counters: number[] = [0, 0, 0, 0, 0, 0];
+  const numberedOutline = outline.map((item) => {
+    const depth = item.level - minLevel;
+    counters[depth] = (counters[depth] || 0) + 1;
+    // Reset deeper counters
+    for (let d = depth + 1; d < counters.length; d++) counters[d] = 0;
+    const number = counters.slice(0, depth + 1).filter(Boolean).join('.');
+    return { ...item, number };
+  });
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-1.5 border-b px-3 py-2">
@@ -91,7 +102,7 @@ export const DocumentOutline = memo(function DocumentOutline() {
       </div>
       <ScrollArea className="flex-1">
         <nav className="py-1">
-          {outline.map((item, idx) => {
+          {numberedOutline.map((item, idx) => {
             const Icon = getLevelIcon(item.level);
             const indent = (item.level - minLevel) * 12;
             return (
@@ -108,6 +119,7 @@ export const DocumentOutline = memo(function DocumentOutline() {
                 title={`Line ${item.line}`}
               >
                 <Icon className="size-3 shrink-0 opacity-50" />
+                <span className="shrink-0 font-mono text-[10px] text-muted-foreground/50">{item.number}</span>
                 <span className="truncate">{item.title}</span>
                 <span className="ml-auto shrink-0 font-mono text-[10px] opacity-40">
                   {item.line}
