@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { TargetIcon } from 'lucide-react';
 import { useEditorStore } from '@/store/editor-store';
 import { cn } from '@/lib/utils';
@@ -37,6 +37,15 @@ function computeStats(content: string): DocStats {
   return { lines, chars, words };
 }
 
+function formatTimeAgo(date: Date): string {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 5) return 'just now';
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  return `${Math.floor(minutes / 60)}h ago`;
+}
+
 export function EditorStatusBar() {
   const activeTab = useEditorStore((s) => s.activeTab);
   const tabs = useEditorStore((s) => s.tabs);
@@ -52,6 +61,7 @@ export function EditorStatusBar() {
   const [wordGoal, setWordGoal] = useState<number | null>(null);
   const [editingGoal, setEditingGoal] = useState(false);
   const [goalInput, setGoalInput] = useState('');
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Load word goal from localStorage
@@ -59,6 +69,23 @@ export function EditorStatusBar() {
     const saved = localStorage.getItem('paperforge-word-goal');
     if (saved) setWordGoal(parseInt(saved, 10));
   }, []);
+
+  // Track save events (dirty → clean transition)
+  const prevDirty = useRef(tabData?.dirty);
+  const [, tick] = useState(0);
+  useEffect(() => {
+    if (prevDirty.current && !tabData?.dirty) {
+      setLastSaved(new Date());
+    }
+    prevDirty.current = tabData?.dirty;
+  }, [tabData?.dirty]);
+
+  // Re-render every 10s to update "Saved Xs ago"
+  useEffect(() => {
+    if (!lastSaved) return;
+    const id = setInterval(() => tick((n) => n + 1), 10000);
+    return () => clearInterval(id);
+  }, [lastSaved]);
 
   useEffect(() => {
     if (!tabData) { setStats(null); return; }
@@ -148,12 +175,17 @@ export function EditorStatusBar() {
         <span>UTF-8</span>
         <span className="text-border">|</span>
         <span>{fontSize}px</span>
-        {tabData.dirty && (
+        {tabData.dirty ? (
           <>
             <span className="text-border">|</span>
             <span className="text-amber-500">Modified</span>
           </>
-        )}
+        ) : lastSaved ? (
+          <>
+            <span className="text-border">|</span>
+            <span className="text-emerald-500/70">Saved {formatTimeAgo(lastSaved)}</span>
+          </>
+        ) : null}
       </div>
     </div>
   );
