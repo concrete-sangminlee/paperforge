@@ -6,7 +6,7 @@
  *   Email: demo@paperforge.dev
  *   Password: Demo1234!
  */
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../src/generated/prisma/client/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();

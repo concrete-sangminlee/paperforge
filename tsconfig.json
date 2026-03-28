@@ -22,5 +22,5 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "worker", "websocket", "prisma/seed.ts"]
+  "exclude": ["node_modules", "worker", "websocket", "prisma/seed.ts", "prisma/seed-demo.ts"]
 }
