@@ -104,7 +104,7 @@ export default function ApiDocsPage() {
         <p className="mt-2 text-lg text-muted-foreground">
           40 REST endpoints. All responses follow <code className="rounded bg-muted px-1.5 py-0.5 text-sm">{'{ success, data }'}</code> format.
         </p>
-        <p className="mt-1 text-sm text-muted-foreground">Base URL: <code className="rounded bg-muted px-1.5 py-0.5">https://projectlatexcompiler.vercel.app</code></p>
+        <p className="mt-1 text-sm text-muted-foreground">Base URL: <code className="rounded bg-muted px-1.5 py-0.5">https://your-domain.com</code> or <code className="rounded bg-muted px-1.5 py-0.5">http://localhost:3000</code></p>
 
         <div className="mt-12 space-y-6">
           {GROUPS.map((group) => (

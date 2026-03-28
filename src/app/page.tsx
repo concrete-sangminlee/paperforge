@@ -155,8 +155,8 @@ const features = [
 ];
 
 const stats = [
-  { value: "10,000+", label: "Papers Written", icon: FileText },
-  { value: "500+", label: "Institutions", icon: Building2 },
+  { value: "1,558", label: "Tests Passing", icon: FileText },
+  { value: "160+", label: "LaTeX Completions", icon: Building2 },
   { value: "99.9%", label: "Uptime", icon: Clock },
   { value: "100%", label: "Open Source", icon: Heart },
 ];
@@ -623,7 +623,7 @@ export default function HomePage() {
             {/* Trust indicators */}
             <div className="mt-16 flex flex-col items-center gap-4">
               <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">
-                Trusted by researchers at 50+ institutions
+                Built for researchers at leading institutions
               </p>
               <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
                 {trustInstitutions.map((name) => (
