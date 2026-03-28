@@ -541,9 +541,9 @@ PaperForge is built on the shoulders of outstanding open-source projects:
 
 **Built with determination by [concrete-sangminlee](https://github.com/concrete-sangminlee)**
 
-**210+ source files · 514 tests · 40 API routes · 13 database models · 8 Docker services · v2.2.0 · [Live Demo](https://projectlatexcompiler.vercel.app)**
+**220+ source files · 514 tests · 40 API routes · 11 public pages · 8 Docker services · v2.2.0 · [Live Demo](https://projectlatexcompiler.vercel.app)**
 
-*Built with 120 iterations of continuous engineering*
+[Pricing](https://projectlatexcompiler.vercel.app/pricing) · [Docs](https://projectlatexcompiler.vercel.app/docs) · [API Reference](https://projectlatexcompiler.vercel.app/docs/api) · [Status](https://projectlatexcompiler.vercel.app/status) · [Changelog](https://projectlatexcompiler.vercel.app/changelog)
 
 If PaperForge helps your research, consider giving it a star!
 
