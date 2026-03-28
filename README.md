@@ -541,7 +541,7 @@ PaperForge is built on the shoulders of outstanding open-source projects:
 
 **Built with determination by [concrete-sangminlee](https://github.com/concrete-sangminlee)**
 
-**210+ source files · 454 tests · 40 API routes · 13 database models · 8 Docker services · v2.2.0 · [Live Demo](https://projectlatexcompiler.vercel.app)**
+**210+ source files · 514 tests · 40 API routes · 13 database models · 8 Docker services · v2.2.0 · [Live Demo](https://projectlatexcompiler.vercel.app)**
 
 *Built with 120 iterations of continuous engineering*
 
