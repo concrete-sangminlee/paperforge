@@ -49,14 +49,14 @@
 
 | Release | Feature | Description |
 |:---:|:---|:---|
-| v5.0 | **AI LaTeX Assistant** | Claude-powered: write, fix, explain, or convert LaTeX — 4 modes with file context |
-| v5.0 | **Live Math Preview** | KaTeX-rendered equations in real-time — click any formula to jump to source line |
-| v5.0 | **Citation + Symbol Pickers** | Browse .bib entries, 70+ visual symbols — click to insert |
-| v5.0 | **GitHub + ZIP Import** | Paste GitHub URL or upload ZIP → instant project import with auto branch detection |
-| v5.0 | **9 Editor Panels** | PDF, History, Git, Outline, Symbols, Citations, Math Preview, + Quick Open (Ctrl+P) |
-| v5.0 | **Enterprise Security** | Single-use tokens, IDOR prevention, anti-enumeration, timing mitigation, audit logging |
-| v5.0 | **160+ Completions** | BibTeX syntax, 27 snippets, smart linter (7 checks), regex search, cross-file error nav |
-| v5.0 | **1,569 Tests** | 131 suites · 0 type errors · 0 lint errors · 0 dead code · centralized constants |
+| v5.2 | **AI LaTeX Assistant** | Claude-powered: write, fix, explain, convert LaTeX — 4 modes with file context, rate limited |
+| v5.2 | **Live Math Preview** | KaTeX-rendered equations in real-time — click any formula to jump to source line |
+| v5.2 | **Project Activity** | Timeline of compilations and versions with color-coded icons and relative timestamps |
+| v5.2 | **Citation + Symbol Pickers** | Browse .bib entries + 70+ visual symbols — click to insert at cursor |
+| v5.2 | **GitHub + ZIP Import** | Paste GitHub URL or upload ZIP → instant project creation with auto branch detection |
+| v5.2 | **9 Editor Panels** | PDF, History, Git, Outline, Symbols, Citations, Math, AI Assistant |
+| v5.2 | **160+ Completions** | BibTeX syntax, 27 snippets, smart linter, regex search, cross-file error navigation |
+| v5.2 | **1,572 Tests** | 131 suites · 0 type errors · 0 lint errors · 0 dead code · 46 API routes |
 
 ---
 
@@ -485,7 +485,7 @@ Includes all services: Next.js app, WebSocket server, compilation workers, Postg
 - [x] 100% API standardization (all routes use consistent response format)
 - [x] File upload validation (size limits, blocked extensions, path traversal)
 - [x] Admin real-time dashboards (15s auto-refresh)
-- [x] Comprehensive test suite (1,569 tests — linting, completions, error parsing, API, services, E2E)
+- [x] Comprehensive test suite (1,572 tests — linting, completions, error parsing, API, services, E2E)
 - [x] Email error handling (graceful SMTP failure recovery)
 - [x] LaTeX syntax highlighting (custom StreamLanguage parser)
 - [x] LaTeX autocomplete (70+ commands, Greek letters, environments)
@@ -565,7 +565,7 @@ PaperForge is built on the shoulders of outstanding open-source projects:
 
 **Built with determination by [concrete-sangminlee](https://github.com/concrete-sangminlee)**
 
-**230+ source files · 1,569 tests (131 suites) · 45 API routes · 24 pages · 8 Docker services · v5.0.0 · [Live Demo](https://projectlatexcompiler.vercel.app)**
+**230+ source files · 1,572 tests (131 suites) · 46 API routes · 24 pages · 8 Docker services · v5.2.0 · [Live Demo](https://projectlatexcompiler.vercel.app)**
 
 [Pricing](https://projectlatexcompiler.vercel.app/pricing) · [Getting Started](https://projectlatexcompiler.vercel.app/docs/getting-started) · [Docs](https://projectlatexcompiler.vercel.app/docs) · [API](https://projectlatexcompiler.vercel.app/docs/api) · [Symbols](https://projectlatexcompiler.vercel.app/docs/symbols) · [Templates](https://projectlatexcompiler.vercel.app/docs/templates) · [Status](https://projectlatexcompiler.vercel.app/status) · [Changelog](https://projectlatexcompiler.vercel.app/changelog)
 
