@@ -11,6 +11,7 @@ import {
   CopyIcon,
   Trash2Icon,
   Share2Icon,
+  PencilIcon,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -91,6 +92,8 @@ export function ProjectCard({ project, currentUserId, viewMode = 'grid' }: Proje
   const router = useRouter();
   const [shareOpen, setShareOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [renaming, setRenaming] = useState(false);
+  const [newName, setNewName] = useState(project.name);
   const maxAvatars = 3;
   const visibleMembers = project.members.slice(0, maxAvatars);
   const remainingCount = project.members.length - maxAvatars;
@@ -146,6 +149,27 @@ export function ProjectCard({ project, currentUserId, viewMode = 'grid' }: Proje
     } finally {
       setDeleting(false);
     }
+  }
+
+  async function handleRename() {
+    const trimmed = newName.trim();
+    if (!trimmed || trimmed === project.name) { setRenaming(false); return; }
+    try {
+      const res = await fetch(`/api/v1/projects/${project.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: trimmed }),
+      });
+      if (res.ok) {
+        toast.success('Project renamed');
+        window.dispatchEvent(new Event('focus'));
+      } else {
+        toast.error('Failed to rename');
+      }
+    } catch {
+      toast.error('Failed to rename');
+    }
+    setRenaming(false);
   }
 
   // ── List view ──────────────────────────────────────────────
@@ -236,6 +260,12 @@ export function ProjectCard({ project, currentUserId, viewMode = 'grid' }: Proje
                 <ExternalLinkIcon className="size-4" />
                 Open
               </DropdownMenuItem>
+              {isOwner && (
+                <DropdownMenuItem onClick={() => setRenaming(true)}>
+                  <PencilIcon className="size-4" />
+                  Rename
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={() => void handleDuplicate()}>
                 <CopyIcon className="size-4" />
                 Duplicate
@@ -286,7 +316,18 @@ export function ProjectCard({ project, currentUserId, viewMode = 'grid' }: Proje
         >
           <CardHeader>
             <div className="flex items-start justify-between gap-2">
-              <CardTitle className="truncate">{project.name}</CardTitle>
+              {renaming ? (
+                <input
+                  autoFocus
+                  className="w-full rounded border bg-background px-2 py-0.5 text-sm font-semibold outline-none focus:ring-1 focus:ring-ring"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') void handleRename(); if (e.key === 'Escape') setRenaming(false); }}
+                  onBlur={() => void handleRename()}
+                />
+              ) : (
+                <CardTitle className="truncate">{project.name}</CardTitle>
+              )}
               <div className="flex shrink-0 items-center gap-1.5">
                 <Badge
                   className={`border-0 text-[10px] uppercase ${compilerBadgeBg[project.compiler] ?? ''}`}
@@ -363,6 +404,12 @@ export function ProjectCard({ project, currentUserId, viewMode = 'grid' }: Proje
               <ExternalLinkIcon className="size-4" />
               Open
             </DropdownMenuItem>
+            {isOwner && (
+              <DropdownMenuItem onClick={() => setRenaming(true)}>
+                <PencilIcon className="size-4" />
+                Rename
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={() => void handleDuplicate()}>
               <CopyIcon className="size-4" />
               Duplicate
