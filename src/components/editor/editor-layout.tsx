@@ -247,6 +247,13 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
           setActiveTab(t[idx].path);
         }
       }
+      // Ctrl+W to close current tab
+      if ((e.ctrlKey || e.metaKey) && e.key === 'w') {
+        e.preventDefault();
+        const active = useEditorStore.getState().activeTab;
+        if (active) closeTab(active);
+        return;
+      }
       // Ctrl+= / Ctrl+- to zoom editor font
       if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+')) {
         e.preventDefault();

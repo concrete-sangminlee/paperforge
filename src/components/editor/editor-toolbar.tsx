@@ -381,6 +381,7 @@ function KeyboardShortcutsButton() {
     { keys: 'Ctrl+Tab', action: 'Next tab' },
     { keys: 'Ctrl+Shift+Tab', action: 'Previous tab' },
     { keys: 'Ctrl+1-9', action: 'Jump to tab' },
+    { keys: 'Ctrl+W', action: 'Close current tab' },
     { keys: 'Ctrl+= / Ctrl+-', action: 'Zoom in / out' },
     { keys: 'Ctrl+0', action: 'Reset zoom' },
     { keys: 'Ctrl+Shift+P', action: 'Global search' },
