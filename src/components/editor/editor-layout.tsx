@@ -236,13 +236,37 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
         setPdfRefreshKey((k) => k + 1);
       }
     }
+    function handleOpenFileAtLine(e: Event) {
+      const { path: filePath, line } = (e as CustomEvent<{ path: string; line: number }>).detail;
+      // Try to open the file from the project and jump to line
+      const existingTab = useEditorStore.getState().tabs.find((t) => t.path === filePath || t.path.endsWith(filePath));
+      if (existingTab) {
+        setActiveTab(existingTab.path);
+        setTimeout(() => window.dispatchEvent(new CustomEvent('editor-goto-line', { detail: line })), 100);
+      } else {
+        // Fetch file content and open it
+        fetch(`/api/v1/projects/${projectId}/files/${filePath}`)
+          .then((r) => r.json())
+          .then((data) => {
+            const content = data.data?.content ?? data.content ?? '';
+            openFile(filePath, content);
+            setTimeout(() => window.dispatchEvent(new CustomEvent('editor-goto-line', { detail: line })), 200);
+          })
+          .catch(() => {
+            // File might not exist — just jump to line in current file
+            window.dispatchEvent(new CustomEvent('editor-goto-line', { detail: line }));
+          });
+      }
+    }
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('find-in-files', handleFindEvent);
     window.addEventListener('latex-compile', handleCompileEvent);
+    window.addEventListener('editor-open-file-at-line', handleOpenFileAtLine);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('find-in-files', handleFindEvent);
       window.removeEventListener('latex-compile', handleCompileEvent);
+      window.removeEventListener('editor-open-file-at-line', handleOpenFileAtLine);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

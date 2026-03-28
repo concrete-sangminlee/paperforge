@@ -428,9 +428,11 @@ export function CompilationLog() {
               <div className="p-1" role="log" aria-live="polite" aria-label="Compilation output">
                 {filteredLines.length > 0 ? (
                   filteredLines.map((line) => {
-                    // Check if line contains a LaTeX line reference (e.g., "l.42")
-                    const lineRef = line.text.match(/^l\.(\d+)/);
-                    const isClickable = line.level === 'error' && lineRef;
+                    // Detect line references: "l.42" or "line 42" or "at line 42"
+                    const lineRef = line.text.match(/^l\.(\d+)/) || line.text.match(/(?:at )?line (\d+)/i);
+                    // Detect file references: "(./chapter1.tex)" or "file.tex"
+                    const fileRef = line.text.match(/\(\.\/([^)]+\.(?:tex|cls|sty|bib))\)/) || line.text.match(/([a-zA-Z0-9_/-]+\.(?:tex|cls|sty|bib))/);
+                    const isClickable = lineRef != null;
 
                     return (
                       <div
@@ -442,9 +444,16 @@ export function CompilationLog() {
                         )}
                         onClick={isClickable ? () => {
                           const targetLine = parseInt(lineRef[1], 10);
-                          window.dispatchEvent(new CustomEvent('editor-goto-line', { detail: targetLine }));
+                          if (fileRef) {
+                            // Open the referenced file and jump to line
+                            window.dispatchEvent(new CustomEvent('editor-open-file-at-line', {
+                              detail: { path: fileRef[1], line: targetLine },
+                            }));
+                          } else {
+                            window.dispatchEvent(new CustomEvent('editor-goto-line', { detail: targetLine }));
+                          }
                         } : undefined}
-                        title={isClickable ? `Go to line ${lineRef[1]}` : undefined}
+                        title={isClickable ? (fileRef ? `Open ${fileRef[1]}:${lineRef[1]}` : `Go to line ${lineRef[1]}`) : undefined}
                       >
                         {/* Line number gutter */}
                         <span className="w-9 shrink-0 select-none pr-2 text-right text-zinc-400 dark:text-zinc-600">
