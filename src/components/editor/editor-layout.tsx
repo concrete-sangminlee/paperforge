@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react';
-import { FileIcon, GitBranchIcon, HistoryIcon, XIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, ChevronDownIcon, ChevronUpIcon, FileTextIcon, CodeIcon, WifiOff, ListTreeIcon, LoaderCircleIcon, SigmaIcon, BookOpenIcon, FunctionSquareIcon, SparklesIcon } from 'lucide-react';
+import { FileIcon, GitBranchIcon, HistoryIcon, XIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, ChevronDownIcon, ChevronUpIcon, FileTextIcon, CodeIcon, WifiOff, ListTreeIcon, LoaderCircleIcon, SigmaIcon, BookOpenIcon, FunctionSquareIcon, SparklesIcon, TableIcon } from 'lucide-react';
 import { FileTree } from './file-tree';
 import { LaTeXEditor } from './latex-editor';
 import { EditorToolbar } from './editor-toolbar';
@@ -20,6 +20,7 @@ const CitationPicker = lazy(() => import('./citation-picker').then(m => ({ defau
 const MathPreview = lazy(() => import('./math-preview').then(m => ({ default: m.MathPreview })));
 const AiAssistant = lazy(() => import('./ai-assistant').then(m => ({ default: m.AiAssistant })));
 const OnboardingTips = lazy(() => import('./onboarding-tips').then(m => ({ default: m.OnboardingTips })));
+const TableGenerator = lazy(() => import('./table-generator').then(m => ({ default: m.TableGenerator })));
 import { useEditorStore } from '@/store/editor-store';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
@@ -44,7 +45,7 @@ interface EditorLayoutProps {
   gitRemoteUrl?: string;
 }
 
-type RightPanel = 'pdf' | 'history' | 'git' | 'outline' | 'symbols' | 'cite' | 'math' | 'ai';
+type RightPanel = 'pdf' | 'history' | 'git' | 'outline' | 'symbols' | 'cite' | 'math' | 'ai' | 'table';
 
 import { EDITOR } from '@/lib/constants';
 const AUTO_COMPILE_DEBOUNCE_MS = EDITOR.AUTO_COMPILE_DEBOUNCE_MS;
@@ -569,6 +570,16 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
               <SparklesIcon className="size-3.5 text-orange-500" />
               AI
             </Button>
+            <Button
+              size="sm"
+              variant={rightPanel === 'table' ? 'secondary' : 'ghost'}
+              className="h-7 gap-1.5 px-2 text-xs"
+              onClick={() => setRightPanel('table')}
+              aria-pressed={rightPanel === 'table'}
+            >
+              <TableIcon className="size-3.5" />
+              Table
+            </Button>
           </div>
 
           {/* Panel content */}
@@ -582,6 +593,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
               {rightPanel === 'cite' && <CitationPicker />}
               {rightPanel === 'math' && <MathPreview />}
               {rightPanel === 'ai' && <AiAssistant />}
+              {rightPanel === 'table' && <TableGenerator />}
             </Suspense>
           </div>
         </div>

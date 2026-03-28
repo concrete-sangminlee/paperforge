@@ -301,6 +301,7 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
         saveKeymap,
         themeCompartment.of(theme === 'dark' ? oneDark : []),
         wrapCompartment.of(useEditorStore.getState().wordWrap ? EditorView.lineWrapping : []),
+        EditorView.contentAttributes.of({ spellcheck: 'true', autocorrect: 'on' }),
         EditorView.theme({
           '&': { height: '100%', minHeight: '0' },
           '.cm-scroller': { overflow: 'auto', fontFamily: 'var(--font-mono, monospace)' },
