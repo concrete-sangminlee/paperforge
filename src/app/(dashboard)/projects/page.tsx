@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/select';
 import { ProjectCard, type ProjectData } from '@/components/dashboard/project-card';
 import { CreateProjectDialog } from '@/components/dashboard/create-project-dialog';
+import { ImportProjectDialog } from '@/components/dashboard/import-project-dialog';
 import { StorageBar } from '@/components/dashboard/storage-bar';
 
 type SortOption = 'updated' | 'name-asc' | 'name-desc' | 'created';
@@ -278,7 +279,10 @@ export default function ProjectsPage() {
             </p>
           </div>
         </div>
-        <CreateProjectDialog />
+        <div className="flex gap-2">
+          <ImportProjectDialog />
+          <CreateProjectDialog />
+        </div>
       </div>
 
       {user?.storageQuotaBytes && (
