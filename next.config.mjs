@@ -81,6 +81,12 @@ const nextConfig = {
       "@codemirror/view",
       "@codemirror/state",
       "@codemirror/language",
+      "@codemirror/autocomplete",
+      "@codemirror/commands",
+      "@codemirror/lint",
+      "@codemirror/search",
+      "cmdk",
+      "sonner",
     ],
   },
 };

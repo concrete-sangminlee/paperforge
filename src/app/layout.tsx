@@ -1,11 +1,16 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
+import dynamic from "next/dynamic";
 import localFont from "next/font/local";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
-import { CommandPalette } from "@/components/shared/command-palette";
 import { NavigationProgress } from "@/components/shared/navigation-progress";
+
+const CommandPalette = dynamic(
+  () => import("@/components/shared/command-palette").then((m) => m.CommandPalette),
+  { ssr: false }
+);
 import "./globals.css";
 
 const geistSans = localFont({
