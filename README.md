@@ -48,13 +48,13 @@
 
 | Release | Feature | Description |
 |:---:|:---|:---|
-| v4.6 | **Auth Security** | Anti-enumeration on register/login, timing-attack mitigation (constant-time), JWT secret length validation (32+) |
-| v4.6 | **BibTeX Language Support** | Dedicated syntax highlighting for .bib files, file-extension-based language detection |
-| v4.6 | **Advanced Error Parser** | Undefined refs/citations, badbox measurements, runaway arguments, missing number |
+| v4.6 | **PDF Click-to-Source** | Double-click PDF to jump to approximate source line in editor (SyncTeX-style navigation) |
+| v4.6 | **Numbered Document Outline** | Auto-generated section numbers (1, 1.1, 1.1.1) with click-to-jump navigation |
+| v4.6 | **Enterprise Security** | Single-use reset tokens, IDOR prevention, anti-enumeration, timing-attack mitigation, audit logging |
+| v4.6 | **BibTeX + 160+ Completions** | Dedicated .bib syntax highlighting, Greek alphabet, math, booktabs, TikZ, 27 snippets |
 | v4.6 | **Smart Linter + Search** | Floating label, typos, empty refs, regex + case-sensitive find-in-project |
+| v4.6 | **Production Hardening** | Soft-delete enforcement, WebSocket limits/ping/shutdown, worker path traversal fix |
 | v4.6 | **Smart Exports** | PDF/DOCX/ZIP use project name, .paperforge.json metadata, @media print stylesheet |
-| v4.6 | **160+ Completions** | Greek alphabet, math functions, booktabs, cleveref, TikZ, 27 snippets |
-| v4.6 | **WebSocket Hardening** | Fail-fast auth, UUID validation, connection limits, ping/pong, graceful SIGTERM |
 | v4.6 | **1,558 Tests** | 130 suites: linting, completions, error parsing, API, validation, services, BibTeX, E2E |
 
 ---
