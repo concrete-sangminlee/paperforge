@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react';
-import { FileIcon, GitBranchIcon, HistoryIcon, XIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, ChevronDownIcon, ChevronUpIcon, FileTextIcon, CodeIcon, WifiOff, ListTreeIcon, LoaderCircleIcon, SigmaIcon, BookOpenIcon } from 'lucide-react';
+import { FileIcon, GitBranchIcon, HistoryIcon, XIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, ChevronDownIcon, ChevronUpIcon, FileTextIcon, CodeIcon, WifiOff, ListTreeIcon, LoaderCircleIcon, SigmaIcon, BookOpenIcon, FunctionSquareIcon } from 'lucide-react';
 import { FileTree } from './file-tree';
 import { LaTeXEditor } from './latex-editor';
 import { EditorToolbar } from './editor-toolbar';
@@ -17,6 +17,7 @@ const GitPanel = lazy(() => import('./git-panel').then(m => ({ default: m.GitPan
 const DocumentOutline = lazy(() => import('./document-outline').then(m => ({ default: m.DocumentOutline })));
 const SymbolPicker = lazy(() => import('./symbol-picker').then(m => ({ default: m.SymbolPicker })));
 const CitationPicker = lazy(() => import('./citation-picker').then(m => ({ default: m.CitationPicker })));
+const MathPreview = lazy(() => import('./math-preview').then(m => ({ default: m.MathPreview })));
 import { useEditorStore } from '@/store/editor-store';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
@@ -41,7 +42,7 @@ interface EditorLayoutProps {
   gitRemoteUrl?: string;
 }
 
-type RightPanel = 'pdf' | 'history' | 'git' | 'outline' | 'symbols' | 'cite';
+type RightPanel = 'pdf' | 'history' | 'git' | 'outline' | 'symbols' | 'cite' | 'math';
 
 import { EDITOR } from '@/lib/constants';
 const AUTO_COMPILE_DEBOUNCE_MS = EDITOR.AUTO_COMPILE_DEBOUNCE_MS;
@@ -546,6 +547,16 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
               <BookOpenIcon className="size-3.5" />
               Cite
             </Button>
+            <Button
+              size="sm"
+              variant={rightPanel === 'math' ? 'secondary' : 'ghost'}
+              className="h-7 gap-1.5 px-2 text-xs"
+              onClick={() => setRightPanel('math')}
+              aria-pressed={rightPanel === 'math'}
+            >
+              <FunctionSquareIcon className="size-3.5" />
+              Math
+            </Button>
           </div>
 
           {/* Panel content */}
@@ -557,6 +568,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
               {rightPanel === 'outline' && <DocumentOutline />}
               {rightPanel === 'symbols' && <SymbolPicker />}
               {rightPanel === 'cite' && <CitationPicker />}
+              {rightPanel === 'math' && <MathPreview />}
             </Suspense>
           </div>
         </div>
