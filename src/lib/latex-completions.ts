@@ -75,6 +75,101 @@ const LATEX_COMMANDS: Completion[] = [
   // Hyperlinks
   { label: '\\href', type: 'function', detail: 'Hyperlink', apply: '\\href{$0}{$1}' },
   { label: '\\url', type: 'function', detail: 'URL', apply: '\\url{$0}' },
+
+  // Math functions
+  { label: '\\sin', type: 'variable', detail: 'Sine function' },
+  { label: '\\cos', type: 'variable', detail: 'Cosine function' },
+  { label: '\\tan', type: 'variable', detail: 'Tangent function' },
+  { label: '\\log', type: 'variable', detail: 'Logarithm' },
+  { label: '\\ln', type: 'variable', detail: 'Natural logarithm' },
+  { label: '\\exp', type: 'variable', detail: 'Exponential' },
+  { label: '\\det', type: 'variable', detail: 'Determinant' },
+  { label: '\\min', type: 'variable', detail: 'Minimum' },
+  { label: '\\max', type: 'variable', detail: 'Maximum' },
+  { label: '\\sup', type: 'variable', detail: 'Supremum' },
+  { label: '\\inf', type: 'variable', detail: 'Infimum' },
+  { label: '\\prod', type: 'variable', detail: 'Product', apply: '\\prod_{$0}^{$1}' },
+  { label: '\\binom', type: 'function', detail: 'Binomial coefficient', apply: '\\binom{$0}{$1}' },
+
+  // Missing Greek letters
+  { label: '\\phi', type: 'variable', detail: 'Greek phi' },
+  { label: '\\psi', type: 'variable', detail: 'Greek psi' },
+  { label: '\\rho', type: 'variable', detail: 'Greek rho' },
+  { label: '\\tau', type: 'variable', detail: 'Greek tau' },
+  { label: '\\chi', type: 'variable', detail: 'Greek chi' },
+  { label: '\\eta', type: 'variable', detail: 'Greek eta' },
+  { label: '\\zeta', type: 'variable', detail: 'Greek zeta' },
+  { label: '\\kappa', type: 'variable', detail: 'Greek kappa' },
+  { label: '\\nu', type: 'variable', detail: 'Greek nu' },
+  { label: '\\xi', type: 'variable', detail: 'Greek xi' },
+  { label: '\\iota', type: 'variable', detail: 'Greek iota' },
+  { label: '\\Gamma', type: 'variable', detail: 'Capital Gamma' },
+  { label: '\\Delta', type: 'variable', detail: 'Capital Delta' },
+  { label: '\\Theta', type: 'variable', detail: 'Capital Theta' },
+  { label: '\\Lambda', type: 'variable', detail: 'Capital Lambda' },
+  { label: '\\Sigma', type: 'variable', detail: 'Capital Sigma' },
+  { label: '\\Omega', type: 'variable', detail: 'Capital Omega' },
+  { label: '\\Phi', type: 'variable', detail: 'Capital Phi' },
+  { label: '\\Psi', type: 'variable', detail: 'Capital Psi' },
+  { label: '\\Pi', type: 'variable', detail: 'Capital Pi' },
+
+  // Math symbols & operators
+  { label: '\\leq', type: 'variable', detail: 'Less than or equal' },
+  { label: '\\geq', type: 'variable', detail: 'Greater than or equal' },
+  { label: '\\neq', type: 'variable', detail: 'Not equal' },
+  { label: '\\approx', type: 'variable', detail: 'Approximately equal' },
+  { label: '\\equiv', type: 'variable', detail: 'Equivalent' },
+  { label: '\\subset', type: 'variable', detail: 'Subset' },
+  { label: '\\supset', type: 'variable', detail: 'Superset' },
+  { label: '\\in', type: 'variable', detail: 'Element of' },
+  { label: '\\cup', type: 'variable', detail: 'Union' },
+  { label: '\\cap', type: 'variable', detail: 'Intersection' },
+  { label: '\\forall', type: 'variable', detail: 'For all' },
+  { label: '\\exists', type: 'variable', detail: 'Exists' },
+  { label: '\\rightarrow', type: 'variable', detail: 'Right arrow' },
+  { label: '\\leftarrow', type: 'variable', detail: 'Left arrow' },
+  { label: '\\Rightarrow', type: 'variable', detail: 'Double right arrow' },
+  { label: '\\Leftrightarrow', type: 'variable', detail: 'Double bidirectional' },
+  { label: '\\cdot', type: 'variable', detail: 'Center dot' },
+  { label: '\\times', type: 'variable', detail: 'Multiplication' },
+  { label: '\\div', type: 'variable', detail: 'Division' },
+  { label: '\\pm', type: 'variable', detail: 'Plus-minus' },
+  { label: '\\ldots', type: 'variable', detail: 'Horizontal dots' },
+  { label: '\\cdots', type: 'variable', detail: 'Center dots' },
+  { label: '\\vdots', type: 'variable', detail: 'Vertical dots' },
+  { label: '\\ddots', type: 'variable', detail: 'Diagonal dots' },
+
+  // Meta-programming / Definitions
+  { label: '\\newcommand', type: 'keyword', detail: 'Define new command', apply: '\\newcommand{\\$0}[1]{$1}' },
+  { label: '\\renewcommand', type: 'keyword', detail: 'Redefine command', apply: '\\renewcommand{\\$0}{$1}' },
+  { label: '\\newenvironment', type: 'keyword', detail: 'Define new environment', apply: '\\newenvironment{$0}{$1}{$2}' },
+  { label: '\\input', type: 'keyword', detail: 'Include file', apply: '\\input{$0}' },
+  { label: '\\include', type: 'keyword', detail: 'Include chapter', apply: '\\include{$0}' },
+
+  // Tables
+  { label: '\\hline', type: 'keyword', detail: 'Horizontal line' },
+  { label: '\\cline', type: 'function', detail: 'Partial horizontal line', apply: '\\cline{$0-$1}' },
+  { label: '\\multicolumn', type: 'function', detail: 'Span columns', apply: '\\multicolumn{$0}{c}{$1}' },
+  { label: '\\multirow', type: 'function', detail: 'Span rows', apply: '\\multirow{$0}{*}{$1}' },
+  { label: '\\toprule', type: 'keyword', detail: 'booktabs top rule' },
+  { label: '\\midrule', type: 'keyword', detail: 'booktabs mid rule' },
+  { label: '\\bottomrule', type: 'keyword', detail: 'booktabs bottom rule' },
+
+  // References (modern)
+  { label: '\\pageref', type: 'function', detail: 'Page reference', apply: '\\pageref{$0}' },
+  { label: '\\eqref', type: 'function', detail: 'Equation reference', apply: '\\eqref{$0}' },
+  { label: '\\autoref', type: 'function', detail: 'Auto-typed reference', apply: '\\autoref{$0}' },
+  { label: '\\cref', type: 'function', detail: 'cleveref reference', apply: '\\cref{$0}' },
+
+  // Page layout
+  { label: '\\setlength', type: 'function', detail: 'Set length', apply: '\\setlength{\\$0}{$1}' },
+  { label: '\\geometry', type: 'function', detail: 'Page geometry', apply: '\\geometry{margin=$0}' },
+  { label: '\\pagestyle', type: 'function', detail: 'Page style', apply: '\\pagestyle{$0}' },
+  { label: '\\thispagestyle', type: 'function', detail: 'This page style', apply: '\\thispagestyle{$0}' },
+
+  // Colors
+  { label: '\\textcolor', type: 'function', detail: 'Colored text', apply: '\\textcolor{$0}{$1}' },
+  { label: '\\colorbox', type: 'function', detail: 'Color background', apply: '\\colorbox{$0}{$1}' },
 ];
 
 const LATEX_ENVIRONMENTS: Completion[] = [

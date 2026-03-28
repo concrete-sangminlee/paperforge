@@ -203,6 +203,29 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'f') {
         e.preventDefault();
         setFindOpen(true);
+        return;
+      }
+      // Ctrl+Tab / Ctrl+Shift+Tab to cycle tabs
+      if (e.ctrlKey && e.key === 'Tab') {
+        e.preventDefault();
+        const t = useEditorStore.getState().tabs;
+        const active = useEditorStore.getState().activeTab;
+        if (t.length < 2) return;
+        const idx = t.findIndex((x) => x.path === active);
+        const next = e.shiftKey
+          ? (idx - 1 + t.length) % t.length
+          : (idx + 1) % t.length;
+        setActiveTab(t[next].path);
+        return;
+      }
+      // Ctrl+1-9 to jump to tab by position
+      if ((e.ctrlKey || e.metaKey) && e.key >= '1' && e.key <= '9') {
+        const t = useEditorStore.getState().tabs;
+        const idx = parseInt(e.key, 10) - 1;
+        if (idx < t.length) {
+          e.preventDefault();
+          setActiveTab(t[idx].path);
+        }
       }
     }
     function handleFindEvent() { setFindOpen(true); }
@@ -305,10 +328,15 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
                 <button
                   key={tab.path}
                   onClick={() => setActiveTab(tab.path)}
+                  onMouseDown={(e) => {
+                    // Middle-click to close tab
+                    if (e.button === 1) { e.preventDefault(); closeTab(tab.path); }
+                  }}
                   onContextMenu={(e) => {
                     e.preventDefault();
                     setTabContextMenu({ x: e.clientX, y: e.clientY, path: tab.path });
                   }}
+                  title={tab.path}
                   className={cn(
                     'group flex items-center gap-1.5 rounded-t-md border border-b-0 px-3 py-1.5 text-xs transition-colors',
                     activeTab === tab.path
@@ -316,7 +344,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
                       : 'border-transparent bg-muted/60 text-muted-foreground hover:bg-muted',
                   )}
                 >
-                  <span className="max-w-[140px] truncate">{tab.path}</span>
+                  <span className="max-w-[140px] truncate">{tab.path.split('/').pop()}</span>
                   {tab.dirty && (
                     <span
                       className="size-1.5 rounded-full bg-amber-400"
