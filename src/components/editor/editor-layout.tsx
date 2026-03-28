@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react';
-import { FileIcon, GitBranchIcon, HistoryIcon, XIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, ChevronDownIcon, ChevronUpIcon, FileTextIcon, CodeIcon, WifiOff, ListTreeIcon, LoaderCircleIcon } from 'lucide-react';
+import { FileIcon, GitBranchIcon, HistoryIcon, XIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, ChevronDownIcon, ChevronUpIcon, FileTextIcon, CodeIcon, WifiOff, ListTreeIcon, LoaderCircleIcon, SigmaIcon } from 'lucide-react';
 import { FileTree } from './file-tree';
 import { LaTeXEditor } from './latex-editor';
 import { EditorToolbar } from './editor-toolbar';
@@ -15,6 +15,7 @@ import { Collaborators } from './collaborators';
 const VersionHistory = lazy(() => import('./version-history').then(m => ({ default: m.VersionHistory })));
 const GitPanel = lazy(() => import('./git-panel').then(m => ({ default: m.GitPanel })));
 const DocumentOutline = lazy(() => import('./document-outline').then(m => ({ default: m.DocumentOutline })));
+const SymbolPicker = lazy(() => import('./symbol-picker').then(m => ({ default: m.SymbolPicker })));
 import { useEditorStore } from '@/store/editor-store';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
@@ -39,7 +40,7 @@ interface EditorLayoutProps {
   gitRemoteUrl?: string;
 }
 
-type RightPanel = 'pdf' | 'history' | 'git' | 'outline';
+type RightPanel = 'pdf' | 'history' | 'git' | 'outline' | 'symbols';
 
 import { EDITOR } from '@/lib/constants';
 const AUTO_COMPILE_DEBOUNCE_MS = EDITOR.AUTO_COMPILE_DEBOUNCE_MS;
@@ -524,6 +525,16 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
               <ListTreeIcon className="size-3.5" />
               Outline
             </Button>
+            <Button
+              size="sm"
+              variant={rightPanel === 'symbols' ? 'secondary' : 'ghost'}
+              className="h-7 gap-1.5 px-2 text-xs"
+              onClick={() => setRightPanel('symbols')}
+              aria-pressed={rightPanel === 'symbols'}
+            >
+              <SigmaIcon className="size-3.5" />
+              Symbols
+            </Button>
           </div>
 
           {/* Panel content */}
@@ -533,6 +544,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
               {rightPanel === 'history' && <VersionHistory projectId={projectId} />}
               {rightPanel === 'git' && <GitPanel projectId={projectId} remoteUrl={gitRemoteUrl} />}
               {rightPanel === 'outline' && <DocumentOutline />}
+              {rightPanel === 'symbols' && <SymbolPicker />}
             </Suspense>
           </div>
         </div>
