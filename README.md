@@ -48,13 +48,13 @@
 
 | Release | Feature | Description |
 |:---:|:---|:---|
-| v4.6 | **160+ LaTeX Completions** | Full Greek alphabet, math functions (sin/cos/log), set theory, booktabs, cleveref, colors, meta-programming |
-| v4.6 | **VS Code-Quality Tabs** | Middle-click close, Ctrl+Tab cycling, Ctrl+1-9 jump, full path tooltip, filename-only labels |
-| v4.6 | **Pro Status Bar** | Ln/Col cursor, compilation time, word count, writing goals, file type, encoding, dirty indicator |
-| v4.6 | **Shared Data Layer** | Unified SWR fetcher across all pages, Prisma index optimization, typed API responses |
-| v4.6 | **27 LaTeX Snippets** | math (multline, gather, cases, matrix), structure (sec/chap), BibTeX, algorithms, TikZ, subfigures |
-| v4.6 | **Security & Governance** | CSP, CORS, 28 blocked extensions, CODE_OF_CONDUCT, FUNDING.yml, aria-labels, route error boundaries |
-| v4.6 | **1,550+ Tests** | 130 suites covering linting, completions, error parsing, API responses, validation, services, and E2E |
+| v4.6 | **Advanced Error Parser** | Undefined references/citations, badbox measurements, runaway arguments, missing number detection |
+| v4.6 | **Smart Linter** | Floating label warnings, \usepackage typo detection, empty \cite{}/\ref{} checks, paragraph break anti-patterns |
+| v4.6 | **Regex Project Search** | Case sensitivity toggle, regex mode (.* button), aria-labels — VS Code-style find-in-project |
+| v4.6 | **Smart Download Filenames** | PDF/DOCX/ZIP exports use project name, ZIP includes .paperforge.json metadata, @media print stylesheet |
+| v4.6 | **160+ LaTeX Completions** | Full Greek alphabet, math functions, set theory, booktabs, cleveref, colors, meta-programming |
+| v4.6 | **VS Code-Quality Editor** | Tabs (middle-click, Ctrl+Tab, Ctrl+1-9), Ln/Col cursor, compilation time, word goals, 27 snippets |
+| v4.6 | **1,550+ Tests** | 130 suites: linting, completions, error parsing, API responses, validation, services, E2E |
 
 ---
 
