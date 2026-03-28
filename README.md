@@ -49,7 +49,9 @@
 
 | Release | Feature | Description |
 |:---:|:---|:---|
-| v5.2 | **AI LaTeX Assistant** | Claude-powered: write, fix, explain, convert LaTeX — 4 modes with file context, rate limited |
+| v5.3 | **One-Click Quick-Fix** | Linter suggests fixes for typos (\\being→\\begin) — click "Fix" button in error tooltip |
+| v5.3 | **Onboarding Tips** | First-time welcome card highlighting Ctrl+P, Ctrl+K, AI Panel, Math Panel |
+| v5.3 | **AI LaTeX Assistant** | Claude-powered: write, fix, explain, convert LaTeX — 4 modes with file context |
 | v5.2 | **Live Math Preview** | KaTeX-rendered equations in real-time — click any formula to jump to source line |
 | v5.2 | **Project Activity** | Timeline of compilations and versions with color-coded icons and relative timestamps |
 | v5.2 | **Citation + Symbol Pickers** | Browse .bib entries + 70+ visual symbols — click to insert at cursor |
@@ -565,7 +567,7 @@ PaperForge is built on the shoulders of outstanding open-source projects:
 
 **Built with determination by [concrete-sangminlee](https://github.com/concrete-sangminlee)**
 
-**230+ source files · 1,572 tests (131 suites) · 46 API routes · 24 pages · 8 Docker services · v5.2.0 · [Live Demo](https://projectlatexcompiler.vercel.app)**
+**230+ source files · 1,572 tests (131 suites) · 46 API routes · 24 pages · 8 Docker services · v5.3.0 · [Live Demo](https://projectlatexcompiler.vercel.app)**
 
 [Pricing](https://projectlatexcompiler.vercel.app/pricing) · [Getting Started](https://projectlatexcompiler.vercel.app/docs/getting-started) · [Docs](https://projectlatexcompiler.vercel.app/docs) · [API](https://projectlatexcompiler.vercel.app/docs/api) · [Symbols](https://projectlatexcompiler.vercel.app/docs/symbols) · [Templates](https://projectlatexcompiler.vercel.app/docs/templates) · [Status](https://projectlatexcompiler.vercel.app/status) · [Changelog](https://projectlatexcompiler.vercel.app/changelog)
 
