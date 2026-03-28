@@ -159,6 +159,12 @@ export const useEditorStore = create<EditorState>()(
         autoCompileEnabled: state.autoCompileEnabled,
         sidebarCollapsed: state.sidebarCollapsed,
         logPanelCollapsed: state.logPanelCollapsed,
+        // Persist open tabs for crash recovery (max 10 tabs, 50KB each)
+        tabs: state.tabs.slice(0, 10).map(t => ({
+          ...t,
+          content: t.content.slice(0, 50000),
+        })),
+        activeTab: state.activeTab,
       }),
     }
   )

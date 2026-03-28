@@ -24,6 +24,7 @@ const TableGenerator = lazy(() => import('./table-generator').then(m => ({ defau
 const EquationBuilder = lazy(() => import('./equation-builder').then(m => ({ default: m.EquationBuilder })));
 const DocumentStats = lazy(() => import('./document-stats').then(m => ({ default: m.DocumentStats })));
 const ShareSnippet = lazy(() => import('./share-snippet').then(m => ({ default: m.ShareSnippet })));
+import { RecoveryBanner } from './recovery-banner';
 import { useEditorStore } from '@/store/editor-store';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
@@ -293,6 +294,8 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
 
   return (
     <div className="flex h-screen flex-col overflow-hidden">
+      {/* Recovery banner for crashed sessions */}
+      <RecoveryBanner />
       {/* Offline / disconnected banner */}
       {!isOnline && (
         <div className="flex items-center gap-2 bg-red-500/10 border-b border-red-500/20 px-4 py-1.5 text-xs text-red-600">
