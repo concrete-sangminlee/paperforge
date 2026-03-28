@@ -47,21 +47,27 @@ export default async function EditorPage({ params }: EditorPageProps) {
   const { projectId } = await params;
   const userId = (session.user as { id: string }).id;
 
-  const project = await getProject(projectId, userId);
-  let files = await listFiles(projectId);
+  let project;
+  let fileEntries: Array<{ id: string; path: string; mimeType: string | null; isBinary: boolean }> = [];
 
-  // Auto-create main.tex if there are no files
-  if (files.length === 0) {
-    await createFile(projectId, 'main.tex', MAIN_TEX_TEMPLATE);
-    files = await listFiles(projectId);
+  try {
+    project = await getProject(projectId, userId);
+    let files = await listFiles(projectId);
+
+    if (files.length === 0) {
+      await createFile(projectId, 'main.tex', MAIN_TEX_TEMPLATE);
+      files = await listFiles(projectId);
+    }
+
+    fileEntries = files.map((f) => ({
+      id: f.id,
+      path: f.path,
+      mimeType: f.mimeType,
+      isBinary: f.isBinary,
+    }));
+  } catch {
+    redirect('/projects');
   }
-
-  const fileEntries = files.map((f) => ({
-    id: f.id,
-    path: f.path,
-    mimeType: f.mimeType,
-    isBinary: f.isBinary,
-  }));
 
   return (
     <ErrorBoundary>
