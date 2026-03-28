@@ -406,6 +406,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
                       : 'border-transparent bg-muted/60 text-muted-foreground hover:bg-muted',
                   )}
                 >
+                  <TabFileIcon path={tab.path} />
                   <span className="max-w-[140px] truncate">{tab.path.split('/').pop()}</span>
                   {tab.dirty && (
                     <span
@@ -687,4 +688,15 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
       </Suspense>
     </div>
   );
+}
+
+function TabFileIcon({ path }: { path: string }) {
+  const ext = path.split('.').pop()?.toLowerCase();
+  const cls = 'size-3 shrink-0';
+  switch (ext) {
+    case 'tex': case 'ltx': return <FileTextIcon className={`${cls} text-blue-500`} />;
+    case 'bib': case 'bst': return <BookOpenIcon className={`${cls} text-amber-500`} />;
+    case 'cls': case 'sty': return <CodeIcon className={`${cls} text-purple-500`} />;
+    default: return <FileIcon className={`${cls} text-muted-foreground`} />;
+  }
 }
