@@ -384,6 +384,7 @@ function KeyboardShortcutsButton() {
     { keys: 'Ctrl+W', action: 'Close current tab' },
     { keys: 'Ctrl+= / Ctrl+-', action: 'Zoom in / out' },
     { keys: 'Ctrl+0', action: 'Reset zoom' },
+    { keys: 'Ctrl+N', action: 'New file' },
     { keys: 'Ctrl+Shift+P', action: 'Global search' },
   ];
 
