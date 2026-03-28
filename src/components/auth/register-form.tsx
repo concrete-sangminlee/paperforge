@@ -167,7 +167,7 @@ export function RegisterForm() {
       <CardContent>
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           {error && (
-            <div className="flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <div role="alert" aria-live="polite" className="flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
@@ -302,7 +302,7 @@ export function RegisterForm() {
             {password && (
               <div className="space-y-2">
                 {/* Strength Bar */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2" role="meter" aria-valuenow={passwordStrength.percentage} aria-valuemin={0} aria-valuemax={100} aria-label={`Password strength: ${passwordStrength.level}`}>
                   <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
                     <div
                       className={`h-full rounded-full transition-all duration-300 ${passwordStrength.color}`}
@@ -311,6 +311,7 @@ export function RegisterForm() {
                   </div>
                   <span
                     className={`text-xs font-medium capitalize ${passwordStrength.bgColor}`}
+                    aria-live="polite"
                   >
                     {passwordStrength.level}
                   </span>

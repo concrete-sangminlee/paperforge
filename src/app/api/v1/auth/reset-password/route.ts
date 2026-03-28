@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
@@ -6,7 +5,7 @@ import { verifySignedToken } from '@/lib/jwt-utils';
 import { prisma } from '@/lib/prisma';
 import { errorResponse, ApiError } from '@/lib/errors';
 import { checkRateLimit } from '@/lib/rate-limit';
-import { apiError } from '@/lib/api-response';
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 const resetPasswordSchema = z.object({
   token: z.string().min(1),
@@ -53,7 +52,7 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({
+    return apiSuccess({
       message: 'Password has been reset successfully.',
     });
   } catch (error) {

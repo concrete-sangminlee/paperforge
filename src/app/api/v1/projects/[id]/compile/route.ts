@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/lib/auth';
 import { errorResponse } from '@/lib/errors';
 import { checkRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
 import { assertProjectRole } from '@/services/project-service';
 import { triggerCompilation } from '@/services/compilation-service';
-import { ApiErrors } from '@/lib/api-response';
+import { apiSuccess, apiError, ApiErrors } from '@/lib/api-response';
 
 export async function POST(
   request: NextRequest,
@@ -22,29 +22,15 @@ export async function POST(
     const rateLimitKey = `rate:compile:${userId}:${id}`;
     const rateLimit = await checkRateLimit(rateLimitKey, 10, 60);
     if (!rateLimit.allowed) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'RATE_LIMITED',
-            message: 'Too many compilation requests. Please wait before retrying.',
-          },
-        },
-        {
-          status: 429,
-          headers: rateLimitHeaders(10, rateLimit),
-        },
-      );
+      const res = apiError('Too many compilation requests. Please wait before retrying.', 429, 'RATE_LIMITED');
+      Object.entries(rateLimitHeaders(10, rateLimit)).forEach(([k, v]) => res.headers.set(k, v));
+      return res;
     }
 
     const compilation = await triggerCompilation(id, userId);
-    return NextResponse.json(
-      { success: true, data: compilation },
-      {
-        status: 202,
-        headers: rateLimitHeaders(10, rateLimit),
-      },
-    );
+    const res = apiSuccess(compilation, 202);
+    Object.entries(rateLimitHeaders(10, rateLimit)).forEach(([k, v]) => res.headers.set(k, v));
+    return res;
   } catch (error) {
     return errorResponse(error);
   }

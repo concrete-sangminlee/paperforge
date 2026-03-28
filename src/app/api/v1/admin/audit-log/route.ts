@@ -13,8 +13,8 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') ?? '1', 10);
-    const limit = parseInt(searchParams.get('limit') ?? '50', 10);
+    const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '50', 10) || 50));
 
     const result = await getAuditLog(page, limit);
     return apiSuccess(result);

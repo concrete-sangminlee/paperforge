@@ -425,7 +425,7 @@ export function CompilationLog() {
             onScroll={handleScroll}
           >
             {compilationLog ? (
-              <div className="p-1">
+              <div className="p-1" role="log" aria-live="polite" aria-label="Compilation output">
                 {filteredLines.length > 0 ? (
                   filteredLines.map((line) => {
                     // Check if line contains a LaTeX line reference (e.g., "l.42")

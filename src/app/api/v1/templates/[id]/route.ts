@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { errorResponse } from '@/lib/errors';
+import { apiSuccess } from '@/lib/api-response';
 import { getTemplate } from '@/services/template-service';
 
 export async function GET(
@@ -9,7 +10,7 @@ export async function GET(
   try {
     const { id } = await params;
     const template = await getTemplate(id);
-    return NextResponse.json(template);
+    return apiSuccess(template);
   } catch (error) {
     return errorResponse(error);
   }

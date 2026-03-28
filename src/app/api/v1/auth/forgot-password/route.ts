@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
@@ -7,7 +6,7 @@ import { sendEmail } from '@/lib/email';
 import { errorResponse } from '@/lib/errors';
 import { emailTemplate, buttonHtml } from '@/lib/email-templates';
 import { checkRateLimit } from '@/lib/rate-limit';
-import { apiError } from '@/lib/api-response';
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email(),
@@ -51,7 +50,7 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({
+    return apiSuccess({
       message: 'If an account with that email exists, a reset link has been sent.',
     });
   } catch (error) {

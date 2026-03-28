@@ -229,6 +229,8 @@ export function EditorToolbar({ projectId, projectName, onCompileReady }: Editor
         onClick={() => { toggleAutoCompile(); toast.info(autoCompileEnabled ? 'Auto-compile disabled' : 'Auto-compile enabled'); }}
         className="gap-1.5 text-xs"
         title={autoCompileEnabled ? 'Auto-compile ON - click to disable' : 'Auto-compile OFF - click to enable'}
+        aria-label={autoCompileEnabled ? 'Disable auto-compile' : 'Enable auto-compile'}
+        aria-pressed={autoCompileEnabled}
       >
         {autoCompileEnabled ? (
           <ZapIcon className="size-3.5 text-amber-500" />
@@ -251,6 +253,7 @@ export function EditorToolbar({ projectId, projectName, onCompileReady }: Editor
             variant="ghost"
             onClick={() => insertLatex(command)}
             title={shortcut ? `${label} (${shortcut})` : label}
+            aria-label={label}
           >
             <Icon className="size-3.5" />
           </Button>
@@ -268,6 +271,7 @@ export function EditorToolbar({ projectId, projectName, onCompileReady }: Editor
             variant="ghost"
             onClick={() => insertLatex(command)}
             title={label}
+            aria-label={label}
           >
             <Icon className="size-3.5" />
           </Button>

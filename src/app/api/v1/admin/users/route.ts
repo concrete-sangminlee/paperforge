@@ -12,8 +12,8 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') ?? undefined;
-    const page = parseInt(searchParams.get('page') ?? '1', 10);
-    const limit = parseInt(searchParams.get('limit') ?? '50', 10);
+    const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '50', 10) || 50));
     const skip = (page - 1) * limit;
 
     const where = search

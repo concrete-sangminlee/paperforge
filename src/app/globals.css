@@ -320,3 +320,60 @@ html {
   transform: translateY(-1px);
   box-shadow: 0 8px 30px rgba(249, 115, 22, 0.25);
 }
+
+/* ─── Scroll-triggered reveal animations ─── */
+.landing-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.landing-reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger delays for grid children */
+.landing-stagger > .landing-reveal:nth-child(1) { transition-delay: 0ms; }
+.landing-stagger > .landing-reveal:nth-child(2) { transition-delay: 80ms; }
+.landing-stagger > .landing-reveal:nth-child(3) { transition-delay: 160ms; }
+.landing-stagger > .landing-reveal:nth-child(4) { transition-delay: 240ms; }
+.landing-stagger > .landing-reveal:nth-child(5) { transition-delay: 320ms; }
+.landing-stagger > .landing-reveal:nth-child(6) { transition-delay: 400ms; }
+
+/* Fade in from left / right */
+.landing-reveal-left {
+  opacity: 0;
+  transform: translateX(-24px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.landing-reveal-left.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Scale up */
+.landing-reveal-scale {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.landing-reveal-scale.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Skeleton stagger pulse */
+@keyframes stagger-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.skeleton-stagger:nth-child(1) { animation: stagger-pulse 2s ease-in-out infinite 0ms; }
+.skeleton-stagger:nth-child(2) { animation: stagger-pulse 2s ease-in-out infinite 150ms; }
+.skeleton-stagger:nth-child(3) { animation: stagger-pulse 2s ease-in-out infinite 300ms; }
+.skeleton-stagger:nth-child(4) { animation: stagger-pulse 2s ease-in-out infinite 450ms; }
+.skeleton-stagger:nth-child(5) { animation: stagger-pulse 2s ease-in-out infinite 600ms; }
+.skeleton-stagger:nth-child(6) { animation: stagger-pulse 2s ease-in-out infinite 750ms; }

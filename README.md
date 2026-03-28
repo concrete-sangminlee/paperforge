@@ -48,10 +48,12 @@
 
 | Release | Feature | Description |
 |:---:|:---|:---|
-| Latest | **Real-time Auto-Compile** | Overleaf-style live compilation with a 2-second debounce — see your changes as you type |
-| Latest | **DOCX Export** | Export your LaTeX documents to Word (`.docx`) via Pandoc for seamless sharing with non-LaTeX users |
-| Latest | **Styled Email Templates** | Professional, branded email notifications for verification, invitations, and password resets |
-| Latest | **Major UI/UX Improvements** | Refined editor layout, improved navigation, polished component design across the application |
+| v4.5 | **Scroll Animations & Animated Counters** | Premium landing page with scroll-triggered reveals, staggered card animations, and animated stat counters |
+| v4.5 | **100% API Standardization** | Every API route uses `apiSuccess()`/`ApiErrors` pattern with input validation and pagination bounds |
+| v4.5 | **WCAG Accessibility** | `aria-live` alerts, `role="meter"` password strength, `aria-label` on all toolbar buttons, `role="log"` on compilation output |
+| v4.5 | **Real-time Auto-Compile** | Overleaf-style live compilation with a 2-second debounce — see your changes as you type |
+| v4.5 | **DOCX Export** | Export your LaTeX documents to Word (`.docx`) via Pandoc for seamless sharing with non-LaTeX users |
+| v4.5 | **1,500+ Tests** | 128 test suites covering linting, completions, error parsing, API responses, validation, and full pipeline E2E |
 
 ---
 

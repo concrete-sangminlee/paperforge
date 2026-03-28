@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +45,74 @@ import {
   Clock,
   Heart,
 } from "lucide-react";
+
+/* ───────────────────── hooks ───────────────────── */
+
+function useScrollReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add("visible");
+            // Also reveal staggered children
+            e.target.querySelectorAll(".landing-reveal").forEach((c) => c.classList.add("visible"));
+            obs.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return ref;
+}
+
+function AnimatedCounter({ target, suffix = "" }: { target: string; suffix?: string }) {
+  const [display, setDisplay] = useState("0");
+  const ref = useRef<HTMLSpanElement>(null);
+  const animated = useRef(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !animated.current) {
+          animated.current = true;
+          const numericStr = target.replace(/[^0-9.]/g, "");
+          const end = parseFloat(numericStr);
+          const isDecimal = numericStr.includes(".");
+          const prefix = target.startsWith("$") ? "$" : "";
+          const duration = 1200;
+          const start = performance.now();
+          const tick = (now: number) => {
+            const t = Math.min((now - start) / duration, 1);
+            const ease = 1 - Math.pow(1 - t, 3);
+            const current = end * ease;
+            if (isDecimal) {
+              setDisplay(`${prefix}${current.toFixed(1)}${suffix}`);
+            } else {
+              setDisplay(`${prefix}${Math.round(current).toLocaleString()}${suffix}`);
+            }
+            if (t < 1) requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+          obs.unobserve(el);
+        }
+      },
+      { threshold: 0.5 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [target, suffix]);
+
+  return <span ref={ref}>{display}</span>;
+}
 
 /* ───────────────────── static data ───────────────────── */
 
@@ -217,26 +286,25 @@ const footerLinks = {
   Product: [
     { label: "Features", href: "#features" },
     { label: "Comparison", href: "#comparison" },
-    { label: "Templates", href: "#" },
-    { label: "Changelog", href: "#" },
+    { label: "Templates", href: "/docs/templates" },
+    { label: "Changelog", href: "/changelog" },
   ],
   Resources: [
-    { label: "Documentation", href: "#" },
-    { label: "LaTeX Guide", href: "#" },
-    { label: "API Reference", href: "#" },
-    { label: "Blog", href: "#" },
+    { label: "Documentation", href: "/docs" },
+    { label: "Getting Started", href: "/docs/getting-started" },
+    { label: "API Reference", href: "/docs/api" },
+    { label: "LaTeX Symbols", href: "/docs/symbols" },
   ],
   Company: [
-    { label: "About", href: "#" },
-    { label: "Contact", href: "#" },
-    { label: "Careers", href: "#" },
-    { label: "Open Source", href: "#" },
+    { label: "Pricing", href: "/pricing" },
+    { label: "Status", href: "/status" },
+    { label: "Open Source", href: "https://github.com" },
+    { label: "Contact", href: "mailto:hello@paperforge.dev" },
   ],
   Legal: [
-    { label: "Privacy Policy", href: "#" },
-    { label: "Terms of Service", href: "#" },
-    { label: "Cookie Policy", href: "#" },
-    { label: "MIT License", href: "#" },
+    { label: "Privacy Policy", href: "/privacy" },
+    { label: "Terms of Service", href: "/terms" },
+    { label: "MIT License", href: "https://opensource.org/licenses/MIT" },
   ],
 };
 
@@ -266,10 +334,107 @@ function StarRating({ count }: { count: number }) {
   );
 }
 
+/* ───────────────── section components ──────────── */
+
+function StatsSection() {
+  const ref = useScrollReveal();
+  return (
+    <section className="relative border-t border-b bg-muted/20 py-16 sm:py-20">
+      <div ref={ref} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 landing-reveal">
+        <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+          {stats.map(({ value, label, icon: Icon }) => {
+            const suffix = value.includes("+") ? "+" : value.includes("%") ? "%" : "";
+            return (
+              <div key={label} className="text-center">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-orange-500/10">
+                  <Icon className="h-6 w-6 text-orange-500" />
+                </div>
+                <p className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">
+                  <AnimatedCounter target={value} suffix={suffix} />
+                </p>
+                <p className="mt-1 text-sm font-medium text-muted-foreground sm:text-base">
+                  {label}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FeaturesSection() {
+  const ref = useScrollReveal();
+  return (
+    <section id="features" className="relative py-24 sm:py-32">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute top-0 right-0 -z-10 h-72 w-72 translate-x-1/3 -translate-y-1/3 rounded-full bg-orange-500/5 blur-3xl"
+      />
+      <div ref={ref} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 landing-reveal">
+        <div className="mb-16 text-center">
+          <Badge variant="secondary" className="mb-4 text-xs font-medium uppercase tracking-widest">
+            Features
+          </Badge>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
+            Everything you need to write
+            <br />
+            <span className="landing-gradient-text">great papers</span>
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
+            Powerful tools built for researchers, students, and teams.
+          </p>
+        </div>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 landing-stagger">
+          {features.map(({ icon: Icon, title, description }) => (
+            <Card
+              key={title}
+              className="landing-reveal group relative overflow-hidden border transition-all duration-300 hover:shadow-xl hover:shadow-orange-500/5 hover:-translate-y-1 hover:border-orange-500/30 landing-feature-card"
+            >
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 transition-opacity duration-300 group-hover:opacity-100 landing-card-glow"
+              />
+              <CardHeader className="relative pb-3">
+                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-orange-500/10 transition-colors duration-300 group-hover:bg-orange-500/20">
+                  <Icon className="h-6 w-6 text-orange-500" />
+                </div>
+                <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+              </CardHeader>
+              <CardContent className="relative">
+                <CardDescription className="text-sm leading-relaxed">{description}</CardDescription>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ───────────────────── page ───────────────────── */
 
 export default function HomePage() {
   const isLoggedIn = false;
+
+  // Observe all landing-stagger containers to reveal their children
+  useEffect(() => {
+    const containers = document.querySelectorAll(".landing-stagger");
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.querySelectorAll(".landing-reveal").forEach((c) => c.classList.add("visible"));
+            obs.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+    containers.forEach((c) => obs.observe(c));
+    return () => obs.disconnect();
+  }, []);
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -451,77 +616,10 @@ export default function HomePage() {
         </section>
 
         {/* ── Stats ───────────────────────────────────────── */}
-        <section className="relative border-t border-b bg-muted/20 py-16 sm:py-20">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
-              {stats.map(({ value, label, icon: Icon }) => (
-                <div key={label} className="text-center">
-                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-orange-500/10">
-                    <Icon className="h-6 w-6 text-orange-500" />
-                  </div>
-                  <p className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">
-                    {value}
-                  </p>
-                  <p className="mt-1 text-sm font-medium text-muted-foreground sm:text-base">
-                    {label}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <StatsSection />
 
         {/* ── Features ───────────────────────────────────── */}
-        <section id="features" className="relative py-24 sm:py-32">
-          {/* subtle decorative circle */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute top-0 right-0 -z-10 h-72 w-72 translate-x-1/3 -translate-y-1/3 rounded-full bg-orange-500/5 blur-3xl"
-          />
-
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="mb-16 text-center">
-              <Badge variant="secondary" className="mb-4 text-xs font-medium uppercase tracking-widest">
-                Features
-              </Badge>
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-                Everything you need to write
-                <br />
-                <span className="landing-gradient-text">great papers</span>
-              </h2>
-              <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-                Powerful tools built for researchers, students, and teams.
-              </p>
-            </div>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {features.map(({ icon: Icon, title, description }) => (
-                <Card
-                  key={title}
-                  className="group relative overflow-hidden border transition-all duration-300 hover:shadow-xl hover:shadow-orange-500/5 hover:-translate-y-1 hover:border-orange-500/30 landing-feature-card"
-                >
-                  {/* gradient border glow on hover */}
-                  <div
-                    aria-hidden
-                    className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 transition-opacity duration-300 group-hover:opacity-100 landing-card-glow"
-                  />
-                  <CardHeader className="relative pb-3">
-                    <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-orange-500/10 transition-colors duration-300 group-hover:bg-orange-500/20">
-                      <Icon className="h-6 w-6 text-orange-500" />
-                    </div>
-                    <CardTitle className="text-lg font-semibold">
-                      {title}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="relative">
-                    <CardDescription className="text-sm leading-relaxed">
-                      {description}
-                    </CardDescription>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
+        <FeaturesSection />
 
         {/* ── How It Works ───────────────────────────────── */}
         <section
@@ -670,12 +768,12 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="grid gap-8 md:grid-cols-3">
+            <div className="grid gap-8 md:grid-cols-3 landing-stagger">
               {testimonials.map(
                 ({ quote, name, role, institution, stars }) => (
                   <Card
                     key={name}
-                    className="relative overflow-hidden border transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                    className="landing-reveal relative overflow-hidden border transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
                   >
                     <CardHeader className="pb-4">
                       <Quote className="mb-2 h-8 w-8 text-orange-500/20" />

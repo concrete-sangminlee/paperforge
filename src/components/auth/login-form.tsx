@@ -93,7 +93,7 @@ export function LoginForm() {
       <CardContent>
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           {error && (
-            <div className="flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <div role="alert" aria-live="polite" className="flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
