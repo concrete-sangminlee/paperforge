@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Governance
 - CODE_OF_CONDUCT.md, FUNDING.yml, SECURITY.md
-- 1,558 tests across 130 suites
+- 1,566 tests across 131 suites
 
 ---
 

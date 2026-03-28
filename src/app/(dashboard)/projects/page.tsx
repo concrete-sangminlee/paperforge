@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, useDeferredValue } from 'react';
+import { useSession } from 'next-auth/react';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/fetcher';
 import {
@@ -11,10 +12,6 @@ import {
   FolderIcon,
   AlertTriangleIcon,
 } from 'lucide-react';
-import { ProjectCard, type ProjectData } from '@/components/dashboard/project-card';
-import { CreateProjectDialog } from '@/components/dashboard/create-project-dialog';
-import { StorageBar } from '@/components/dashboard/storage-bar';
-import { useSession } from 'next-auth/react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +22,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ProjectCard, type ProjectData } from '@/components/dashboard/project-card';
+import { CreateProjectDialog } from '@/components/dashboard/create-project-dialog';
+import { StorageBar } from '@/components/dashboard/storage-bar';
 
 type SortOption = 'updated' | 'name-asc' | 'name-desc' | 'created';
 type RoleFilter = 'all' | 'mine' | 'shared';
