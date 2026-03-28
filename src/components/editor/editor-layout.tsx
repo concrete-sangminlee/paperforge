@@ -19,6 +19,7 @@ const SymbolPicker = lazy(() => import('./symbol-picker').then(m => ({ default: 
 const CitationPicker = lazy(() => import('./citation-picker').then(m => ({ default: m.CitationPicker })));
 const MathPreview = lazy(() => import('./math-preview').then(m => ({ default: m.MathPreview })));
 const AiAssistant = lazy(() => import('./ai-assistant').then(m => ({ default: m.AiAssistant })));
+const OnboardingTips = lazy(() => import('./onboarding-tips').then(m => ({ default: m.OnboardingTips })));
 import { useEditorStore } from '@/store/editor-store';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
@@ -588,6 +589,11 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
 
       {/* Find in Project dialog */}
       <FindInProject projectId={projectId} open={findOpen} onOpenChange={setFindOpen} />
+
+      {/* First-time user onboarding */}
+      <Suspense fallback={null}>
+        <OnboardingTips />
+      </Suspense>
     </div>
   );
 }
