@@ -5,6 +5,16 @@ All notable changes to PaperForge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.8.0] - 2026-03-29
+
+### Editor
+- **Quick Open (Ctrl+P)** — jump to any file by name with fuzzy search
+- **Word wrap toggle** in editor toolbar, live-wired to CodeMirror via Compartment
+- **ZIP project import** — upload ZIP from Overleaf/GitHub to create project instantly
+- **24 keyboard shortcuts** documented (added Ctrl+P, Ctrl+Tab)
+
+---
+
 ## [4.7.0] - 2026-03-29
 
 ### Editor
