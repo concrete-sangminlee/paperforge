@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ProjectCard, type ProjectData } from '@/components/dashboard/project-card';
+import { ProjectCard, type ProjectData, getStarredIds } from '@/components/dashboard/project-card';
 import { CreateProjectDialog } from '@/components/dashboard/create-project-dialog';
 import { ImportProjectDialog } from '@/components/dashboard/import-project-dialog';
 import { StorageBar } from '@/components/dashboard/storage-bar';
@@ -101,8 +101,12 @@ export default function ProjectsPage() {
       result = result.filter((p) => p.name.toLowerCase().includes(q));
     }
 
-    // Sort
+    // Sort (starred projects first, then by selected order)
+    const starredIds = new Set(getStarredIds());
     result.sort((a, b) => {
+      const aStarred = starredIds.has(a.id) ? 1 : 0;
+      const bStarred = starredIds.has(b.id) ? 1 : 0;
+      if (aStarred !== bStarred) return bStarred - aStarred;
       switch (sort) {
         case 'updated':
           return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();

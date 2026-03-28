@@ -12,6 +12,7 @@ import {
   Trash2Icon,
   Share2Icon,
   PencilIcon,
+  StarIcon,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -88,12 +89,34 @@ interface ProjectCardProps {
   viewMode?: 'grid' | 'list';
 }
 
+export function getStarredIds(): string[] {
+  try { return JSON.parse(localStorage.getItem('paperforge-starred') || '[]'); } catch { return []; }
+}
+
+function useStarred(projectId: string) {
+  const key = 'paperforge-starred';
+  const [starred, setStarredState] = useState(false);
+  useState(() => {
+    try { setStarredState(JSON.parse(localStorage.getItem(key) || '[]').includes(projectId)); } catch {}
+  });
+  const toggle = () => {
+    try {
+      const list: string[] = JSON.parse(localStorage.getItem(key) || '[]');
+      const next = starred ? list.filter(id => id !== projectId) : [...list, projectId];
+      localStorage.setItem(key, JSON.stringify(next));
+      setStarredState(!starred);
+    } catch {}
+  };
+  return { starred, toggle };
+}
+
 export function ProjectCard({ project, currentUserId, viewMode = 'grid' }: ProjectCardProps) {
   const router = useRouter();
   const [shareOpen, setShareOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [newName, setNewName] = useState(project.name);
+  const { starred, toggle: toggleStar } = useStarred(project.id);
   const maxAvatars = 3;
   const visibleMembers = project.members.slice(0, maxAvatars);
   const remainingCount = project.members.length - maxAvatars;
@@ -326,7 +349,12 @@ export function ProjectCard({ project, currentUserId, viewMode = 'grid' }: Proje
                   onBlur={() => void handleRename()}
                 />
               ) : (
-                <CardTitle className="truncate">{project.name}</CardTitle>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleStar(); }} title={starred ? 'Unstar' : 'Star'} className="shrink-0">
+                    <StarIcon className={`size-3.5 transition-colors ${starred ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/30 hover:text-amber-400'}`} />
+                  </button>
+                  <CardTitle className="truncate">{project.name}</CardTitle>
+                </div>
               )}
               <div className="flex shrink-0 items-center gap-1.5">
                 <Badge
