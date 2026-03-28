@@ -48,13 +48,13 @@
 
 | Release | Feature | Description |
 |:---:|:---|:---|
-| v4.5 | **Cursor Position & Status Bar** | Real-time Ln/Col display, LaTeX-aware word count, character count, writing goals with progress bar |
-| v4.5 | **Auto-Open Main File** | Editor automatically opens main.tex on first load — zero-friction onboarding for new projects |
+| v4.5 | **Pro Status Bar** | Real-time Ln/Col cursor position, compilation time display, LaTeX-aware word count, writing goals with progress bar |
+| v4.5 | **Zero-Friction Onboarding** | Auto-open main.tex on first load, compiler help text, contextual PDF empty state with shortcut hints |
 | v4.5 | **27 LaTeX Snippets** | math (multline, gather, cases, matrix), structure (sec/chap), BibTeX, algorithms, TikZ, subfigures |
-| v4.5 | **Account Management** | Change password + delete account APIs, 22+ command palette commands, mobile hamburger nav |
-| v4.5 | **Complete Toast Feedback** | Every user action now shows success/error toast — no more silent failures |
-| v4.5 | **Security & Polish** | CSP, CORS hardening, 28 blocked extensions, dark mode fixes, route error boundaries, transitions |
-| v4.5 | **1,530+ Tests** | 128 suites covering linting, completions, error parsing, API responses, validation, and pipeline E2E |
+| v4.5 | **Performance Optimization** | Lazy-loaded CommandPalette, 11 tree-shaken packages, AVIF/WebP images, NProgress page transitions |
+| v4.5 | **Env Validation & Type Safety** | Typed env module with build-phase safety, removed dangerous non-null assertions, service pattern tests |
+| v4.5 | **Security & Polish** | CSP, CORS hardening, 28 blocked extensions, dark mode, route error boundaries, complete toast feedback |
+| v4.5 | **1,550+ Tests** | 130 suites covering linting, completions, error parsing, API responses, validation, services, and E2E |
 
 ---
 
