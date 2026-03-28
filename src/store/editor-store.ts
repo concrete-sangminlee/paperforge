@@ -19,6 +19,8 @@ interface EditorState {
   sidebarCollapsed: boolean;
   logPanelCollapsed: boolean;
   fontSize: number;
+  lineHeight: number;
+  fontFamily: string;
   wordWrap: boolean;
   showLineNumbers: boolean;
   cursorLine: number;
@@ -40,6 +42,8 @@ interface EditorState {
   toggleSidebar: () => void;
   toggleLogPanel: () => void;
   setFontSize: (size: number) => void;
+  setLineHeight: (height: number) => void;
+  setFontFamily: (family: string) => void;
   setWordWrap: (enabled: boolean) => void;
   setShowLineNumbers: (enabled: boolean) => void;
   setCursorPosition: (line: number, col: number) => void;
@@ -84,6 +88,8 @@ export const useEditorStore = create<EditorState>()(
   sidebarCollapsed: false,
   logPanelCollapsed: false,
   fontSize: 14,
+  lineHeight: 1.6,
+  fontFamily: 'var(--font-mono, monospace)',
   wordWrap: true,
   showLineNumbers: true,
   cursorLine: 1,
@@ -137,6 +143,8 @@ export const useEditorStore = create<EditorState>()(
   toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
   toggleLogPanel: () => set((state) => ({ logPanelCollapsed: !state.logPanelCollapsed })),
   setFontSize: (size) => set({ fontSize: size }),
+  setLineHeight: (height) => set({ lineHeight: height }),
+  setFontFamily: (family) => set({ fontFamily: family }),
   setWordWrap: (enabled) => set({ wordWrap: enabled }),
   setShowLineNumbers: (enabled) => set({ showLineNumbers: enabled }),
   setCursorPosition: (line, col) => set({ cursorLine: line, cursorCol: col }),
@@ -154,6 +162,8 @@ export const useEditorStore = create<EditorState>()(
       name: 'paperforge-editor',
       partialize: (state) => ({
         fontSize: state.fontSize,
+        lineHeight: state.lineHeight,
+        fontFamily: state.fontFamily,
         wordWrap: state.wordWrap,
         showLineNumbers: state.showLineNumbers,
         autoCompileEnabled: state.autoCompileEnabled,

@@ -304,7 +304,12 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
         EditorView.contentAttributes.of({ spellcheck: 'true', autocorrect: 'on' }),
         EditorView.theme({
           '&': { height: '100%', minHeight: '0' },
-          '.cm-scroller': { overflow: 'auto', fontFamily: 'var(--font-mono, monospace)' },
+          '.cm-scroller': {
+            overflow: 'auto',
+            fontFamily: useEditorStore.getState().fontFamily,
+            fontSize: `${useEditorStore.getState().fontSize}px`,
+            lineHeight: String(useEditorStore.getState().lineHeight),
+          },
           // Bracket pair colorization
           '.cm-matchingBracket': {
             backgroundColor: 'rgba(249, 115, 22, 0.15)',
