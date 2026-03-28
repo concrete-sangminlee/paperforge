@@ -13,6 +13,7 @@ import {
   Share2Icon,
   PencilIcon,
   StarIcon,
+  TagIcon,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -117,6 +118,10 @@ export function ProjectCard({ project, currentUserId, viewMode = 'grid' }: Proje
   const [renaming, setRenaming] = useState(false);
   const [newName, setNewName] = useState(project.name);
   const { starred, toggle: toggleStar } = useStarred(project.id);
+  const [tags, setTags] = useState<string[]>([]);
+  useState(() => {
+    import('@/lib/project-tags').then(({ getProjectTags }) => setTags(getProjectTags(project.id)));
+  });
   const maxAvatars = 3;
   const visibleMembers = project.members.slice(0, maxAvatars);
   const remainingCount = project.members.length - maxAvatars;
@@ -289,6 +294,19 @@ export function ProjectCard({ project, currentUserId, viewMode = 'grid' }: Proje
                   Rename
                 </DropdownMenuItem>
               )}
+              <DropdownMenuItem onClick={() => {
+                const tag = prompt('Add tag (e.g., thesis, paper, draft):');
+                if (tag?.trim()) {
+                  import('@/lib/project-tags').then(({ addTag }) => {
+                    addTag(project.id, tag.trim());
+                    setTags(prev => prev.includes(tag.trim()) ? prev : [...prev, tag.trim()]);
+                    toast.success(`Tagged: ${tag.trim()}`);
+                  });
+                }
+              }}>
+                <TagIcon className="size-4" />
+                Add Tag
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => void handleDuplicate()}>
                 <CopyIcon className="size-4" />
                 Duplicate
@@ -373,6 +391,15 @@ export function ProjectCard({ project, currentUserId, viewMode = 'grid' }: Proje
               <CardDescription className="line-clamp-2">
                 {project.description}
               </CardDescription>
+            )}
+            {tags.length > 0 && (
+              <div className="mt-1.5 flex flex-wrap gap-1">
+                {tags.map((tag) => (
+                  <span key={tag} className="rounded-full bg-orange-500/10 px-2 py-0.5 text-[9px] font-medium text-orange-600 dark:text-orange-400">
+                    {tag}
+                  </span>
+                ))}
+              </div>
             )}
           </CardHeader>
           <CardFooter className="flex items-center justify-between gap-4 text-xs text-muted-foreground">
