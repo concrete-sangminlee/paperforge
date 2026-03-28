@@ -21,6 +21,7 @@ const MathPreview = lazy(() => import('./math-preview').then(m => ({ default: m.
 const AiAssistant = lazy(() => import('./ai-assistant').then(m => ({ default: m.AiAssistant })));
 const OnboardingTips = lazy(() => import('./onboarding-tips').then(m => ({ default: m.OnboardingTips })));
 const TableGenerator = lazy(() => import('./table-generator').then(m => ({ default: m.TableGenerator })));
+const EquationBuilder = lazy(() => import('./equation-builder').then(m => ({ default: m.EquationBuilder })));
 import { useEditorStore } from '@/store/editor-store';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
@@ -45,7 +46,7 @@ interface EditorLayoutProps {
   gitRemoteUrl?: string;
 }
 
-type RightPanel = 'pdf' | 'history' | 'git' | 'outline' | 'symbols' | 'cite' | 'math' | 'ai' | 'table';
+type RightPanel = 'pdf' | 'history' | 'git' | 'outline' | 'symbols' | 'cite' | 'math' | 'ai' | 'table' | 'equation';
 
 import { EDITOR } from '@/lib/constants';
 const AUTO_COMPILE_DEBOUNCE_MS = EDITOR.AUTO_COMPILE_DEBOUNCE_MS;
@@ -580,6 +581,16 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
               <TableIcon className="size-3.5" />
               Table
             </Button>
+            <Button
+              size="sm"
+              variant={rightPanel === 'equation' ? 'secondary' : 'ghost'}
+              className="h-7 gap-1.5 px-2 text-xs"
+              onClick={() => setRightPanel('equation')}
+              aria-pressed={rightPanel === 'equation'}
+            >
+              <FunctionSquareIcon className="size-3.5" />
+              Eq
+            </Button>
           </div>
 
           {/* Panel content */}
@@ -594,6 +605,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
               {rightPanel === 'math' && <MathPreview />}
               {rightPanel === 'ai' && <AiAssistant />}
               {rightPanel === 'table' && <TableGenerator />}
+              {rightPanel === 'equation' && <EquationBuilder />}
             </Suspense>
           </div>
         </div>
