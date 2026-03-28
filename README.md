@@ -49,15 +49,15 @@
 
 | Release | Feature | Description |
 |:---:|:---|:---|
-| v5.4 | **Visual Table Generator** | Interactive grid editor with booktabs toggle — generates complete LaTeX table code |
-| v5.4 | **Browser Spellcheck** | Native browser dictionary integration — red squiggles on misspelled words, zero dependencies |
-| v5.4 | **One-Click Quick-Fix** | Linter "Fix" button for typos (\\being→\\begin, \\usepackge→\\usepackage) |
-| v5.4 | **AI LaTeX Assistant** | Claude-powered: write, fix, explain, convert LaTeX — 4 modes with file context |
-| v5.4 | **Live Math Preview** | KaTeX-rendered equations in real-time — click any formula to jump to source |
-| v5.4 | **10 Editor Panels** | PDF, History, Git, Outline, Symbols, Cite, Math, AI, Table + Quick Open |
-| v5.4 | **GitHub + ZIP Import** | Paste GitHub URL or upload ZIP → instant project with auto branch detection |
-| v5.4 | **160+ Completions** | BibTeX syntax, 27 snippets, 70+ symbols, smart linter, regex search, cross-file error nav |
-| v5.4 | **1,572 Tests** | 131 suites · 0 type errors · 0 lint errors · 0 dead code · 46 API routes |
+| v5.5 | **Equation Builder** | Visual equation construction with 19 templates, live KaTeX preview, click-to-insert |
+| v5.5 | **Table Generator** | Interactive grid with booktabs toggle — generates complete LaTeX table code |
+| v5.5 | **AI LaTeX Assistant** | Claude-powered: write, fix, explain, convert — 4 modes with file context |
+| v5.5 | **Live Math Preview** | KaTeX-rendered equations in real-time — click to jump to source line |
+| v5.5 | **11 Editor Panels** | PDF, History, Git, Outline, Symbols, Cite, Math, AI, Table, Equation Builder |
+| v5.5 | **Quick-Fix + Spellcheck** | One-click typo fixes + browser-native spell checking |
+| v5.5 | **GitHub + ZIP Import** | Paste GitHub URL or upload ZIP → instant project creation |
+| v5.5 | **160+ Completions** | BibTeX syntax, 27 snippets, 70+ symbols, smart linter, cross-file error nav |
+| v5.5 | **1,572 Tests** | 0 type errors · 0 lint errors · 0 dead code · 46 API routes · 52 components |
 
 ---
 
@@ -566,7 +566,7 @@ PaperForge is built on the shoulders of outstanding open-source projects:
 
 **Built with determination by [concrete-sangminlee](https://github.com/concrete-sangminlee)**
 
-**230+ source files · 1,572 tests (131 suites) · 46 API routes · 24 pages · 8 Docker services · v5.4.0 · [Live Demo](https://projectlatexcompiler.vercel.app)**
+**230+ source files · 1,572 tests (131 suites) · 46 API routes · 24 pages · 8 Docker services · v5.5.0 · [Live Demo](https://projectlatexcompiler.vercel.app)**
 
 [Pricing](https://projectlatexcompiler.vercel.app/pricing) · [Getting Started](https://projectlatexcompiler.vercel.app/docs/getting-started) · [Docs](https://projectlatexcompiler.vercel.app/docs) · [API](https://projectlatexcompiler.vercel.app/docs/api) · [Symbols](https://projectlatexcompiler.vercel.app/docs/symbols) · [Templates](https://projectlatexcompiler.vercel.app/docs/templates) · [Status](https://projectlatexcompiler.vercel.app/status) · [Changelog](https://projectlatexcompiler.vercel.app/changelog)
 
