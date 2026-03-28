@@ -7,6 +7,8 @@ datasource db {
   provider = "postgresql"
 }
 
+/// Registered user account. Supports credential + OAuth login.
+/// Soft-delete NOT supported — use lockedUntil for suspension.
 model User {
   id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email              String    @unique @db.VarChar(255)
@@ -53,6 +55,7 @@ model OAuthAccount {
   @@map("oauth_accounts")
 }
 
+/// LaTeX project with soft-delete (deletedAt). Access controlled via ProjectMember.
 model Project {
   id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   createdBy   String?   @map("created_by") @db.Uuid
@@ -79,6 +82,7 @@ model Project {
   @@map("projects")
 }
 
+/// User-project membership with role (owner/editor/viewer).
 model ProjectMember {
   projectId String   @map("project_id") @db.Uuid
   userId    String   @map("user_id") @db.Uuid
@@ -94,6 +98,7 @@ model ProjectMember {
   @@map("project_members")
 }
 
+/// Project file with soft-delete (deletedAt). Content stored in MinIO.
 model File {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   projectId String    @map("project_id") @db.Uuid
@@ -114,6 +119,7 @@ model File {
   @@map("files")
 }
 
+/// LaTeX compilation job with status tracking and artifact storage.
 model Compilation {
   id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   projectId      String   @map("project_id") @db.Uuid
@@ -138,6 +144,7 @@ model Compilation {
   @@map("compilations")
 }
 
+/// Named version snapshot backed by a git commit.
 model Version {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   projectId String   @map("project_id") @db.Uuid
@@ -154,6 +161,7 @@ model Version {
   @@map("versions")
 }
 
+/// Curated or user-submitted project template. Requires admin approval.
 model Template {
   id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name            String   @db.VarChar(255)
@@ -174,6 +182,7 @@ model Template {
   @@map("templates")
 }
 
+/// Encrypted git remote credential (token encrypted with AES-256-GCM).
 model GitCredential {
   id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId                 String   @map("user_id") @db.Uuid
@@ -189,6 +198,7 @@ model GitCredential {
   @@map("git_credentials")
 }
 
+/// Time-limited share link for project access invitation.
 model ShareLink {
   id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   projectId  String    @map("project_id") @db.Uuid
@@ -203,6 +213,7 @@ model ShareLink {
   @@map("share_links")
 }
 
+/// Admin action audit trail for compliance and security tracking.
 model AuditLog {
   id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   adminId    String   @map("admin_id") @db.Uuid
