@@ -305,6 +305,7 @@ paperforge/
 | `POST` | `/api/v1/auth/forgot-password` | Request password reset |
 | `POST` | `/api/v1/auth/reset-password` | Reset with token |
 | `GET`  | `/api/v1/auth/verify-email/:token` | Verify email |
+| `POST` | `/api/v1/auth/change-password` | Change password (authenticated) |
 
 </details>
 
@@ -333,6 +334,22 @@ paperforge/
 | `PUT`    | `/api/v1/projects/:id/files/:path` | Write file |
 | `DELETE` | `/api/v1/projects/:id/files/:path` | Delete file |
 | `POST`   | `/api/v1/projects/:id/files/upload` | Upload binary |
+
+</details>
+
+<details>
+<summary><strong>User & Account</strong></summary>
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET`  | `/api/v1/user/profile` | Get user profile |
+| `PATCH` | `/api/v1/user/profile` | Update name, institution, bio |
+| `GET`  | `/api/v1/user/settings` | Get user preferences |
+| `PATCH` | `/api/v1/user/settings` | Update editor/notification settings |
+| `DELETE` | `/api/v1/user/account` | Delete account (cascading) |
+| `GET`  | `/api/v1/user/git-credentials` | List git credentials |
+| `POST` | `/api/v1/user/git-credentials` | Add encrypted credential |
+| `DELETE` | `/api/v1/user/git-credentials/:id` | Remove credential |
 
 </details>
 
@@ -465,7 +482,7 @@ Includes all services: Next.js app, WebSocket server, compilation workers, Postg
 - [x] 100% API standardization (all routes use consistent response format)
 - [x] File upload validation (size limits, blocked extensions, path traversal)
 - [x] Admin real-time dashboards (15s auto-refresh)
-- [x] Comprehensive test suite (46 tests — API, validation, errors, encryption)
+- [x] Comprehensive test suite (1,558 tests — linting, completions, error parsing, API, services, E2E)
 - [x] Email error handling (graceful SMTP failure recovery)
 - [x] LaTeX syntax highlighting (custom StreamLanguage parser)
 - [x] LaTeX autocomplete (70+ commands, Greek letters, environments)

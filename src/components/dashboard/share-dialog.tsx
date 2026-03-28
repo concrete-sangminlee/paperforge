@@ -90,8 +90,8 @@ export function ShareDialog({ projectId, currentUserRole, open: openProp, onOpen
     }
   }, [open, fetchMembers]);
 
-  async function handleInvite(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleInvite(e?: React.FormEvent) {
+    e?.preventDefault();
     if (!inviteEmail.trim()) return;
     setInviting(true);
     setInviteError('');
@@ -259,7 +259,7 @@ export function ShareDialog({ projectId, currentUserRole, open: openProp, onOpen
                     autoComplete="email"
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void handleInvite(e as unknown as React.FormEvent); } }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void handleInvite(); } }}
                     className="flex-1"
                   />
                   <Select

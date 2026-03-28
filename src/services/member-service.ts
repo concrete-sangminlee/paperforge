@@ -35,7 +35,7 @@ export async function inviteMember(
     select: { name: true },
   });
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000';
   const projectName = project?.name ?? 'a project';
   const projectUrl = `${appUrl}/editor/${projectId}`;
   const body = `
