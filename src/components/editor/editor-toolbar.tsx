@@ -73,7 +73,7 @@ const STRUCTURE_BUTTONS = [
 ] as const;
 
 export function EditorToolbar({ projectId, projectName, onCompileReady }: EditorToolbarProps) {
-  const { compilationStatus, setCompilationStatus, setCompilationLog, setLatestPdfUrl, autoCompileEnabled, toggleAutoCompile } =
+  const { compilationStatus, setCompilationStatus, setCompilationLog, setCompilationDuration, setLatestPdfUrl, autoCompileEnabled, toggleAutoCompile } =
     useEditorStore();
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [docxUrl, setDocxUrl] = useState<string | null>(null);
@@ -91,7 +91,9 @@ export function EditorToolbar({ projectId, projectName, onCompileReady }: Editor
 
     setCompilationStatus('compiling');
     setCompilationLog('');
+    setCompilationDuration(null);
     setDocxUrl(null);
+    const compileStart = Date.now();
 
     try {
       const res = await fetch(`/api/v1/projects/${projectId}/compile`, {
@@ -137,6 +139,7 @@ export function EditorToolbar({ projectId, projectName, onCompileReady }: Editor
             if (data.docxMinioKey) {
               setDocxUrl(`/api/v1/projects/${projectId}/compile/${compileId}/docx`);
             }
+            setCompilationDuration(Date.now() - compileStart);
             toast.success('Compiled successfully');
           } else if (data.status === 'failed' || data.status === 'error') {
             stopPolling();

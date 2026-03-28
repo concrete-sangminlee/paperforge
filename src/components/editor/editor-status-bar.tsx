@@ -43,6 +43,8 @@ export function EditorStatusBar() {
   const fontSize = useEditorStore((s) => s.fontSize);
   const cursorLine = useEditorStore((s) => s.cursorLine);
   const cursorCol = useEditorStore((s) => s.cursorCol);
+  const compilationDuration = useEditorStore((s) => s.compilationDuration);
+  const compilationStatus = useEditorStore((s) => s.compilationStatus);
 
   const tabData = tabs.find((t) => t.path === activeTab);
 
@@ -135,6 +137,12 @@ export function EditorStatusBar() {
             <TargetIcon className="size-3" />
             Goal
           </button>
+        )}
+        {compilationStatus === 'success' && compilationDuration != null && (
+          <>
+            <span className="text-border">|</span>
+            <span className="text-emerald-500">Compiled {(compilationDuration / 1000).toFixed(1)}s</span>
+          </>
         )}
         <span className="text-border">|</span>
         <span>UTF-8</span>
