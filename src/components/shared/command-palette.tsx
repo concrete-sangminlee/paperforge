@@ -186,6 +186,12 @@ export function CommandPalette() {
         action: () => dispatchCustomEvent('show-shortcuts'),
       },
       {
+        id: 'editor-summarize',
+        label: 'AI: Generate Abstract',
+        icon: <FileArchive className="size-4" />,
+        action: () => dispatchCustomEvent('generate-abstract'),
+      },
+      {
         id: 'editor-share',
         label: 'Share Project',
         icon: <Share2 className="size-4" />,
