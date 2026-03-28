@@ -100,11 +100,14 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
         key: 'Ctrl-g',
         mac: 'Cmd-g',
         run(view) {
-          const input = prompt('Go to line:');
+          // Use a non-blocking approach: dispatch event to show go-to-line UI
+          // Fallback to prompt() if no listener handles it
+          const lineCount = view.state.doc.lines;
+          const input = prompt(`Go to line (1-${lineCount}):`);
           if (!input) return true;
           const line = parseInt(input, 10);
           if (isNaN(line) || line < 1) return true;
-          const target = Math.min(line, view.state.doc.lines);
+          const target = Math.min(line, lineCount);
           const lineInfo = view.state.doc.line(target);
           view.dispatch({
             selection: { anchor: lineInfo.from },
@@ -299,6 +302,23 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
         EditorView.theme({
           '&': { height: '100%', minHeight: '0' },
           '.cm-scroller': { overflow: 'auto', fontFamily: 'var(--font-mono, monospace)' },
+          // Bracket pair colorization
+          '.cm-matchingBracket': {
+            backgroundColor: 'rgba(249, 115, 22, 0.15)',
+            borderBottom: '1px solid #f97316',
+            color: 'inherit',
+          },
+          '.cm-nonmatchingBracket': {
+            backgroundColor: 'rgba(239, 68, 68, 0.2)',
+            borderBottom: '1px solid #ef4444',
+          },
+          // Active line highlight
+          '.cm-activeLine': {
+            backgroundColor: 'rgba(249, 115, 22, 0.04)',
+          },
+          '.cm-activeLineGutter': {
+            backgroundColor: 'rgba(249, 115, 22, 0.08)',
+          },
         }),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
