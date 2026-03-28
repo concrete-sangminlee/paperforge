@@ -55,8 +55,12 @@ export default async function EditorPage({ params }: EditorPageProps) {
     let files = await listFiles(projectId);
 
     if (files.length === 0) {
-      await createFile(projectId, 'main.tex', MAIN_TEX_TEMPLATE);
-      files = await listFiles(projectId);
+      try {
+        await createFile(projectId, 'main.tex', MAIN_TEX_TEMPLATE);
+        files = await listFiles(projectId);
+      } catch {
+        // MinIO may not be available — proceed with empty file list
+      }
     }
 
     fileEntries = files.map((f) => ({
