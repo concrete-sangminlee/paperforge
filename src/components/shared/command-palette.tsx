@@ -56,23 +56,39 @@ interface CommandGroupEntry {
 
 export function CommandPalette() {
   const [open, setOpen] = React.useState(false)
+  const [quickOpenFiles, setQuickOpenFiles] = React.useState<string[]>([])
   const router = useRouter()
   const pathname = usePathname()
   const { setTheme } = useTheme()
 
   const isEditorPage = pathname.startsWith('/editor') || pathname.startsWith('/projects/')
 
-  // Global keyboard shortcut: Cmd+K / Ctrl+K
+  // Global keyboard shortcuts: Cmd+K / Ctrl+K (commands), Ctrl+P (quick open)
   React.useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
         setOpen((prev) => !prev)
       }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'p' && isEditorPage) {
+        e.preventDefault()
+        // Load file list for quick open
+        const match = pathname.match(/\/editor\/([^/]+)/)
+        if (match) {
+          fetch(`/api/v1/projects/${match[1]}/files`)
+            .then(r => r.json())
+            .then(data => {
+              const files = (data.data ?? data) as Array<{ path: string; isBinary: boolean }>
+              setQuickOpenFiles(files.filter(f => !f.isBinary).map(f => f.path))
+            })
+            .catch(() => {})
+        }
+        setOpen(true)
+      }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [isEditorPage, pathname])
 
   function runCommand(action: () => void) {
     setOpen(false)
@@ -272,16 +288,32 @@ export function CommandPalette() {
     ],
   }
 
+  // Quick Open file list (populated by Ctrl+P)
+  const quickOpenGroup: CommandGroupEntry | null = quickOpenFiles.length > 0 ? {
+    heading: 'Quick Open',
+    commands: quickOpenFiles.map((path) => ({
+      id: `file-${path}`,
+      label: path,
+      icon: <FileArchive className="size-4" />,
+      action: () => {
+        dispatchCustomEvent('editor-open-file-at-line', { path, line: 1 })
+        setQuickOpenFiles([])
+      },
+    })),
+  } : null
+
   // Build the list of groups; editor + latex only shown on editor pages
-  const groups: CommandGroupEntry[] = [navigationGroup]
+  const groups: CommandGroupEntry[] = []
+  if (quickOpenGroup) groups.push(quickOpenGroup)
+  groups.push(navigationGroup)
   if (isEditorPage) {
     groups.push(editorGroup, latexGroup)
   }
   groups.push(themeGroup)
 
   return (
-    <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder="Type a command or search..." />
+    <CommandDialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setQuickOpenFiles([]); }}>
+      <CommandInput placeholder={quickOpenFiles.length ? "Search files..." : "Type a command or search..."} />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
         {groups.map((group, groupIndex) => (
