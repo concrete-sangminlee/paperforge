@@ -34,7 +34,12 @@ Write your conclusion here.
 `;
 
 export default async function EditorPage({ params }: EditorPageProps) {
-  const session = await auth();
+  let session = null;
+  try {
+    session = await auth();
+  } catch {
+    redirect('/login');
+  }
   if (!session?.user) {
     redirect('/login');
   }

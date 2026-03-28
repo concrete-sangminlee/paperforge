@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import { auth } from '@/lib/auth';
 import { Navbar } from '@/components/shared/navbar';
 
 export default async function DashboardLayout({
@@ -7,7 +6,14 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  let session = null;
+  try {
+    const { auth } = await import('@/lib/auth');
+    session = await auth();
+  } catch {
+    // Auth failed — redirect to login
+  }
+
   if (!session?.user) {
     redirect('/login');
   }
