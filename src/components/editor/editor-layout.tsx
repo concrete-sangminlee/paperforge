@@ -247,6 +247,12 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
           setActiveTab(t[idx].path);
         }
       }
+      // Ctrl+\ to toggle sidebar
+      if ((e.ctrlKey || e.metaKey) && e.key === '\\') {
+        e.preventDefault();
+        toggleSidebar();
+        return;
+      }
       // Ctrl+N to create new file
       if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
         e.preventDefault();
