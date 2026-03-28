@@ -71,7 +71,8 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
     try {
       const res = await fetch('/api/v1/user/git-credentials');
       if (!res.ok) return;
-      const data: GitCredential[] = await res.json();
+      const result = await res.json();
+      const data = (result.data ?? result) as GitCredential[];
       setCredentials(data);
     } catch {
       // silently ignore

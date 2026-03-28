@@ -67,7 +67,8 @@ export function VersionHistory({ projectId }: VersionHistoryProps) {
       setLoading(true);
       const res = await fetch(`/api/v1/projects/${projectId}/versions`);
       if (!res.ok) throw new Error('Failed to load versions');
-      const data: Version[] = await res.json();
+      const result = await res.json();
+      const data = (result.data ?? result) as Version[];
       setVersions(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -144,7 +145,8 @@ export function VersionHistory({ projectId }: VersionHistoryProps) {
         `/api/v1/projects/${projectId}/versions/${versionId}/diff`,
       );
       if (!res.ok) throw new Error('Failed to load diff');
-      const data = await res.json();
+      const result = await res.json();
+      const data = result.data ?? result;
       setDiffContent(typeof data === 'string' ? data : JSON.stringify(data, null, 2));
     } catch {
       setDiffContent('Failed to load diff.');

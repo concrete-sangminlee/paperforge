@@ -24,7 +24,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+const fetcher = (url: string) => fetch(url).then((r) => r.json()).then((result) => result.data ?? result);
 
 interface Template {
   id: string;
@@ -115,7 +115,8 @@ export default function TemplatesPage() {
         setError(data.error ?? 'Failed to create project');
         return;
       }
-      const project = await res.json();
+      const result = await res.json();
+      const project = result.data ?? result;
       router.push(`/editor/${project.id}`);
     } catch {
       setError('Failed to create project');

@@ -72,7 +72,8 @@ export function ShareDialog({ projectId, currentUserRole, open: openProp, onOpen
     try {
       const res = await fetch(`/api/v1/projects/${projectId}/members`);
       if (res.ok) {
-        const data = await res.json() as Member[];
+        const result = await res.json();
+        const data = (result.data ?? result) as Member[];
         setMembers(data);
       }
     } catch {
@@ -100,8 +101,8 @@ export function ShareDialog({ projectId, currentUserRole, open: openProp, onOpen
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
       });
-      const data = await res.json() as { error?: string };
-      if (!res.ok) throw new Error(data.error ?? 'Failed to invite');
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error ?? 'Failed to invite');
       setInviteSuccess(`Invitation sent to ${inviteEmail.trim()}`);
       setInviteEmail('');
       await fetchMembers();
@@ -144,8 +145,9 @@ export function ShareDialog({ projectId, currentUserRole, open: openProp, onOpen
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ permission: shareLinkPermission }),
       });
-      const data = await res.json() as { token?: string; error?: string };
-      if (!res.ok) throw new Error(data.error ?? 'Failed to generate link');
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error ?? 'Failed to generate link');
+      const data = (result.data ?? result) as { token?: string };
       const appUrl = window.location.origin;
       setShareLink(`${appUrl}/api/v1/join/${data.token}`);
     } catch {
