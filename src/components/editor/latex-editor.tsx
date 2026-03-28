@@ -23,6 +23,7 @@ interface LaTeXEditorProps {
   filePath: string;
   projectId: string;
   theme?: 'light' | 'dark';
+  readOnly?: boolean;
   onSave?: (content: string) => void;
   onProviderReady?: (provider: WebsocketProvider) => void;
   onConnectionChange?: (connected: boolean) => void;
@@ -47,7 +48,7 @@ function wrapSelection(view: EditorView, prefix: string, suffix: string): boolea
   return true;
 }
 
-export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'light', onSave, onProviderReady, onConnectionChange }: LaTeXEditorProps) {
+export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'light', readOnly = false, onSave, onProviderReady, onConnectionChange }: LaTeXEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const updateContent = useEditorStore((s) => s.updateContent);
@@ -303,6 +304,8 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
         themeCompartment.of(theme === 'dark' ? oneDark : []),
         wrapCompartment.of(useEditorStore.getState().wordWrap ? EditorView.lineWrapping : []),
         EditorView.contentAttributes.of({ spellcheck: 'true', autocorrect: 'on' }),
+        EditorState.readOnly.of(readOnly),
+        EditorView.editable.of(!readOnly),
         EditorView.theme({
           '&': { height: '100%', minHeight: '0' },
           '.cm-scroller': {
