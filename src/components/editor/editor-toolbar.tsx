@@ -388,6 +388,7 @@ function KeyboardShortcutsButton() {
     { keys: 'Ctrl+Shift+P', action: 'Global search' },
     { keys: 'Ctrl+\\', action: 'Toggle sidebar' },
     { keys: 'Ctrl+J', action: 'Toggle log panel' },
+    { keys: 'Ctrl+Shift+C', action: 'Compile' },
   ];
 
   return (
