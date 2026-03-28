@@ -30,8 +30,8 @@ export async function inviteMember(
     include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } },
   });
 
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, deletedAt: null },
     select: { name: true },
   });
 
@@ -133,12 +133,12 @@ export async function joinViaShareLink(token: string, userId: string) {
   });
   if (existing) {
     // Already a member — just return the project
-    return prisma.project.findUnique({ where: { id: link.projectId } });
+    return prisma.project.findFirst({ where: { id: link.projectId, deletedAt: null } });
   }
 
   await prisma.projectMember.create({
     data: { projectId: link.projectId, userId, role: link.permission },
   });
 
-  return prisma.project.findUnique({ where: { id: link.projectId } });
+  return prisma.project.findFirst({ where: { id: link.projectId, deletedAt: null } });
 }

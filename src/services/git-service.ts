@@ -29,7 +29,7 @@ export async function linkGitRemote(projectId: string, remoteUrl: string) {
 }
 
 export async function pushToRemote(projectId: string, userId: string) {
-  const project = await prisma.project.findUnique({ where: { id: projectId } });
+  const project = await prisma.project.findFirst({ where: { id: projectId, deletedAt: null } });
   if (!project?.gitRepoPath) throw new ApiError(400, 'No remote repository linked');
 
   const credential = await prisma.gitCredential.findFirst({ where: { userId } });
@@ -54,7 +54,7 @@ export async function pushToRemote(projectId: string, userId: string) {
 }
 
 export async function pullFromRemote(projectId: string, userId: string) {
-  const project = await prisma.project.findUnique({ where: { id: projectId } });
+  const project = await prisma.project.findFirst({ where: { id: projectId, deletedAt: null } });
   if (!project?.gitRepoPath) throw new ApiError(400, 'No remote repository linked');
 
   const dir = getRepoDir(projectId);

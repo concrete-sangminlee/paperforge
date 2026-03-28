@@ -18,8 +18,8 @@ try {
 }
 
 export async function triggerCompilation(projectId: string, userId: string) {
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, deletedAt: null },
     include: { files: { where: { deletedAt: null } } },
   });
   if (!project) throw new ApiError(404, 'Project not found');
