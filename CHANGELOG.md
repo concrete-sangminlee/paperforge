@@ -5,6 +5,17 @@ All notable changes to PaperForge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-03-28
+
+### Added
+- **/changelog** — Visual release timeline page
+- **/status** — Live system health monitoring with auto-refresh
+- **/docs/api** — Interactive API reference with 40 endpoints
+- **543 Tests** — Build config, Docker infra, sitemap, fetcher, all commands
+- **Expanded Sitemap** — 11 public pages with SEO priority/frequency
+
+---
+
 ## [2.2.0] - 2026-03-28
 
 ### Added
