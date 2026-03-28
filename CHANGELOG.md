@@ -5,6 +5,20 @@ All notable changes to PaperForge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2026-03-28
+
+### Added
+- **/docs/symbols** — 67 LaTeX symbols with click-to-copy and Unicode preview
+- **/docs/templates** — 6 copy-paste templates (Article, IEEE, Beamer, Letter, Thesis, CV)
+- **1000 Tests** — Complete system verification across 89 suites
+- **API envelope fix** — All client components correctly unwrap { data } responses
+- **unwrapApi()** — Shared utility for API response handling
+
+### Pages (14 total)
+Landing, Login, Register, Projects, Templates, Settings, Editor, Pricing, Privacy, Terms, Docs (+ API, Symbols, Templates sub-pages), Changelog, Status
+
+---
+
 ## [2.5.0] - 2026-03-28
 
 ### Stats
