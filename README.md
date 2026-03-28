@@ -48,13 +48,13 @@
 
 | Release | Feature | Description |
 |:---:|:---|:---|
-| v4.5 | **Command Palette Pro** | 22+ commands with fuzzy search (Cmd+K): navigation, LaTeX insertion, export, sharing, theme switching, keyboard shortcut reference |
-| v4.5 | **Page Transition Indicator** | NProgress-style orange progress bar on route navigation for seamless UX |
-| v4.5 | **Enhanced File Tree** | File size display, "Copy Path" context menu, staggered skeleton loading, full keyboard navigation |
-| v4.5 | **Route Error Boundaries** | Dedicated error pages for auth, dashboard, and editor routes with error digest + retry/navigate actions |
-| v4.5 | **Dark Mode Polish** | Compilation log, status badges, search highlights all properly themed for light and dark modes |
-| v4.5 | **Security Hardening** | CSP headers, production-only CORS, restricted image domains, 28 blocked extensions, AbortController on async ops |
-| v4.5 | **1,500+ Tests** | 128 test suites covering linting, completions, error parsing, API responses, validation, and full pipeline E2E |
+| v4.5 | **Change Password API** | Secure password change from settings (current password verification, bcrypt hashing, strength enforcement) |
+| v4.5 | **Git Remote Persistence** | Previously linked git remotes now display on editor open (fixed data flow: project → layout → GitPanel) |
+| v4.5 | **Mobile Landing Page** | Hamburger menu for mobile nav with full section links + documentation/pricing access |
+| v4.5 | **Command Palette Pro** | 22+ commands with fuzzy search (Cmd+K): navigation, LaTeX, export, sharing, theme, keyboard shortcuts |
+| v4.5 | **File Tree UX** | File sizes (KB/MB), "Copy Path" context menu, staggered skeleton loading, keyboard nav |
+| v4.5 | **Security & Polish** | CSP headers, CORS hardening, 28 blocked extensions, dark mode fixes, route error boundaries, page transitions |
+| v4.5 | **1,500+ Tests** | 128 suites covering linting, completions, error parsing, API responses, validation, and pipeline E2E |
 
 ---
 
