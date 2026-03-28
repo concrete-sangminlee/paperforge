@@ -25,7 +25,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = (url: string) => fetch(url).then((res) => {
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}).then((data) => data.data ?? data);
 
 type SortOption = 'updated' | 'name-asc' | 'name-desc' | 'created';
 type RoleFilter = 'all' | 'mine' | 'shared';
