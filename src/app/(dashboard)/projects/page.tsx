@@ -26,6 +26,7 @@ import { ProjectCard, type ProjectData } from '@/components/dashboard/project-ca
 import { CreateProjectDialog } from '@/components/dashboard/create-project-dialog';
 import { ImportProjectDialog } from '@/components/dashboard/import-project-dialog';
 import { StorageBar } from '@/components/dashboard/storage-bar';
+import { GlobalSearch } from '@/components/dashboard/global-search';
 
 type SortOption = 'updated' | 'name-asc' | 'name-desc' | 'created';
 type RoleFilter = 'all' | 'mine' | 'shared';
@@ -279,7 +280,8 @@ export default function ProjectsPage() {
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          <GlobalSearch />
           <ImportProjectDialog />
           <CreateProjectDialog />
         </div>
