@@ -49,8 +49,9 @@
 
 | Release | Feature | Description |
 |:---:|:---|:---|
-| v4.8 | **GitHub Import** | Paste a GitHub URL → one-click import any public repo; tab-style dialog with ZIP + GitHub modes |
-| v4.8 | **Word Wrap Toggle** | Quick toolbar button wired live to CodeMirror — no editor restart needed |
+| v4.8 | **Symbol Picker** | 70+ visual LaTeX symbols (Greek, operators, arrows, calculus) — click to insert at cursor |
+| v4.8 | **Project Rename** | Inline rename from dashboard dropdown — Enter/Escape/blur to save, owner-only |
+| v4.8 | **GitHub Import** | Paste a GitHub URL → one-click import any public repo; tab-style ZIP + GitHub dialog |
 | v4.8 | **Quick Open (Ctrl+P)** | Jump to any file by name — VS Code trifecta: Ctrl+P (files), Ctrl+K (commands), Ctrl+Shift+F (search) |
 | v4.8 | **Cross-File Error Nav** | Click compilation log → opens referenced file at exact line; bracket colorization; PDF click-to-source |
 | v4.8 | **Enterprise Security** | Single-use tokens, IDOR prevention, anti-enumeration, timing mitigation, zero magic numbers |
