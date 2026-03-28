@@ -49,11 +49,12 @@ export function CreateProjectDialog() {
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to create project');
+        const errData = await res.json();
+        throw new Error(errData.error?.message || errData.error || 'Failed to create project');
       }
 
-      const project = await res.json();
+      const result = await res.json();
+      const project = result.data ?? result;
       setOpen(false);
       setName('');
       setCompiler('pdflatex');
