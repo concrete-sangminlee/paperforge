@@ -58,30 +58,57 @@ export function latexLinter(doc: string): Diagnostic[] {
       }
     }
 
-    // Check for common mistakes
+    // Check for common mistakes with quick-fix actions
     if (line.includes('\\being{')) {
+      const idx = pos + line.indexOf('\\being{');
       diagnostics.push({
-        from: pos + line.indexOf('\\being{'),
-        to: pos + line.indexOf('\\being{') + 7,
+        from: idx,
+        to: idx + 7,
         severity: 'error',
         message: 'Did you mean \\begin{...}?',
+        actions: [{
+          name: 'Fix: \\begin',
+          apply(view) { view.dispatch({ changes: { from: idx, to: idx + 6, insert: '\\begin' } }); },
+        }],
       });
     }
 
     if (line.includes('\\ned{')) {
+      const idx = pos + line.indexOf('\\ned{');
       diagnostics.push({
-        from: pos + line.indexOf('\\ned{'),
-        to: pos + line.indexOf('\\ned{') + 5,
+        from: idx,
+        to: idx + 5,
         severity: 'error',
         message: 'Did you mean \\end{...}?',
+        actions: [{
+          name: 'Fix: \\end',
+          apply(view) { view.dispatch({ changes: { from: idx, to: idx + 4, insert: '\\end' } }); },
+        }],
+      });
+    }
+
+    // Detect \usepackage typos with quick fix
+    if (line.includes('\\usepackge{') || line.includes('\\usepckage{')) {
+      const typo = line.includes('\\usepackge{') ? '\\usepackge{' : '\\usepckage{';
+      const idx = pos + line.indexOf(typo);
+      diagnostics.push({
+        from: idx,
+        to: idx + typo.length,
+        severity: 'error',
+        message: 'Did you mean \\usepackage{...}?',
+        actions: [{
+          name: 'Fix: \\usepackage',
+          apply(view) { view.dispatch({ changes: { from: idx, to: idx + typo.length - 1, insert: '\\usepackage' } }); },
+        }],
       });
     }
 
     // Warn about double dollar signs (prefer equation environment)
     if (line.includes('$$')) {
+      const idx = pos + line.indexOf('$$');
       diagnostics.push({
-        from: pos + line.indexOf('$$'),
-        to: pos + line.indexOf('$$') + 2,
+        from: idx,
+        to: idx + 2,
         severity: 'info',
         message: 'Consider using \\begin{equation} instead of $$ for numbered equations',
       });
@@ -100,16 +127,7 @@ export function latexLinter(doc: string): Diagnostic[] {
       }
     }
 
-    // Detect common typos
-    if (line.includes('\\usepackge{') || line.includes('\\usepckage{')) {
-      const typo = line.includes('\\usepackge{') ? '\\usepackge{' : '\\usepckage{';
-      diagnostics.push({
-        from: pos + line.indexOf(typo),
-        to: pos + line.indexOf(typo) + typo.length,
-        severity: 'error',
-        message: 'Did you mean \\usepackage{...}?',
-      });
-    }
+    // (usepackage typos handled above with quick-fix actions)
 
     // Detect \cite{} or \ref{} with empty argument
     const emptyRef = line.match(/\\(cite|ref|label|eqref|autoref|cref)\{\s*\}/);
