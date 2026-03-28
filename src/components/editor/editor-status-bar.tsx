@@ -62,6 +62,8 @@ export function EditorStatusBar() {
   const [editingGoal, setEditingGoal] = useState(false);
   const [goalInput, setGoalInput] = useState('');
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [sessionStart] = useState(() => Date.now());
+  const [sessionMinutes, setSessionMinutes] = useState(0);
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Load word goal from localStorage
@@ -80,12 +82,14 @@ export function EditorStatusBar() {
     prevDirty.current = tabData?.dirty;
   }, [tabData?.dirty]);
 
-  // Re-render every 10s to update "Saved Xs ago"
+  // Re-render every 10s to update "Saved Xs ago" + session timer
   useEffect(() => {
-    if (!lastSaved) return;
-    const id = setInterval(() => tick((n) => n + 1), 10000);
+    const id = setInterval(() => {
+      tick((n) => n + 1);
+      setSessionMinutes(Math.floor((Date.now() - sessionStart) / 60000));
+    }, 10000);
     return () => clearInterval(id);
-  }, [lastSaved]);
+  }, [sessionStart]);
 
   useEffect(() => {
     if (!tabData) { setStats(null); return; }
@@ -175,6 +179,12 @@ export function EditorStatusBar() {
         <span>UTF-8</span>
         <span className="text-border">|</span>
         <span>{fontSize}px</span>
+        {sessionMinutes > 0 && (
+          <>
+            <span className="text-border">|</span>
+            <span title="Session duration">{sessionMinutes < 60 ? `${sessionMinutes}m` : `${Math.floor(sessionMinutes / 60)}h${sessionMinutes % 60}m`}</span>
+          </>
+        )}
         {tabData.dirty ? (
           <>
             <span className="text-border">|</span>
