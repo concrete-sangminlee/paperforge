@@ -44,7 +44,7 @@ export async function triggerCompilation(projectId: string, userId: string) {
       projectId,
       mainFile: project.mainFile,
       compiler: project.compiler,
-      files: project.files.map((f) => ({ path: f.path, minioKey: f.minioKey! })),
+      files: project.files.filter((f) => f.minioKey).map((f) => ({ path: f.path, minioKey: f.minioKey as string })),
     },
     {
       priority: 2,
