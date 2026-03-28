@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { TargetIcon } from 'lucide-react';
 import { useEditorStore } from '@/store/editor-store';
 import { cn } from '@/lib/utils';

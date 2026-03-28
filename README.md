@@ -66,20 +66,20 @@
 <td width="50%">
 
 ### <img src="https://img.icons8.com/fluency/24/source-code.png" width="20" /> LaTeX Editor
-- Powered by **CodeMirror 6** with full LaTeX syntax highlighting
-- Auto-completion for commands, environments, citations
-- Bracket matching, code folding, regex search
-- Light & Dark themes with VIM/Emacs keybindings
-- Inline error highlighting from compiler output
+- Powered by **CodeMirror 6** with LaTeX + BibTeX syntax highlighting
+- **160+ completions**, 27 snippets, full Greek alphabet
+- Smart linter with typo detection, empty ref warnings, label checks
+- Bracket matching, code folding, regex search, 23 keyboard shortcuts
+- Cursor position (Ln/Col), compilation time, "Saved Xs ago" indicator
 
 </td>
 <td width="50%">
 
 ### <img src="https://img.icons8.com/fluency/24/pdf-2.png" width="20" /> Instant PDF Preview
-- Split-pane editor | PDF view with resizable divider
+- Split-pane editor | PDF view with tabbed right panel
 - Powered by **PDF.js** with smooth rendering
-- SyncTeX: click source to jump to PDF, and vice versa
-- Zoom, page navigation, fit-to-width
+- **Double-click to jump** from PDF to approximate source line
+- Zoom (25%-400%), page navigation, fit-to-width, fullscreen
 - One-click PDF download
 
 </td>
