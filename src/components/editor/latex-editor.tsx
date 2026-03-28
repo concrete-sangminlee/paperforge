@@ -62,13 +62,7 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
 
     // --- Connection status tracking ---
     const handleStatus = ({ status }: { status: string }) => {
-      const connected = status === 'connected';
-      onConnectionChange?.(connected);
-      if (!connected) {
-        console.log(`[PaperForge] WebSocket disconnected – attempting reconnection...`);
-      } else {
-        console.log(`[PaperForge] WebSocket connected`);
-      }
+      onConnectionChange?.(status === 'connected');
     };
     provider.on('status', handleStatus);
 

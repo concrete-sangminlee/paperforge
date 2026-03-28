@@ -118,6 +118,12 @@ export function FindInProject({ projectId, open, onOpenChange }: FindInProjectPr
           window.dispatchEvent(new CustomEvent('editor-goto-line', { detail: result.line }));
         }, 100);
         onOpenChange(false);
+      })
+      .catch(() => {
+        // File may not be readable — just navigate to it
+        openFile(result.path, '');
+        setActiveTab(result.path);
+        onOpenChange(false);
       });
   }
 

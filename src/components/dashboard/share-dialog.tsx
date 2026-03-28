@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Share2Icon, CopyIcon, CheckIcon, UserMinusIcon, LoaderCircleIcon } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -115,25 +116,35 @@ export function ShareDialog({ projectId, currentUserRole, open: openProp, onOpen
 
   async function handleRoleChange(userId: string, role: string) {
     try {
-      await fetch(`/api/v1/projects/${projectId}/members/${userId}`, {
+      const res = await fetch(`/api/v1/projects/${projectId}/members/${userId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role }),
       });
+      if (res.ok) {
+        toast.success('Role updated');
+      } else {
+        toast.error('Failed to update role');
+      }
       await fetchMembers();
     } catch {
-      // ignore
+      toast.error('Failed to update role');
     }
   }
 
   async function handleRemove(userId: string) {
     try {
-      await fetch(`/api/v1/projects/${projectId}/members/${userId}`, {
+      const res = await fetch(`/api/v1/projects/${projectId}/members/${userId}`, {
         method: 'DELETE',
       });
+      if (res.ok) {
+        toast.success('Member removed');
+      } else {
+        toast.error('Failed to remove member');
+      }
       await fetchMembers();
     } catch {
-      // ignore
+      toast.error('Failed to remove member');
     }
   }
 

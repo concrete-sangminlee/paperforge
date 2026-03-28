@@ -651,6 +651,7 @@ export function FileTree({
         body: JSON.stringify({ mainFile: file.path }),
       });
       onMainFileChange?.(file.path);
+      toast.success('Main document updated');
     } catch (err) {
       console.error('Set main file failed:', err);
       toast.error('Failed to set main file');
@@ -686,6 +687,7 @@ export function FileTree({
       });
 
       onRefresh();
+      toast.success('File duplicated');
     } catch (err) {
       console.error('Duplicate failed:', err);
       toast.error('Duplicate failed');

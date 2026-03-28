@@ -185,7 +185,6 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
       }
     }
     function handleFindEvent() { setFindOpen(true); }
-    function handleShareEvent() { /* Future: open share dialog */ }
     function handleCompileEvent() {
       if (compileFnRef.current) {
         void compileFnRef.current();
@@ -194,12 +193,10 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
     }
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('find-in-files', handleFindEvent);
-    window.addEventListener('open-share-dialog', handleShareEvent);
     window.addEventListener('latex-compile', handleCompileEvent);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('find-in-files', handleFindEvent);
-      window.removeEventListener('open-share-dialog', handleShareEvent);
       window.removeEventListener('latex-compile', handleCompileEvent);
     };
   }, []);

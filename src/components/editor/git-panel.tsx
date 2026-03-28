@@ -216,6 +216,7 @@ export function GitPanel({ projectId, remoteUrl: initialRemote }: GitPanelProps)
       await fetch(`/api/v1/user/git-credentials/${id}`, { method: 'DELETE' });
       setDeleteConfirm(null);
       await fetchCredentials();
+      toast.success('Credential removed');
     } catch {
       setError('Failed to remove credential');
       toast.error('Failed to remove credential');
