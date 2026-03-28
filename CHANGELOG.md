@@ -5,6 +5,23 @@ All notable changes to PaperForge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.7.0] - 2026-03-29
+
+### Editor
+- **Cross-file error navigation** — click compilation log errors to open referenced file at exact line
+- **Bracket pair colorization** — orange matching, red non-matching, active line tint
+- **Go to Line** shows total line count in prompt
+
+### Architecture
+- **Zero magic numbers** — all rate limits, timeouts, thresholds in centralized constants.ts
+- **isValidFilePath()** shared utility replaces 3 duplicate implementations
+- **ESLint 0 errors** — all unused imports/variables cleaned up
+
+### Governance
+- **package.json**: license (MIT) + engines (node >=20) fields added
+
+---
+
 ## [4.6.0] - 2026-03-29
 
 ### Editor

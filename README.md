@@ -48,14 +48,14 @@
 
 | Release | Feature | Description |
 |:---:|:---|:---|
-| v4.6 | **PDF Click-to-Source** | Double-click PDF to jump to approximate source line in editor (SyncTeX-style navigation) |
-| v4.6 | **Numbered Document Outline** | Auto-generated section numbers (1, 1.1, 1.1.1) with click-to-jump navigation |
-| v4.6 | **Enterprise Security** | Single-use reset tokens, IDOR prevention, anti-enumeration, timing-attack mitigation, audit logging |
-| v4.6 | **BibTeX + 160+ Completions** | Dedicated .bib syntax highlighting, Greek alphabet, math, booktabs, TikZ, 27 snippets |
-| v4.6 | **Smart Linter + Search** | Floating label, typos, empty refs, regex + case-sensitive find-in-project |
-| v4.6 | **Production Hardening** | Soft-delete enforcement, WebSocket limits/ping/shutdown, worker path traversal fix |
-| v4.6 | **Smart Exports** | PDF/DOCX/ZIP use project name, .paperforge.json metadata, @media print stylesheet |
-| v4.6 | **1,566 Tests** | 131 suites: linting, completions, error parsing, API, validation, services, constants, E2E |
+| v4.7 | **Cross-File Error Navigation** | Click error in compilation log → opens referenced file at exact line (multi-file debugging) |
+| v4.7 | **Bracket Pair Colorization** | Orange/red matching bracket highlighting, active line tint, centralized constants module |
+| v4.7 | **PDF Click-to-Source** | Double-click PDF → jump to approximate source line; numbered document outline (1, 1.1, 1.1.1) |
+| v4.7 | **Enterprise Security** | Single-use reset tokens, IDOR prevention, anti-enumeration, timing-attack mitigation, audit logging |
+| v4.7 | **BibTeX + 160+ Completions** | Dedicated .bib syntax, Greek alphabet, math functions, booktabs, cleveref, TikZ, 27 snippets |
+| v4.7 | **Zero Magic Numbers** | All rate limits, timeouts, thresholds centralized in constants.ts with isValidFilePath() utility |
+| v4.7 | **Production Hardened** | Soft-delete enforcement, WebSocket hardening, worker path traversal fix, ESLint 0 errors |
+| v4.7 | **1,566 Tests** | 131 suites: linting, completions, error parsing, API, validation, services, constants, E2E |
 
 ---
 
@@ -562,7 +562,7 @@ PaperForge is built on the shoulders of outstanding open-source projects:
 
 **Built with determination by [concrete-sangminlee](https://github.com/concrete-sangminlee)**
 
-**230+ source files · 1,566 tests (131 suites) · 40+ API routes · 24 pages · 8 Docker services · v4.6.0 · [Live Demo](https://projectlatexcompiler.vercel.app)**
+**230+ source files · 1,566 tests (131 suites) · 40+ API routes · 24 pages · 8 Docker services · v4.7.0 · [Live Demo](https://projectlatexcompiler.vercel.app)**
 
 [Pricing](https://projectlatexcompiler.vercel.app/pricing) · [Getting Started](https://projectlatexcompiler.vercel.app/docs/getting-started) · [Docs](https://projectlatexcompiler.vercel.app/docs) · [API](https://projectlatexcompiler.vercel.app/docs/api) · [Symbols](https://projectlatexcompiler.vercel.app/docs/symbols) · [Templates](https://projectlatexcompiler.vercel.app/docs/templates) · [Status](https://projectlatexcompiler.vercel.app/status) · [Changelog](https://projectlatexcompiler.vercel.app/changelog)
 
