@@ -49,9 +49,10 @@
 
 | Release | Feature | Description |
 |:---:|:---|:---|
-| v4.8 | **Symbol Picker** | 70+ visual LaTeX symbols (Greek, operators, arrows, calculus) — click to insert at cursor |
-| v4.8 | **Project Rename** | Inline rename from dashboard dropdown — Enter/Escape/blur to save, owner-only |
-| v4.8 | **GitHub Import** | Paste a GitHub URL → one-click import any public repo; tab-style ZIP + GitHub dialog |
+| v4.9 | **Citation Picker** | Browse .bib entries visually — search by author/title/year, click to insert \\cite{key} |
+| v4.9 | **Symbol Picker** | 70+ LaTeX symbols (Greek, operators, arrows, calculus) — click-to-insert visual grid |
+| v4.9 | **GitHub + ZIP Import** | Paste GitHub URL or upload ZIP → one-click project import with auto branch detection |
+| v4.9 | **Project Rename** | Inline rename from dashboard — Enter/Escape/blur to save, owner-only |
 | v4.8 | **Quick Open (Ctrl+P)** | Jump to any file by name — VS Code trifecta: Ctrl+P (files), Ctrl+K (commands), Ctrl+Shift+F (search) |
 | v4.8 | **Cross-File Error Nav** | Click compilation log → opens referenced file at exact line; bracket colorization; PDF click-to-source |
 | v4.8 | **Enterprise Security** | Single-use tokens, IDOR prevention, anti-enumeration, timing mitigation, zero magic numbers |
@@ -566,7 +567,7 @@ PaperForge is built on the shoulders of outstanding open-source projects:
 
 **Built with determination by [concrete-sangminlee](https://github.com/concrete-sangminlee)**
 
-**230+ source files · 1,569 tests (131 suites) · 45 API routes · 24 pages · 8 Docker services · v4.8.0 · [Live Demo](https://projectlatexcompiler.vercel.app)**
+**230+ source files · 1,569 tests (131 suites) · 45 API routes · 24 pages · 8 Docker services · v4.9.0 · [Live Demo](https://projectlatexcompiler.vercel.app)**
 
 [Pricing](https://projectlatexcompiler.vercel.app/pricing) · [Getting Started](https://projectlatexcompiler.vercel.app/docs/getting-started) · [Docs](https://projectlatexcompiler.vercel.app/docs) · [API](https://projectlatexcompiler.vercel.app/docs/api) · [Symbols](https://projectlatexcompiler.vercel.app/docs/symbols) · [Templates](https://projectlatexcompiler.vercel.app/docs/templates) · [Status](https://projectlatexcompiler.vercel.app/status) · [Changelog](https://projectlatexcompiler.vercel.app/changelog)
 
