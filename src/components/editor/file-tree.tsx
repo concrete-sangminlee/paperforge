@@ -213,6 +213,7 @@ function FileNode({
   file,
   name,
   depth,
+  projectId,
   mainFile,
   loading,
   onClick,
@@ -231,6 +232,7 @@ function FileNode({
   const isLoading = loading === file.path;
   const triggerRef = useRef<HTMLButtonElement>(null);
   const iconCls = 'size-3.5 shrink-0';
+  const isImage = /\.(png|jpg|jpeg|gif|svg|webp)$/i.test(file.path);
 
   return (
     <DropdownMenu>
@@ -245,7 +247,7 @@ function FileNode({
             disabled={file.isBinary || isLoading}
             style={{ paddingLeft: `${depth * 12 + 8}px` }}
             className={cn(
-              'relative flex w-full items-center gap-1.5 rounded-md py-1 pr-2 text-left text-xs transition-colors',
+              'group/filebtn relative flex w-full items-center gap-1.5 rounded-md py-1 pr-2 text-left text-xs transition-colors',
               'hover:bg-accent/60 hover:text-accent-foreground',
               isActive && 'bg-accent text-accent-foreground font-medium',
               isFocused && !isActive && 'ring-1 ring-ring/40',
@@ -265,6 +267,11 @@ function FileNode({
           getFileIcon(name, cn(iconCls, 'text-muted-foreground'))
         )}
         <span className="flex-1 truncate">{name}</span>
+        {isImage && (
+          <span className="absolute left-full top-0 z-50 ml-2 hidden rounded-md border bg-card p-1 shadow-lg group-hover/filebtn:block">
+            <img src={`/api/v1/projects/${projectId}/files/${file.path}`} alt={name} className="max-h-24 max-w-32 rounded object-contain" loading="lazy" />
+          </span>
+        )}
         {file.sizeBytes != null && (
           <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground/50">
             {formatFileSize(file.sizeBytes)}
