@@ -5,6 +5,47 @@ All notable changes to PaperForge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.6.0] - 2026-03-29
+
+### Editor
+- **BibTeX syntax highlighting** with dedicated parser for .bib/.bst files
+- **160+ LaTeX completions** (Greek alphabet, math functions, booktabs, cleveref, colors)
+- **27 LaTeX snippets** (math envs, algorithms, TikZ, subfigures, BibTeX entries)
+- **Advanced error parser** (undefined references, badbox measurements, runaway arguments)
+- **Smart linter** (floating labels, typo detection, empty refs, paragraph anti-patterns)
+- **Cursor position** (Ln/Col) and compilation time in status bar
+- **Auto-open main.tex** on first project load
+- **Regex + case-sensitive** find-in-project search
+- **VS Code-quality tabs** (middle-click close, Ctrl+Tab, Ctrl+1-9, path tooltip)
+
+### Security
+- **CSP headers**, production-only CORS, 28 blocked file extensions
+- **WebSocket hardening** (fail-fast auth, UUID validation, connection limits, ping/pong, graceful shutdown)
+- **Worker path traversal** validation in file downloads
+- **AbortController** on all async search/fetch operations
+
+### Architecture
+- **Shared SWR fetcher** replacing 9 duplicate implementations
+- **Env validation module** with build-phase safety
+- **Prisma indexes** on ShareLink.projectId and Template.authorId
+- **Lazy-loaded CommandPalette**, 11 tree-shaken packages
+- **Delete account** + **change password** API endpoints
+
+### UX
+- **22+ command palette** commands with fuzzy search
+- **NProgress page transitions**, staggered skeleton animations
+- **Smart download filenames** (PDF/DOCX/ZIP use project name)
+- **ZIP metadata** (.paperforge.json with project info)
+- **Print stylesheet** (@media print)
+- **Toast feedback** on every user action
+- **Premium 404 page** with branded design
+
+### Governance
+- CODE_OF_CONDUCT.md, FUNDING.yml, SECURITY.md
+- 1,558 tests across 130 suites
+
+---
+
 ## [3.1.0] - 2026-03-28
 
 ### Added
