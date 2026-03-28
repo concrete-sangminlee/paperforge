@@ -1,7 +1,10 @@
 import jwt from 'jsonwebtoken';
 import { IncomingMessage } from 'http';
 
-const SECRET = process.env.NEXTAUTH_SECRET || '';
+const SECRET = process.env.NEXTAUTH_SECRET;
+if (!SECRET) {
+  console.error('[WebSocket] FATAL: NEXTAUTH_SECRET not set — authentication will reject all connections');
+}
 
 export function authenticateFromCookie(req: IncomingMessage): { id: string; role: string } | null {
   const cookieHeader = req.headers.cookie;
@@ -21,6 +24,7 @@ export function authenticateFromCookie(req: IncomingMessage): { id: string; role
   if (!token) return null;
 
   try {
+    if (!SECRET) return null;
     const decoded = jwt.verify(token, SECRET) as { id?: string; sub?: string; role?: string };
     return { id: decoded.id || decoded.sub || '', role: decoded.role || 'user' };
   } catch {

@@ -37,7 +37,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     const requesterId = (session.user as { id: string }).id;
     const { id, userId } = await params;
     await removeMember(id, requesterId, userId);
-    return apiSuccess({ success: true });
+    return apiSuccess({ removed: true });
   } catch (error) {
     return errorResponse(error);
   }

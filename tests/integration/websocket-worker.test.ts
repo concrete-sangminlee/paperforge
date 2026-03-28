@@ -6,7 +6,7 @@ describe('WebSocket server', () => {
   it('index.ts exists', () => { expect(existsSync(join(process.cwd(), 'websocket/src/index.ts'))).toBe(true); });
   it('yjs-server.ts exists', () => { expect(existsSync(join(process.cwd(), 'websocket/src/yjs-server.ts'))).toBe(true); });
   it('has error handler', () => { expect(readFileSync(join(process.cwd(), 'websocket/src/index.ts'), 'utf-8')).toContain('error'); });
-  it('has connection logging', () => { expect(readFileSync(join(process.cwd(), 'websocket/src/index.ts'), 'utf-8')).toContain('clients.size'); });
+  it('has graceful shutdown', () => { expect(readFileSync(join(process.cwd(), 'websocket/src/index.ts'), 'utf-8')).toContain('SIGTERM'); });
   it('yjs has doc cleanup', () => { expect(readFileSync(join(process.cwd(), 'websocket/src/yjs-server.ts'), 'utf-8')).toContain('delete'); });
 });
 

@@ -7,7 +7,7 @@ describe('websocket server features', () => {
   it('has HTTP upgrade', () => { expect(ws).toContain('upgrade'); });
   it('has auth verification', () => { expect(ws).toContain('auth'); });
   it('has error handler', () => { expect(ws).toContain('error'); });
-  it('has connection count', () => { expect(ws).toContain('clients.size'); });
+  it('has connection tracking', () => { expect(ws).toContain('userConnectionCount'); });
 
   const yjs = readFileSync(join(process.cwd(), 'websocket/src/yjs-server.ts'), 'utf-8');
   it('has Yjs doc', () => { expect(yjs).toContain('Y.Doc'); });
