@@ -279,7 +279,7 @@ const comparisonRows: {
     feature: "Price",
     paperforge: "Free",
     overleafFree: "Free",
-    overleafPro: "$21 / mo",
+    overleafPro: "$199 / yr",
   },
 ];
 
@@ -299,7 +299,7 @@ const footerLinks = {
   Company: [
     { label: "Pricing", href: "/pricing" },
     { label: "Status", href: "/status" },
-    { label: "Open Source", href: "https://github.com" },
+    { label: "Open Source", href: "https://github.com/concrete-sangminlee/paperforge" },
     { label: "Contact", href: "mailto:hello@paperforge.dev" },
   ],
   Legal: [
@@ -877,7 +877,7 @@ export default function HomePage() {
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                   <Link
-                    href="https://github.com"
+                    href="https://github.com/concrete-sangminlee/paperforge"
                     target="_blank"
                     rel="noopener noreferrer"
                     className={cn(
@@ -916,7 +916,7 @@ export default function HomePage() {
               {/* social icons */}
               <div className="mt-6 flex gap-3">
                 <Link
-                  href="https://github.com"
+                  href="https://github.com/concrete-sangminlee/paperforge"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex h-9 w-9 items-center justify-center rounded-lg border bg-background text-muted-foreground transition-colors hover:border-orange-500/30 hover:text-foreground"
