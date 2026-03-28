@@ -23,6 +23,7 @@ const OnboardingTips = lazy(() => import('./onboarding-tips').then(m => ({ defau
 const TableGenerator = lazy(() => import('./table-generator').then(m => ({ default: m.TableGenerator })));
 const EquationBuilder = lazy(() => import('./equation-builder').then(m => ({ default: m.EquationBuilder })));
 const DocumentStats = lazy(() => import('./document-stats').then(m => ({ default: m.DocumentStats })));
+const ShareSnippet = lazy(() => import('./share-snippet').then(m => ({ default: m.ShareSnippet })));
 import { useEditorStore } from '@/store/editor-store';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
@@ -625,6 +626,11 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
 
       {/* Find in Project dialog */}
       <FindInProject projectId={projectId} open={findOpen} onOpenChange={setFindOpen} />
+
+      {/* Share snippet dialog */}
+      <Suspense fallback={null}>
+        <ShareSnippet />
+      </Suspense>
 
       {/* First-time user onboarding */}
       <Suspense fallback={null}>
