@@ -54,6 +54,7 @@
 | v4.6 | **Regex Project Search** | Case sensitivity (Aa) + regex (.* ) toggles, VS Code-style find-in-project |
 | v4.6 | **Smart Exports** | PDF/DOCX/ZIP use project name, ZIP metadata (.paperforge.json), @media print stylesheet |
 | v4.6 | **160+ Completions + 27 Snippets** | Greek alphabet, math, booktabs, cleveref, TikZ, algorithms, subfigures |
+| v4.6 | **WebSocket Hardening** | Fail-fast auth, UUID validation, per-user connection limits (20), 10MB message cap, ping/pong, graceful SIGTERM |
 | v4.6 | **1,558 Tests** | 130 suites: linting, completions, error parsing, API, validation, services, BibTeX, E2E |
 
 ---
