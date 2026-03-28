@@ -5,6 +5,22 @@ All notable changes to PaperForge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-03-28
+
+### Added
+- **Pricing Page**: /pricing with Free ($0), Pro ($8/mo), Team ($15/user/mo) tiers
+- **Privacy Policy**: /privacy — 7-section GDPR-style privacy policy
+- **Terms of Service**: /terms — 10-section ToS
+- **Documentation Hub**: /docs with 7 topic cards and 16 keyboard shortcuts reference
+- **Demo Seed Script**: `npm run db:seed-demo` creates demo@paperforge.dev / Demo1234!
+- **454 Tests**: 56 suites covering API errors, auth layouts, critical file existence, page modules
+
+### Fixed
+- Auth crash on Vercel: Dashboard, Admin, Editor layouts now catch auth() errors gracefully
+- Login redirect loop: auth() wrapped in try/catch across all server layouts
+
+---
+
 ## [2.1.0] - 2026-03-28 — 100 ITERATIONS MILESTONE
 
 ### Stats
