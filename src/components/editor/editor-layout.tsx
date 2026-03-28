@@ -64,6 +64,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
   const [files, setFiles] = useState<FileEntry[]>(initialFiles);
   const [mainFile, setMainFile] = useState(initialMainFile ?? 'main.tex');
   const [rightPanel, setRightPanel] = useState<RightPanel>('pdf');
+  const [focusMode, setFocusMode] = useState(false);
   const [pdfRefreshKey, setPdfRefreshKey] = useState(0);
   const providerRef = useRef<WebsocketProvider | null>(null);
   const [provider, setProvider] = useState<WebsocketProvider | null>(null);
@@ -247,6 +248,17 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
           setActiveTab(t[idx].path);
         }
       }
+      // Escape to exit focus mode
+      if (e.key === 'Escape' && focusMode) {
+        setFocusMode(false);
+        return;
+      }
+      // F11 to toggle focus mode
+      if (e.key === 'F11') {
+        e.preventDefault();
+        setFocusMode(f => !f);
+        return;
+      }
       // Ctrl+Shift+C to compile
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'c') {
         e.preventDefault();
@@ -369,7 +381,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
       )}
 
       {/* Top toolbar */}
-      <div className="flex items-center justify-between border-b bg-background px-2">
+      <div className={cn('flex items-center justify-between border-b bg-background px-2', focusMode && 'hidden')}>
         <EditorToolbar
           projectId={projectId}
           projectName={projectName}
@@ -390,7 +402,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
         {/* Left sidebar – file tree */}
         <aside className={cn(
           'shrink-0 border-r bg-background transition-all duration-200',
-          sidebarCollapsed ? 'w-0 overflow-hidden' : 'w-[220px]'
+          (sidebarCollapsed || focusMode) ? 'w-0 overflow-hidden' : 'w-[220px]'
         )}>
           <FileTree
             projectId={projectId}
@@ -552,7 +564,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
         </div>
 
         {/* Right – switchable panel */}
-        <div className="flex w-[45%] shrink-0 flex-col">
+        <div className={cn('flex w-[45%] shrink-0 flex-col', focusMode && 'hidden')}>
           {/* Panel tabs */}
           <div className="flex shrink-0 items-center gap-1 border-b bg-muted/40 px-2 py-1">
             <Button
