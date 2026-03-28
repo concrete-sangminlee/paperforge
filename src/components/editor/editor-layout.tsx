@@ -73,6 +73,13 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
     setWsConnected(connected);
   }, []);
 
+  // Track recent project access
+  useEffect(() => {
+    import('@/lib/recent-projects').then(({ trackProjectAccess }) => {
+      trackProjectAccess(projectId, projectName);
+    });
+  }, [projectId, projectName]);
+
   // Stable ref to the compile function registered by EditorToolbar
   const compileFnRef = useRef<(() => Promise<void>) | null>(null);
 

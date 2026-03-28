@@ -308,9 +308,30 @@ export function CommandPalette() {
     })),
   } : null
 
+  // Recent projects
+  const [recentProjects, setRecentProjects] = React.useState<Array<{ id: string; name: string }>>([])
+  React.useEffect(() => {
+    if (open) {
+      import('@/lib/recent-projects').then(({ getRecentProjects }) => {
+        setRecentProjects(getRecentProjects().slice(0, 5))
+      })
+    }
+  }, [open])
+
+  const recentGroup: CommandGroupEntry | null = recentProjects.length > 0 ? {
+    heading: 'Recent Projects',
+    commands: recentProjects.map((p) => ({
+      id: `recent-${p.id}`,
+      label: p.name,
+      icon: <FolderOpen className="size-4" />,
+      action: () => router.push(`/editor/${p.id}`),
+    })),
+  } : null
+
   // Build the list of groups; editor + latex only shown on editor pages
   const groups: CommandGroupEntry[] = []
   if (quickOpenGroup) groups.push(quickOpenGroup)
+  if (recentGroup) groups.push(recentGroup)
   groups.push(navigationGroup)
   if (isEditorPage) {
     groups.push(editorGroup, latexGroup)
