@@ -49,7 +49,9 @@
 
 | Release | Feature | Description |
 |:---:|:---|:---|
-| v6.1 | **Global Project Search** | Ctrl+Shift+P — search across ALL projects and files from dashboard |
+| v6.2 | **Share Snippet** | Copy shareable URL with LaTeX code preview — like GitHub Gists for LaTeX |
+| v6.2 | **1,622 Tests** | 50 new panel tests covering equation builder, table gen, citation picker, stats, AI, search |
+| v6.2 | **Global Project Search** | Ctrl+Shift+P — search across ALL projects and files from dashboard |
 | v6.1 | **Document Statistics** | Words by section bar chart, element counts (figures/tables/equations/citations), reading time |
 | v6.0 | **Equation Builder** | 19 visual templates with live KaTeX preview — fractions, matrices, integrals, accents |
 | v6.0 | **Table Generator** | Interactive grid with booktabs toggle — generates complete LaTeX table code |
@@ -487,7 +489,7 @@ Includes all services: Next.js app, WebSocket server, compilation workers, Postg
 - [x] 100% API standardization (all routes use consistent response format)
 - [x] File upload validation (size limits, blocked extensions, path traversal)
 - [x] Admin real-time dashboards (15s auto-refresh)
-- [x] Comprehensive test suite (1,572 tests — linting, completions, error parsing, API, services, E2E)
+- [x] Comprehensive test suite (1,622 tests — linting, completions, error parsing, API, services, E2E)
 - [x] Email error handling (graceful SMTP failure recovery)
 - [x] LaTeX syntax highlighting (custom StreamLanguage parser)
 - [x] LaTeX autocomplete (70+ commands, Greek letters, environments)
@@ -567,7 +569,7 @@ PaperForge is built on the shoulders of outstanding open-source projects:
 
 **Built with determination by [concrete-sangminlee](https://github.com/concrete-sangminlee)**
 
-**230+ source files · 1,572 tests (131 suites) · 46 API routes · 24 pages · 8 Docker services · v6.1.0 · [Live Demo](https://projectlatexcompiler.vercel.app)**
+**230+ source files · 1,622 tests (131 suites) · 46 API routes · 24 pages · 8 Docker services · v6.2.0 · [Live Demo](https://projectlatexcompiler.vercel.app)**
 
 [Pricing](https://projectlatexcompiler.vercel.app/pricing) · [Getting Started](https://projectlatexcompiler.vercel.app/docs/getting-started) · [Docs](https://projectlatexcompiler.vercel.app/docs) · [API](https://projectlatexcompiler.vercel.app/docs/api) · [Symbols](https://projectlatexcompiler.vercel.app/docs/symbols) · [Templates](https://projectlatexcompiler.vercel.app/docs/templates) · [Status](https://projectlatexcompiler.vercel.app/status) · [Changelog](https://projectlatexcompiler.vercel.app/changelog)
 
