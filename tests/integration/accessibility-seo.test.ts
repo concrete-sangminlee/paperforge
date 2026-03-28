@@ -36,8 +36,8 @@ describe('SEO', () => {
   it('robots.txt exists', () => {
     expect(existsSync(join(process.cwd(), 'public/robots.txt'))).toBe(true);
   });
-  it('sitemap has 12 urls', () => {
+  it('sitemap has 13 urls', () => {
     const c = readFileSync(join(process.cwd(), 'src/app/sitemap.ts'), 'utf-8');
-    expect((c.match(/url:/g) || []).length).toBe(12);
+    expect((c.match(/url:/g) || []).length).toBe(13);
   });
 });

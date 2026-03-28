@@ -1,5 +1,11 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { FlameIcon } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'Getting Started',
+  description: 'Get started with PaperForge in 5 minutes — create your first LaTeX project, collaborate, and compile to PDF.',
+};
 
 export default function GettingStartedPage() {
   return (

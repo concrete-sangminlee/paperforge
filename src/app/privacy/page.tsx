@@ -1,5 +1,11 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { FlameIcon } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'Privacy Policy',
+  description: 'PaperForge privacy policy — how we collect, use, and protect your data.',
+};
 
 export default function PrivacyPage() {
   return (

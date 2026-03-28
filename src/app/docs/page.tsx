@@ -5,13 +5,13 @@ import { FlameIcon, BookOpenIcon, KeyboardIcon, CodeIcon, GitBranchIcon, FileTex
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const DOCS = [
-  { icon: CodeIcon, title: 'Getting Started', desc: 'Create your first project and compile a LaTeX document in under a minute.', href: '#getting-started' },
-  { icon: KeyboardIcon, title: 'Keyboard Shortcuts', desc: '22 shortcuts for formatting, navigation, compilation, and more.', href: '#shortcuts' },
-  { icon: FileTextIcon, title: 'LaTeX Autocomplete', desc: '70+ commands, 12 snippets, 7 BibTeX entries, and Greek letters.', href: '#autocomplete' },
-  { icon: UsersIcon, title: 'Collaboration', desc: 'Real-time editing with multiple cursors, presence, and conflict-free merging.', href: '#collaboration' },
-  { icon: GitBranchIcon, title: 'Git Integration', desc: 'Push/pull to GitHub, GitLab, or Bitbucket with encrypted credentials.', href: '#git' },
-  { icon: ZapIcon, title: 'Auto-Compile', desc: '2-second debounce auto-compilation with PDF preview and DOCX export.', href: '#compile' },
-  { icon: BookOpenIcon, title: 'Templates', desc: 'IEEE, ACM, Springer, Beamer, thesis, CV — start with curated templates.', href: '#templates' },
+  { icon: CodeIcon, title: 'Getting Started', desc: 'Create your first project and compile a LaTeX document in under a minute.', href: '/docs/getting-started' },
+  { icon: KeyboardIcon, title: 'Keyboard Shortcuts', desc: '23 shortcuts for formatting, navigation, compilation, and more.', href: '#shortcuts' },
+  { icon: FileTextIcon, title: 'LaTeX Symbols', desc: '160+ commands, 27 snippets, BibTeX entries, Greek alphabet, and math symbols.', href: '/docs/symbols' },
+  { icon: UsersIcon, title: 'API Reference', desc: '40+ REST endpoints for projects, files, compilation, and user management.', href: '/docs/api' },
+  { icon: GitBranchIcon, title: 'Git Integration', desc: 'Push/pull to GitHub, GitLab, or Bitbucket with encrypted credentials.', href: '/docs/getting-started#git' },
+  { icon: ZapIcon, title: 'Auto-Compile', desc: '2-second debounce auto-compilation with PDF preview and DOCX export.', href: '/docs/getting-started#compile' },
+  { icon: BookOpenIcon, title: 'Templates', desc: 'IEEE, ACM, Springer, Beamer, thesis, CV — start with curated templates.', href: '/docs/templates' },
 ];
 
 const SHORTCUTS = [

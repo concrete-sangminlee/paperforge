@@ -1,5 +1,11 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { FlameIcon } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'Terms of Service',
+  description: 'PaperForge terms of service — usage policies and conditions.',
+};
 
 export default function TermsPage() {
   return (

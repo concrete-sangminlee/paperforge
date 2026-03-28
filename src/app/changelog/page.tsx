@@ -1,6 +1,12 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { FlameIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+
+export const metadata: Metadata = {
+  title: 'Changelog',
+  description: 'PaperForge release history — new features, improvements, and fixes.',
+};
 
 const RELEASES = [
   { version: '2.2.0', date: '2026-03-28', label: 'Latest', items: ['Pricing page', 'Privacy & Terms', 'Documentation hub', 'API reference', 'Demo seed script', '454 tests'] },
