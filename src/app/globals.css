@@ -151,10 +151,37 @@ html {
   color: inherit;
 }
 
-/* ---- Background Pattern Utilities ---- */
+/* ---- Print Stylesheet ---- */
 
+@media print {
+  /* Hide non-content elements */
+  header, footer, nav,
+  .no-print,
+  [role="navigation"],
+  [data-sonner-toaster],
+  .fixed { display: none !important; }
 
-/* ---- Glass Morphism ---- */
+  /* Reset backgrounds and colors for readability */
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  /* Clean up links */
+  a { color: black !important; text-decoration: underline; }
+  a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 9pt; color: #666; }
+
+  /* Page margins */
+  @page { margin: 2cm; }
+
+  /* Prevent page breaks inside cards */
+  .card, article, section { break-inside: avoid; }
+
+  /* Full-width content */
+  .max-w-7xl, .max-w-5xl, .max-w-4xl, .max-w-3xl { max-width: 100% !important; }
+}
 
 
 /* ---- Text Gradient ---- */

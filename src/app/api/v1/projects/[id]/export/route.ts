@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { errorResponse } from '@/lib/errors';
-import { assertProjectRole } from '@/services/project-service';
+import { assertProjectRole, getProject } from '@/services/project-service';
 import { listFiles, getFileContent } from '@/services/file-service';
 import { ApiErrors } from '@/lib/api-response';
 import { checkRateLimit } from '@/lib/rate-limit';
@@ -26,14 +26,50 @@ export async function GET(
 
     await assertProjectRole(id, userId, ['owner', 'editor', 'viewer']);
 
+    const project = await getProject(id, userId);
     const files = await listFiles(id);
 
-    // Dynamically import archiver-like ZIP creation
-    // Using a simple approach with raw ZIP format
+    // Add project metadata as .paperforge.json
+    const metadata = JSON.stringify({
+      name: project.name,
+      compiler: project.compiler,
+      mainFile: project.mainFile,
+      exportedAt: new Date().toISOString(),
+      fileCount: files.length,
+    }, null, 2);
+
     const encoder = new TextEncoder();
     const zipParts: Uint8Array[] = [];
     const centralDir: Uint8Array[] = [];
     let offset = 0;
+
+    // Include metadata file first
+    const metaContent = encoder.encode(metadata);
+    const metaPath = encoder.encode('.paperforge.json');
+    const metaCrc = crc32(metaContent);
+    const metaHeader = new Uint8Array(30 + metaPath.length);
+    const metaView = new DataView(metaHeader.buffer);
+    metaView.setUint32(0, 0x04034b50, true);
+    metaView.setUint16(4, 20, true);
+    metaView.setUint16(26, metaPath.length, true);
+    metaView.setUint32(14, metaCrc, true);
+    metaView.setUint32(18, metaContent.length, true);
+    metaView.setUint32(22, metaContent.length, true);
+    metaHeader.set(metaPath, 30);
+    zipParts.push(metaHeader, metaContent);
+    const metaCd = new Uint8Array(46 + metaPath.length);
+    const metaCdView = new DataView(metaCd.buffer);
+    metaCdView.setUint32(0, 0x02014b50, true);
+    metaCdView.setUint16(4, 20, true);
+    metaCdView.setUint16(6, 20, true);
+    metaCdView.setUint32(16, metaCrc, true);
+    metaCdView.setUint32(20, metaContent.length, true);
+    metaCdView.setUint32(24, metaContent.length, true);
+    metaCdView.setUint16(28, metaPath.length, true);
+    metaCdView.setUint32(42, 0, true);
+    metaCd.set(metaPath, 46);
+    centralDir.push(metaCd);
+    offset += metaHeader.length + metaContent.length;
 
     for (const file of files) {
       let content: Uint8Array;
@@ -121,7 +157,7 @@ export async function GET(
       status: 200,
       headers: {
         'Content-Type': 'application/zip',
-        'Content-Disposition': `attachment; filename="project-${id.slice(0, 8)}.zip"`,
+        'Content-Disposition': `attachment; filename="${project.name.replace(/[^a-zA-Z0-9_-]/g, '_')}.zip"`,
         'Content-Length': String(totalSize),
       },
     });

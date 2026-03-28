@@ -502,7 +502,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
 
           {/* Panel content */}
           <div className="min-h-0 flex-1">
-            {rightPanel === 'pdf' && <PdfViewer refreshKey={pdfRefreshKey} />}
+            {rightPanel === 'pdf' && <PdfViewer refreshKey={pdfRefreshKey} projectName={projectName} />}
             <Suspense fallback={<div className="flex h-full items-center justify-center"><LoaderCircleIcon className="size-5 animate-spin text-muted-foreground" /></div>}>
               {rightPanel === 'history' && <VersionHistory projectId={projectId} />}
               {rightPanel === 'git' && <GitPanel projectId={projectId} remoteUrl={gitRemoteUrl} />}

@@ -208,7 +208,7 @@ export function EditorToolbar({ projectId, projectName, onCompileReady }: Editor
       {docxUrl && (
         <a
           href={docxUrl}
-          download="output.docx"
+          download={`${(projectName || 'output').replace(/[^a-zA-Z0-9_-]/g, '_')}.docx`}
           className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1 text-sm font-medium hover:bg-muted transition-colors"
         >
           <FileDownIcon className="size-3.5" />
@@ -219,7 +219,7 @@ export function EditorToolbar({ projectId, projectName, onCompileReady }: Editor
       {/* Export ZIP */}
       <a
         href={`/api/v1/projects/${projectId}/export`}
-        download
+        download={`${(projectName || 'project').replace(/[^a-zA-Z0-9_-]/g, '_')}.zip`}
         className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
         title="Download project as ZIP"
       >

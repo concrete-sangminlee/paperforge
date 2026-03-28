@@ -35,13 +35,15 @@ type PDFPageProxy = {
 interface PdfViewerProps {
   /** Increment this number to force a PDF reload even when the URL is unchanged. */
   refreshKey?: number;
+  /** Project name used for download filename. */
+  projectName?: string;
 }
 
 const MIN_SCALE = 0.25;
 const MAX_SCALE = 4;
 const SCALE_STEP = 0.25;
 
-export function PdfViewer({ refreshKey }: PdfViewerProps) {
+export function PdfViewer({ refreshKey, projectName }: PdfViewerProps) {
   const latestPdfUrl = useEditorStore((s) => s.latestPdfUrl);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -483,7 +485,7 @@ export function PdfViewer({ refreshKey }: PdfViewerProps) {
         <div className="flex items-center gap-0.5">
           <a
             href={latestPdfUrl}
-            download="output.pdf"
+            download={`${(projectName || 'output').replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`}
             target="_blank"
             rel="noopener noreferrer"
           >
