@@ -159,4 +159,183 @@ export const LATEX_SNIPPETS: Completion[] = [
 
 \\end{document}`,
   },
+  // ── Math environments ─────────────────────────
+  {
+    label: 'multline',
+    type: 'text',
+    detail: 'Multi-line equation',
+    boost: 10,
+    apply: `\\begin{multline}
+  first\\_line \\\\
+  = second\\_line
+  \\label{eq:multline}
+\\end{multline}`,
+  },
+  {
+    label: 'gather',
+    type: 'text',
+    detail: 'Gathered equations (centered)',
+    boost: 10,
+    apply: `\\begin{gather}
+  a = b + c \\\\
+  d = e + f
+  \\label{eq:gather}
+\\end{gather}`,
+  },
+  {
+    label: 'cases',
+    type: 'text',
+    detail: 'Piecewise function',
+    boost: 10,
+    apply: `\\begin{equation}
+  f(x) = \\begin{cases}
+    a & \\text{if } x > 0 \\\\
+    b & \\text{otherwise}
+  \\end{cases}
+  \\label{eq:cases}
+\\end{equation}`,
+  },
+  {
+    label: 'matrix',
+    type: 'text',
+    detail: 'Matrix',
+    boost: 10,
+    apply: `\\begin{equation}
+  \\begin{bmatrix}
+    a & b \\\\
+    c & d
+  \\end{bmatrix}
+  \\label{eq:matrix}
+\\end{equation}`,
+  },
+  // ── Document structure ────────────────────────
+  {
+    label: 'sec',
+    type: 'text',
+    detail: 'Section with label',
+    boost: 10,
+    apply: `\\section{Section Title}
+\\label{sec:label}`,
+  },
+  {
+    label: 'subsec',
+    type: 'text',
+    detail: 'Subsection with label',
+    boost: 10,
+    apply: `\\subsection{Subsection Title}
+\\label{subsec:label}`,
+  },
+  {
+    label: 'chap',
+    type: 'text',
+    detail: 'Chapter (books/reports)',
+    boost: 10,
+    apply: `\\chapter{Chapter Title}
+\\label{chap:label}`,
+  },
+  // ── References & Citations ────────────────────
+  {
+    label: 'bib',
+    type: 'text',
+    detail: 'Bibliography section',
+    boost: 10,
+    apply: `\\bibliographystyle{plain}
+\\bibliography{references}`,
+  },
+  {
+    label: 'bibentry',
+    type: 'text',
+    detail: 'BibTeX article entry',
+    boost: 10,
+    apply: `@article{key,
+  author  = {Author Name},
+  title   = {Article Title},
+  journal = {Journal Name},
+  year    = {2024},
+  volume  = {1},
+  pages   = {1--10},
+  doi     = {},
+}`,
+  },
+  // ── Algorithms ────────────────────────────────
+  {
+    label: 'algo',
+    type: 'text',
+    detail: 'Algorithm pseudocode',
+    boost: 10,
+    apply: `\\begin{algorithm}[htbp]
+  \\caption{Algorithm Name}
+  \\label{alg:label}
+  \\begin{algorithmic}[1]
+    \\Require Input
+    \\Ensure Output
+    \\State Initialize
+    \\For{$i = 1$ to $n$}
+      \\State Process
+    \\EndFor
+    \\Return Result
+  \\end{algorithmic}
+\\end{algorithm}`,
+  },
+  // ── TikZ / Diagrams ──────────────────────────
+  {
+    label: 'tikz',
+    type: 'text',
+    detail: 'TikZ figure',
+    boost: 10,
+    apply: `\\begin{figure}[htbp]
+  \\centering
+  \\begin{tikzpicture}
+    \\draw (0,0) -- (4,0) -- (4,3) -- cycle;
+  \\end{tikzpicture}
+  \\caption{TikZ diagram}
+  \\label{fig:tikz}
+\\end{figure}`,
+  },
+  // ── Common blocks ─────────────────────────────
+  {
+    label: 'href',
+    type: 'text',
+    detail: 'Hyperlink',
+    boost: 10,
+    apply: `\\href{https://example.com}{Link Text}`,
+  },
+  {
+    label: 'footnote',
+    type: 'text',
+    detail: 'Footnote',
+    boost: 10,
+    apply: `\\footnote{Footnote text here.}`,
+  },
+  {
+    label: 'citep',
+    type: 'text',
+    detail: 'Citation with page range',
+    boost: 10,
+    apply: `\\cite[p.~]{key}`,
+  },
+  {
+    label: 'subfig',
+    type: 'text',
+    detail: 'Side-by-side subfigures',
+    boost: 10,
+    apply: `\\begin{figure}[htbp]
+  \\centering
+  \\begin{subfigure}[b]{0.48\\textwidth}
+    \\centering
+    \\includegraphics[width=\\textwidth]{fig1}
+    \\caption{First}
+    \\label{fig:sub1}
+  \\end{subfigure}
+  \\hfill
+  \\begin{subfigure}[b]{0.48\\textwidth}
+    \\centering
+    \\includegraphics[width=\\textwidth]{fig2}
+    \\caption{Second}
+    \\label{fig:sub2}
+  \\end{subfigure}
+  \\caption{Both figures}
+  \\label{fig:both}
+\\end{figure}`,
+  },
 ];

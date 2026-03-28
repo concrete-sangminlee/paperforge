@@ -519,9 +519,11 @@ export default function SettingsPage() {
                         variant="outline"
                         size="xs"
                         className="gap-1"
+                        disabled
+                        title="Avatar upload coming soon"
                       >
                         <CameraIcon className="size-3" />
-                        Upload
+                        Coming Soon
                       </Button>
                     </div>
                     <div className="flex-1 grid gap-4">
