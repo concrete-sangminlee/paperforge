@@ -268,15 +268,8 @@ function StarRating({ count }: { count: number }) {
 
 export const dynamic = 'force-dynamic';
 
-export default async function HomePage() {
-  let isLoggedIn = false;
-  try {
-    const { auth } = await import('@/lib/auth');
-    const session = await auth();
-    isLoggedIn = Boolean(session?.user);
-  } catch {
-    // Auth/DB unavailable — render as logged out
-  }
+export default function HomePage() {
+  const isLoggedIn = false;
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
