@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react';
-import { FileIcon, GitBranchIcon, HistoryIcon, XIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, ChevronDownIcon, ChevronUpIcon, FileTextIcon, CodeIcon, WifiOff, ListTreeIcon, LoaderCircleIcon, SigmaIcon, BookOpenIcon, FunctionSquareIcon, SparklesIcon, TableIcon, BarChart3Icon } from 'lucide-react';
+import { FileIcon, GitBranchIcon, HistoryIcon, XIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, ChevronDownIcon, ChevronUpIcon, FileTextIcon, CodeIcon, WifiOff, ListTreeIcon, LoaderCircleIcon, SigmaIcon, BookOpenIcon, FunctionSquareIcon, SparklesIcon, TableIcon, BarChart3Icon, DiffIcon } from 'lucide-react';
 import { FileTree } from './file-tree';
 import { LaTeXEditor } from './latex-editor';
 import { EditorToolbar } from './editor-toolbar';
@@ -25,6 +25,7 @@ const EquationBuilder = lazy(() => import('./equation-builder').then(m => ({ def
 const DocumentStats = lazy(() => import('./document-stats').then(m => ({ default: m.DocumentStats })));
 const ShareSnippet = lazy(() => import('./share-snippet').then(m => ({ default: m.ShareSnippet })));
 import { RecoveryBanner } from './recovery-banner';
+const DiffViewer = lazy(() => import('./diff-viewer').then(m => ({ default: m.DiffViewer })));
 import { useEditorStore } from '@/store/editor-store';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
@@ -49,7 +50,7 @@ interface EditorLayoutProps {
   gitRemoteUrl?: string;
 }
 
-type RightPanel = 'pdf' | 'history' | 'git' | 'outline' | 'symbols' | 'cite' | 'math' | 'ai' | 'table' | 'equation' | 'stats';
+type RightPanel = 'pdf' | 'history' | 'git' | 'outline' | 'symbols' | 'cite' | 'math' | 'ai' | 'table' | 'equation' | 'stats' | 'diff';
 
 import { EDITOR } from '@/lib/constants';
 const AUTO_COMPILE_DEBOUNCE_MS = EDITOR.AUTO_COMPILE_DEBOUNCE_MS;
@@ -606,6 +607,16 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
               <BarChart3Icon className="size-3.5" />
               Stats
             </Button>
+            <Button
+              size="sm"
+              variant={rightPanel === 'diff' ? 'secondary' : 'ghost'}
+              className="h-7 gap-1.5 px-2 text-xs"
+              onClick={() => setRightPanel('diff')}
+              aria-pressed={rightPanel === 'diff'}
+            >
+              <DiffIcon className="size-3.5" />
+              Diff
+            </Button>
           </div>
 
           {/* Panel content */}
@@ -622,6 +633,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
               {rightPanel === 'table' && <TableGenerator />}
               {rightPanel === 'equation' && <EquationBuilder />}
               {rightPanel === 'stats' && <DocumentStats />}
+              {rightPanel === 'diff' && <DiffViewer />}
             </Suspense>
           </div>
         </div>
