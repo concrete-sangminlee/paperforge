@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import localFont from "next/font/local";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { CommandPalette } from "@/components/shared/command-palette";
+import { NavigationProgress } from "@/components/shared/navigation-progress";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -111,6 +113,9 @@ export default function RootLayout({
             >
               Skip to main content
             </a>
+            <Suspense fallback={null}>
+              <NavigationProgress />
+            </Suspense>
             <div id="main-content">{children}</div>
             <CommandPalette />
             <Toaster />

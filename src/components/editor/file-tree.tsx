@@ -21,6 +21,7 @@ import {
   FileIcon,
   BookOpenIcon,
   FileArchiveIcon,
+  ClipboardCopyIcon,
 } from 'lucide-react';
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -43,6 +44,14 @@ interface FileEntry {
   path: string;
   mimeType: string | null;
   isBinary: boolean;
+  sizeBytes?: number;
+}
+
+function formatFileSize(bytes?: number): string {
+  if (bytes == null) return '';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 interface FileTreeProps {
@@ -256,6 +265,11 @@ function FileNode({
           getFileIcon(name, cn(iconCls, 'text-muted-foreground'))
         )}
         <span className="flex-1 truncate">{name}</span>
+        {file.sizeBytes != null && (
+          <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground/50">
+            {formatFileSize(file.sizeBytes)}
+          </span>
+        )}
         {isMain && (
           <StarIcon
             className="size-3 shrink-0 fill-amber-400 text-amber-400"
@@ -275,6 +289,10 @@ function FileNode({
         <DropdownMenuItem onClick={() => onDownload(file)}>
           <DownloadIcon className="size-3.5 mr-1.5 text-muted-foreground" />
           Download
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(file.path); toast.success('Path copied'); }}>
+          <ClipboardCopyIcon className="size-3.5 mr-1.5 text-muted-foreground" />
+          Copy Path
         </DropdownMenuItem>
         {!file.isBinary && !isMain && (
           <>

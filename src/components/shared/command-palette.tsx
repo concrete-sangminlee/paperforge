@@ -25,6 +25,7 @@ import {
   Search,
   Bold,
   Italic,
+  Underline,
   Heading1,
   Sigma,
   Image as ImageIcon,
@@ -32,6 +33,13 @@ import {
   Sun,
   Moon,
   Monitor,
+  BookOpen,
+  CreditCard,
+  Keyboard,
+  Download,
+  Share2,
+  FileArchive,
+  List,
 } from 'lucide-react'
 
 interface CommandEntry {
@@ -94,10 +102,22 @@ export function CommandPalette() {
         action: () => router.push('/templates'),
       },
       {
+        id: 'nav-docs',
+        label: 'Go to Documentation',
+        icon: <BookOpen className="size-4" />,
+        action: () => router.push('/docs'),
+      },
+      {
         id: 'nav-settings',
         label: 'Go to Settings',
         icon: <Settings className="size-4" />,
         action: () => router.push('/settings'),
+      },
+      {
+        id: 'nav-pricing',
+        label: 'Go to Pricing',
+        icon: <CreditCard className="size-4" />,
+        action: () => router.push('/pricing'),
       },
       {
         id: 'nav-admin',
@@ -115,7 +135,7 @@ export function CommandPalette() {
         id: 'editor-compile',
         label: 'Compile Project',
         icon: <Play className="size-4" />,
-        shortcut: 'Ctrl+S',
+        shortcut: 'Ctrl+Enter',
         action: () => dispatchCustomEvent('latex-compile'),
       },
       {
@@ -128,14 +148,12 @@ export function CommandPalette() {
         id: 'editor-sidebar',
         label: 'Toggle Sidebar',
         icon: <PanelLeftClose className="size-4" />,
-        shortcut: 'Ctrl+B',
         action: () => dispatchCustomEvent('toggle-sidebar'),
       },
       {
         id: 'editor-newfile',
         label: 'New File',
         icon: <FilePlus className="size-4" />,
-        shortcut: 'Ctrl+N',
         action: () => dispatchCustomEvent('new-file'),
       },
       {
@@ -144,6 +162,31 @@ export function CommandPalette() {
         icon: <Search className="size-4" />,
         shortcut: 'Ctrl+Shift+F',
         action: () => dispatchCustomEvent('find-in-files'),
+      },
+      {
+        id: 'editor-shortcuts',
+        label: 'Keyboard Shortcuts',
+        icon: <Keyboard className="size-4" />,
+        shortcut: '?',
+        action: () => dispatchCustomEvent('show-shortcuts'),
+      },
+      {
+        id: 'editor-share',
+        label: 'Share Project',
+        icon: <Share2 className="size-4" />,
+        action: () => dispatchCustomEvent('share-project'),
+      },
+      {
+        id: 'editor-export-zip',
+        label: 'Export as ZIP',
+        icon: <FileArchive className="size-4" />,
+        action: () => dispatchCustomEvent('export-zip'),
+      },
+      {
+        id: 'editor-outline',
+        label: 'Document Outline',
+        icon: <List className="size-4" />,
+        action: () => dispatchCustomEvent('show-outline'),
       },
     ],
   }
@@ -166,6 +209,13 @@ export function CommandPalette() {
         action: () => dispatchCustomEvent('latex-insert', { text: '\\textit{}' }),
       },
       {
+        id: 'latex-underline',
+        label: 'Insert Underline',
+        icon: <Underline className="size-4" />,
+        shortcut: 'Ctrl+U',
+        action: () => dispatchCustomEvent('latex-insert', { text: '\\underline{}' }),
+      },
+      {
         id: 'latex-section',
         label: 'Insert Section',
         icon: <Heading1 className="size-4" />,
@@ -173,8 +223,9 @@ export function CommandPalette() {
       },
       {
         id: 'latex-math',
-        label: 'Insert Math',
+        label: 'Insert Math Mode',
         icon: <Sigma className="size-4" />,
+        shortcut: 'Ctrl+M',
         action: () => dispatchCustomEvent('latex-insert', { text: '$$' }),
       },
       {
