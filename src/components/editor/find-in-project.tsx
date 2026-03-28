@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { SearchIcon, FileTextIcon, LoaderCircleIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,15 +34,27 @@ export function FindInProject({ projectId, open, onOpenChange }: FindInProjectPr
   const [searched, setSearched] = useState(false);
   const openFile = useEditorStore((s) => s.openFile);
   const setActiveTab = useEditorStore((s) => s.setActiveTab);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Clean up any in-flight requests when dialog closes or component unmounts
+  useEffect(() => {
+    return () => { abortRef.current?.abort(); };
+  }, []);
 
   const handleSearch = useCallback(async () => {
     if (!query.trim()) return;
+
+    // Cancel any previous search
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setSearching(true);
     setSearched(false);
 
     try {
       // Fetch all files
-      const res = await fetch(`/api/v1/projects/${projectId}/files`);
+      const res = await fetch(`/api/v1/projects/${projectId}/files`, { signal: controller.signal });
       if (!res.ok) { setSearching(false); return; }
       const data = await res.json();
       const files: Array<{ path: string }> = data.data ?? data;
@@ -52,10 +64,11 @@ export function FindInProject({ projectId, open, onOpenChange }: FindInProjectPr
 
       // Search through each text file
       for (const file of files) {
+        if (controller.signal.aborted) break;
         if (file.path.match(/\.(png|jpg|jpeg|gif|pdf|zip|tar)$/i)) continue;
 
         try {
-          const fileRes = await fetch(`/api/v1/projects/${projectId}/files/${file.path}`);
+          const fileRes = await fetch(`/api/v1/projects/${projectId}/files/${file.path}`, { signal: controller.signal });
           if (!fileRes.ok) continue;
           const fileData = await fileRes.json();
           const content = fileData.data?.content ?? fileData.content ?? '';
@@ -76,15 +89,20 @@ export function FindInProject({ projectId, open, onOpenChange }: FindInProjectPr
             }
           }
           if (found.length >= 100) break;
-        } catch {
+        } catch (e) {
+          if ((e as Error).name === 'AbortError') break;
           continue;
         }
       }
 
-      setResults(found);
-      setSearched(true);
+      if (!controller.signal.aborted) {
+        setResults(found);
+        setSearched(true);
+      }
+    } catch (e) {
+      if ((e as Error).name !== 'AbortError') throw e;
     } finally {
-      setSearching(false);
+      if (!controller.signal.aborted) setSearching(false);
     }
   }, [query, projectId]);
 

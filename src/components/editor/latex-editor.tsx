@@ -78,11 +78,12 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
     // Initialise ytext with the existing content only when the doc is empty
     // (first load / no remote state yet). Once remote state syncs it will
     // override this, which is the correct CRDT behaviour.
-    provider.on('sync', (synced: boolean) => {
+    const handleSync = (synced: boolean) => {
       if (synced && ytext.length === 0 && initialContent) {
         ytext.insert(0, initialContent);
       }
-    });
+    };
+    provider.on('sync', handleSync);
 
     const saveKeymap = keymap.of([
       {
@@ -326,6 +327,8 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
       view.destroy();
       viewRef.current = null;
       provider.off('status', handleStatus);
+      provider.off('sync', handleSync);
+      provider.awareness.destroy();
       provider.disconnect();
       ydoc.destroy();
     };

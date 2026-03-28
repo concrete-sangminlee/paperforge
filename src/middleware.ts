@@ -14,8 +14,9 @@ export function middleware(request: NextRequest) {
     const origin = request.headers.get('origin');
     const allowedOrigins = [
       process.env.NEXTAUTH_URL,
-      'http://localhost:3000',
-      'http://localhost',
+      ...(process.env.NODE_ENV === 'development'
+        ? ['http://localhost:3000', 'http://localhost']
+        : []),
     ].filter(Boolean);
 
     if (origin && allowedOrigins.includes(origin)) {

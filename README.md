@@ -48,11 +48,11 @@
 
 | Release | Feature | Description |
 |:---:|:---|:---|
+| v4.5 | **Security Hardening** | CSP headers, production-only CORS, restricted image domains, expanded blocked extension list (28 types), AbortController on all async operations |
+| v4.5 | **Memory Leak Fixes** | WebSocket sync/awareness cleanup, polling interval cleanup on unmount, AbortController for find-in-project, proper event listener teardown |
 | v4.5 | **Scroll Animations & Animated Counters** | Premium landing page with scroll-triggered reveals, staggered card animations, and animated stat counters |
 | v4.5 | **100% API Standardization** | Every API route uses `apiSuccess()`/`ApiErrors` pattern with input validation and pagination bounds |
 | v4.5 | **WCAG Accessibility** | `aria-live` alerts, `role="meter"` password strength, `aria-label` on all toolbar buttons, `role="log"` on compilation output |
-| v4.5 | **Real-time Auto-Compile** | Overleaf-style live compilation with a 2-second debounce — see your changes as you type |
-| v4.5 | **DOCX Export** | Export your LaTeX documents to Word (`.docx`) via Pandoc for seamless sharing with non-LaTeX users |
 | v4.5 | **1,500+ Tests** | 128 test suites covering linting, completions, error parsing, API responses, validation, and full pipeline E2E |
 
 ---

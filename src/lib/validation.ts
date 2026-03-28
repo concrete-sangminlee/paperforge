@@ -97,10 +97,13 @@ export const ALLOWED_UPLOAD_TYPES = new Set([
   'application/postscript',
 ]);
 
-// Blocked file extensions
+// Blocked file extensions — executables, scripts, and potentially dangerous formats
 export const BLOCKED_EXTENSIONS = new Set([
-  '.exe', '.bat', '.cmd', '.com', '.msi', '.scr',
-  '.sh', '.bash', '.ps1', '.vbs', '.js', '.jar',
+  '.exe', '.bat', '.cmd', '.com', '.msi', '.scr', '.pif', '.cpl',
+  '.sh', '.bash', '.ps1', '.vbs', '.vbe', '.wsf', '.wsh',
+  '.js', '.jse', '.jar', '.class',
+  '.py', '.rb', '.pl', '.php', '.asp', '.jsp', '.cgi',
+  '.dll', '.sys', '.drv', '.ocx',
 ]);
 
 export const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB

@@ -162,10 +162,12 @@ export function EditorToolbar({ projectId, projectName, onCompileReady }: Editor
   handleCompileRef.current = handleCompile;
 
   // Expose a stable wrapper to the parent exactly once on mount.
+  // Also clean up polling on unmount to prevent memory leaks.
   useEffect(() => {
     if (onCompileReady) {
       onCompileReady(() => handleCompileRef.current());
     }
+    return () => stopPolling();
     // onCompileReady identity is stable; only run on mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
