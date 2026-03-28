@@ -26,6 +26,7 @@ const DocumentStats = lazy(() => import('./document-stats').then(m => ({ default
 const ShareSnippet = lazy(() => import('./share-snippet').then(m => ({ default: m.ShareSnippet })));
 import { RecoveryBanner } from './recovery-banner';
 const DiffViewer = lazy(() => import('./diff-viewer').then(m => ({ default: m.DiffViewer })));
+const LaTeXReference = lazy(() => import('./latex-reference').then(m => ({ default: m.LaTeXReference })));
 import { useEditorStore } from '@/store/editor-store';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
@@ -50,7 +51,7 @@ interface EditorLayoutProps {
   gitRemoteUrl?: string;
 }
 
-type RightPanel = 'pdf' | 'history' | 'git' | 'outline' | 'symbols' | 'cite' | 'math' | 'ai' | 'table' | 'equation' | 'stats' | 'diff';
+type RightPanel = 'pdf' | 'history' | 'git' | 'outline' | 'symbols' | 'cite' | 'math' | 'ai' | 'table' | 'equation' | 'stats' | 'diff' | 'ref';
 
 import { EDITOR } from '@/lib/constants';
 const AUTO_COMPILE_DEBOUNCE_MS = EDITOR.AUTO_COMPILE_DEBOUNCE_MS;
@@ -624,6 +625,16 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
               <DiffIcon className="size-3.5" />
               Diff
             </Button>
+            <Button
+              size="sm"
+              variant={rightPanel === 'ref' ? 'secondary' : 'ghost'}
+              className="h-7 gap-1.5 px-2 text-xs"
+              onClick={() => setRightPanel('ref')}
+              aria-pressed={rightPanel === 'ref'}
+            >
+              <BookOpenIcon className="size-3.5" />
+              Ref
+            </Button>
           </div>
 
           {/* Panel content */}
@@ -641,6 +652,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
               {rightPanel === 'equation' && <EquationBuilder />}
               {rightPanel === 'stats' && <DocumentStats />}
               {rightPanel === 'diff' && <DiffViewer />}
+              {rightPanel === 'ref' && <LaTeXReference />}
             </Suspense>
           </div>
         </div>
