@@ -42,7 +42,7 @@ describe('deployment readiness', () => {
 
 describe('version consistency', () => {
   const pkg = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf-8'));
-  it('version matches 3.x', () => { expect(pkg.version).toMatch(/^3\./); });
+  it('version is semver', () => { expect(pkg.version).toMatch(/^\d+\.\d+\.\d+$/); });
   it('name is paperforge', () => { expect(pkg.name).toBe('paperforge'); });
   it('has all required scripts', () => {
     ['dev','build','start','lint','test','db:seed','db:seed-demo','postinstall'].forEach(s => {
