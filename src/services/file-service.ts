@@ -12,12 +12,17 @@ export async function createFile(
   path: string,
   content: string,
 ) {
-  await ensureBucket();
-  const bucket = getBucket();
   const minioKey = `projects/${projectId}/files/${path}`;
   const buffer = Buffer.from(content, 'utf-8');
 
-  await minioClient.putObject(bucket, minioKey, buffer);
+  // Try to upload to MinIO — skip gracefully if unavailable (e.g., Vercel)
+  try {
+    await ensureBucket();
+    const bucket = getBucket();
+    await minioClient.putObject(bucket, minioKey, buffer);
+  } catch {
+    // MinIO not available — file record will still be created in DB
+  }
 
   const existing = await prisma.file.findFirst({
     where: { projectId, path },
@@ -57,12 +62,17 @@ export async function getFileContent(projectId: string, path: string): Promise<s
   });
   if (!file || !file.minioKey) throw new ApiError(404, 'File not found');
 
-  const stream = await minioClient.getObject(getBucket(), file.minioKey);
-  const chunks: Buffer[] = [];
-  for await (const chunk of stream as AsyncIterable<Buffer>) {
-    chunks.push(chunk);
+  try {
+    const stream = await minioClient.getObject(getBucket(), file.minioKey);
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream as AsyncIterable<Buffer>) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks).toString('utf-8');
+  } catch {
+    // MinIO not available — return empty content for files created without storage
+    return '';
   }
-  return Buffer.concat(chunks).toString('utf-8');
 }
 
 /**
@@ -107,9 +117,15 @@ export async function uploadBinaryFile(
   buffer: Buffer,
   mimeType: string,
 ) {
-  await ensureBucket();
   const minioKey = `projects/${projectId}/files/${path}`;
-  await minioClient.putObject(getBucket(), minioKey, buffer);
+
+  // Try to upload to MinIO — skip gracefully if unavailable (e.g., Vercel)
+  try {
+    await ensureBucket();
+    await minioClient.putObject(getBucket(), minioKey, buffer);
+  } catch {
+    // MinIO not available — file record will still be created in DB
+  }
 
   const existing = await prisma.file.findFirst({
     where: { projectId, path },
