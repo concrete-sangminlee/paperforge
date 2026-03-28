@@ -87,6 +87,7 @@ export function CreateProjectDialog() {
               <Input
                 id="project-name"
                 placeholder="My LaTeX Paper"
+                aria-label="Project name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 autoFocus

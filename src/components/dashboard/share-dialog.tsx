@@ -255,8 +255,11 @@ export function ShareDialog({ projectId, currentUserRole, open: openProp, onOpen
                   <Input
                     type="email"
                     placeholder="colleague@example.com"
+                    aria-label="Invite email address"
+                    autoComplete="email"
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void handleInvite(e as unknown as React.FormEvent); } }}
                     className="flex-1"
                   />
                   <Select

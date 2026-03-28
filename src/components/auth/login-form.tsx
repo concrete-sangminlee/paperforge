@@ -119,6 +119,7 @@ export function LoginForm() {
                 id="email"
                 type="email"
                 placeholder="you@example.com"
+                aria-label="Email address"
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);

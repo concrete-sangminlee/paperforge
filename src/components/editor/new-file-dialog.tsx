@@ -83,6 +83,7 @@ export function NewFileDialog({ projectId, onCreated }: NewFileDialogProps) {
             <Input
               id="new-file-path"
               placeholder="main.tex"
+              aria-label="File path"
               value={filePath}
               onChange={(e) => setFilePath(e.target.value)}
               autoFocus

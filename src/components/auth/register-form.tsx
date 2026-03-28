@@ -193,6 +193,7 @@ export function RegisterForm() {
                 id="name"
                 type="text"
                 placeholder="Your name"
+                aria-label="Full name"
                 value={name}
                 onChange={(e) => {
                   setName(e.target.value);
@@ -264,6 +265,7 @@ export function RegisterForm() {
                 id="password"
                 type={showPassword ? "text" : "password"}
                 placeholder="Create a password"
+                aria-label="Password"
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
