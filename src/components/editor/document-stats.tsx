@@ -28,7 +28,7 @@ function analyzeDocument(content: string): DocStats {
   const stripped = content
     .replace(/%.*$/gm, '') // remove comments
     .replace(/\\begin\{[^}]+\}|\\end\{[^}]+\}/g, '') // remove env markers
-    .replace(/\\[a-zA-Z]+(\[[^\]]*\])?(\{[^}]*\})?/g, ' ') // remove commands
+    .replace(/\\[a-zA-Z]+(?:\[[^\]]{0,500}\])?(?:\{[^}]{0,500}\})?/g, ' ') // remove commands (length-bounded to prevent ReDoS)
     .replace(/[{}\\$%&_^~#]/g, '') // remove special chars
     .replace(/\s+/g, ' ');
 
@@ -63,7 +63,7 @@ function analyzeDocument(content: string): DocStats {
     if (match) {
       const sectionContent = lines.slice(lastSectionLine, i).join('\n');
       const sectionStripped = sectionContent
-        .replace(/\\[a-zA-Z]+(\{[^}]*\})?/g, ' ')
+        .replace(/\\[a-zA-Z]+(?:\{[^}]{0,500}\})?/g, ' ')
         .replace(/[{}\\$%]/g, '')
         .replace(/\s+/g, ' ').trim();
       const sectionWords = sectionStripped ? sectionStripped.split(/\s+/).length : 0;
@@ -78,7 +78,7 @@ function analyzeDocument(content: string): DocStats {
   }
   // Last section
   const lastContent = lines.slice(lastSectionLine).join('\n')
-    .replace(/\\[a-zA-Z]+(\{[^}]*\})?/g, ' ')
+    .replace(/\\[a-zA-Z]+(?:\{[^}]{0,500}\})?/g, ' ')
     .replace(/[{}\\$%]/g, '').replace(/\s+/g, ' ').trim();
   const lastWords = lastContent ? lastContent.split(/\s+/).length : 0;
   if (lastWords > 5) {
@@ -130,7 +130,7 @@ export const DocumentStats = memo(function DocumentStats() {
         <div className="p-3 space-y-4">
           {/* Overview */}
           <div>
-            <p className="mb-2 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">Overview</p>
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Overview</p>
             <div className="rounded-lg border p-2.5">
               <StatRow icon={FileTextIcon} label="Words" value={stats.words} />
               <StatRow icon={FileTextIcon} label="Characters" value={stats.chars} />
@@ -143,7 +143,7 @@ export const DocumentStats = memo(function DocumentStats() {
 
           {/* LaTeX Elements */}
           <div>
-            <p className="mb-2 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">LaTeX Elements</p>
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">LaTeX Elements</p>
             <div className="rounded-lg border p-2.5">
               <StatRow icon={FileTextIcon} label="Sections" value={stats.sections} color="text-blue-500" />
               <StatRow icon={ImageIcon} label="Figures" value={stats.figures} color="text-green-500" />
@@ -158,19 +158,44 @@ export const DocumentStats = memo(function DocumentStats() {
           {/* Section Breakdown */}
           {stats.sectionBreakdown.length > 0 && (
             <div>
-              <p className="mb-2 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">Words by Section</p>
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Words by Section</p>
               <div className="space-y-1.5">
-                {stats.sectionBreakdown.map((s, i) => (
-                  <div key={i} style={{ paddingLeft: `${s.level * 8}px` }}>
-                    <div className="flex items-center justify-between text-[10px]">
-                      <span className="truncate text-muted-foreground">{s.title}</span>
-                      <span className="shrink-0 font-mono">{s.words}</span>
-                    </div>
-                    <div className="mt-0.5 h-1 overflow-hidden rounded-full bg-muted">
-                      <div className="h-full rounded-full bg-orange-500/60" style={{ width: `${(s.words / maxSectionWords) * 100}%` }} />
-                    </div>
-                  </div>
-                ))}
+                {stats.sectionBreakdown.map((s, i) => {
+                  const pct = Math.round((s.words / maxSectionWords) * 100);
+                  return (
+                    <button
+                      key={i}
+                      className="block w-full text-left rounded-md px-1 py-0.5 transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      style={{ paddingLeft: `${s.level * 8 + 4}px` }}
+                      onClick={() => {
+                        const lines = (tabData?.content ?? '').split('\n');
+                        for (let ln = 0; ln < lines.length; ln++) {
+                          if (lines[ln].includes(s.title)) {
+                            window.dispatchEvent(new CustomEvent('editor-goto-line', { detail: ln + 1 }));
+                            break;
+                          }
+                        }
+                      }}
+                      title={`Jump to "${s.title}"`}
+                      aria-label={`${s.title}: ${s.words.toLocaleString()} words (${pct}% of largest section). Click to jump.`}
+                    >
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="truncate text-muted-foreground">{s.title}</span>
+                        <span className="shrink-0 font-mono">{s.words}</span>
+                      </div>
+                      <div
+                        className="mt-0.5 h-1 overflow-hidden rounded-full bg-muted"
+                        role="meter"
+                        aria-label={`${s.title} word count`}
+                        aria-valuenow={s.words}
+                        aria-valuemin={0}
+                        aria-valuemax={maxSectionWords}
+                      >
+                        <div className="h-full rounded-full bg-orange-500/60" style={{ width: `${pct}%` }} />
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}

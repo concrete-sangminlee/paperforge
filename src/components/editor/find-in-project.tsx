@@ -13,6 +13,9 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useEditorStore } from '@/store/editor-store';
 
+const MAX_RESULTS = 100;
+const MAX_FILE_BYTES = 2 * 1024 * 1024; // 2MB — skip files larger than this
+
 interface SearchResult {
   path: string;
   line: number;
@@ -32,6 +35,7 @@ export function FindInProject({ projectId, open, onOpenChange }: FindInProjectPr
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [truncated, setTruncated] = useState(false);
   const [caseSensitive, setCaseSensitive] = useState(false);
   const [useRegex, setUseRegex] = useState(false);
   const openFile = useEditorStore((s) => s.openFile);
@@ -53,30 +57,40 @@ export function FindInProject({ projectId, open, onOpenChange }: FindInProjectPr
 
     setSearching(true);
     setSearched(false);
+    setTruncated(false);
 
     try {
       // Fetch all files
       const res = await fetch(`/api/v1/projects/${projectId}/files`, { signal: controller.signal });
       if (!res.ok) { setSearching(false); return; }
       const data = await res.json();
-      const files: Array<{ path: string }> = data.data ?? data;
+      const files: Array<{ path: string; sizeBytes?: number }> = data.data ?? data;
 
       const found: SearchResult[] = [];
       let regex: RegExp | null = null;
       if (useRegex) {
-        try { regex = new RegExp(query, caseSensitive ? 'g' : 'gi'); } catch { /* invalid regex — fall through to string search */ }
+        // Guard against catastrophic backtracking patterns
+        const dangerous = /(\+\+|\*\*|\{\d+,\}\+|\(\?[^)]*\)\+)/.test(query);
+        if (!dangerous) {
+          try { regex = new RegExp(query, caseSensitive ? 'g' : 'gi'); } catch { /* invalid regex — fall through to string search */ }
+        }
       }
 
       // Search through each text file
       for (const file of files) {
         if (controller.signal.aborted) break;
-        if (file.path.match(/\.(png|jpg|jpeg|gif|pdf|zip|tar)$/i)) continue;
+        if (file.path.match(/\.(png|jpg|jpeg|gif|pdf|zip|tar|gz|bin|o|exe)$/i)) continue;
+        // Skip oversized files to prevent browser freeze
+        if (file.sizeBytes != null && file.sizeBytes > MAX_FILE_BYTES) continue;
 
         try {
-          const fileRes = await fetch(`/api/v1/projects/${projectId}/files/${file.path}`, { signal: controller.signal });
+          const encodedPath = file.path.split('/').map(encodeURIComponent).join('/');
+          const fileRes = await fetch(`/api/v1/projects/${projectId}/files/${encodedPath}`, { signal: controller.signal });
           if (!fileRes.ok) continue;
           const fileData = await fileRes.json();
           const content = fileData.data?.content ?? fileData.content ?? '';
+          // Double-check content length
+          if (content.length > MAX_FILE_BYTES) continue;
 
           const lines = content.split('\n');
           for (let i = 0; i < lines.length; i++) {
@@ -99,10 +113,10 @@ export function FindInProject({ projectId, open, onOpenChange }: FindInProjectPr
                 matchStart: idx,
                 matchEnd: idx + matchLen,
               });
-              if (found.length >= 100) break; // Limit results
+              if (found.length >= MAX_RESULTS) break;
             }
           }
-          if (found.length >= 100) break;
+          if (found.length >= MAX_RESULTS) break;
         } catch (e) {
           if ((e as Error).name === 'AbortError') break;
           continue;
@@ -110,6 +124,7 @@ export function FindInProject({ projectId, open, onOpenChange }: FindInProjectPr
       }
 
       if (!controller.signal.aborted) {
+        setTruncated(found.length >= MAX_RESULTS);
         setResults(found);
         setSearched(true);
       }
@@ -122,7 +137,7 @@ export function FindInProject({ projectId, open, onOpenChange }: FindInProjectPr
 
   function handleResultClick(result: SearchResult) {
     // Open the file in editor and go to line
-    fetch(`/api/v1/projects/${projectId}/files/${result.path}`)
+    fetch(`/api/v1/projects/${projectId}/files/${result.path.split('/').map(encodeURIComponent).join('/')}`)
       .then(r => r.json())
       .then(data => {
         const content = data.data?.content ?? data.content ?? '';
@@ -193,7 +208,9 @@ export function FindInProject({ projectId, open, onOpenChange }: FindInProjectPr
           )}
           {results.length > 0 && (
             <div className="space-y-0.5">
-              <p className="mb-2 text-xs text-muted-foreground">{results.length} result{results.length !== 1 ? 's' : ''} found</p>
+              <p className="mb-2 text-xs text-muted-foreground">
+                {truncated ? `${MAX_RESULTS}+ results found (showing first ${MAX_RESULTS})` : `${results.length} result${results.length !== 1 ? 's' : ''} found`}
+              </p>
               {results.map((r, i) => (
                 <button
                   key={`${r.path}-${r.line}-${i}`}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FilePlusIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,11 +25,11 @@ export function NewFileDialog({ projectId, onCreated }: NewFileDialogProps) {
   const [open, setOpen] = useState(false);
 
   // Listen for Ctrl+N event
-  useState(() => {
+  useEffect(() => {
     function handleNewFile() { setOpen(true); }
     window.addEventListener('new-file', handleNewFile);
     return () => window.removeEventListener('new-file', handleNewFile);
-  });
+  }, []);
   const [filePath, setFilePath] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -46,7 +46,8 @@ export function NewFileDialog({ projectId, onCreated }: NewFileDialogProps) {
     setError('');
 
     try {
-      const res = await fetch(`/api/v1/projects/${projectId}/files/${path}`, {
+      const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+      const res = await fetch(`/api/v1/projects/${projectId}/files/${encodedPath}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: '' }),
