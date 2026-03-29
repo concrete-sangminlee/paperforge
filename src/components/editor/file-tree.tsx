@@ -38,6 +38,12 @@ import { cn } from '@/lib/utils';
 import { NewFileDialog } from './new-file-dialog';
 import { UploadDialog } from './upload-dialog';
 import { toast } from 'sonner';
+import { copyToClipboard } from '@/lib/clipboard';
+
+/** Encode each segment of a file path for safe use in fetch URLs. */
+function encodeFilePath(filePath: string): string {
+  return filePath.split('/').map(encodeURIComponent).join('/');
+}
 
 interface FileEntry {
   id: string;
@@ -269,6 +275,7 @@ function FileNode({
         <span className="flex-1 truncate">{name}</span>
         {isImage && (
           <span className="absolute left-full top-0 z-50 ml-2 hidden rounded-md border bg-card p-1 shadow-lg group-hover/filebtn:block">
+            {/* eslint-disable-next-line @next/next/no-img-element -- hover tooltip for arbitrary project files */}
             <img src={`/api/v1/projects/${projectId}/files/${file.path}`} alt={name} className="max-h-24 max-w-32 rounded object-contain" loading="lazy" />
           </span>
         )}
@@ -297,7 +304,7 @@ function FileNode({
           <DownloadIcon className="size-3.5 mr-1.5 text-muted-foreground" />
           Download
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(file.path); toast.success('Path copied'); }}>
+        <DropdownMenuItem onClick={() => { void copyToClipboard(file.path, 'Path copied'); }}>
           <ClipboardCopyIcon className="size-3.5 mr-1.5 text-muted-foreground" />
           Copy Path
         </DropdownMenuItem>
@@ -566,7 +573,7 @@ export function FileTree({
 
     setLoading(file.path);
     try {
-      const res = await fetch(`/api/v1/projects/${projectId}/files/${file.path}`);
+      const res = await fetch(`/api/v1/projects/${projectId}/files/${encodeFilePath(file.path)}`);
       if (!res.ok) throw new Error('Failed to load file');
       const data = (await res.json()) as { content: string };
       openFile(file.path, data.content);
@@ -605,7 +612,7 @@ export function FileTree({
           if (tab) {
             content = tab.content;
           } else {
-            const res = await fetch(`/api/v1/projects/${projectId}/files/${renaming.path}`);
+            const res = await fetch(`/api/v1/projects/${projectId}/files/${encodeFilePath(renaming.path)}`);
             if (res.ok) {
               const data = (await res.json()) as { content: string };
               content = data.content;
@@ -614,12 +621,12 @@ export function FileTree({
         }
 
         // Create at new path then delete old
-        await fetch(`/api/v1/projects/${projectId}/files/${newPath}`, {
+        await fetch(`/api/v1/projects/${projectId}/files/${encodeFilePath(newPath)}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ content }),
         });
-        await fetch(`/api/v1/projects/${projectId}/files/${renaming.path}`, {
+        await fetch(`/api/v1/projects/${projectId}/files/${encodeFilePath(renaming.path)}`, {
           method: 'DELETE',
         });
 
@@ -638,7 +645,7 @@ export function FileTree({
   async function handleDelete(file: FileEntry) {
     if (!confirm(`Delete "${file.path}"? This cannot be undone.`)) return;
     try {
-      await fetch(`/api/v1/projects/${projectId}/files/${file.path}`, {
+      await fetch(`/api/v1/projects/${projectId}/files/${encodeFilePath(file.path)}`, {
         method: 'DELETE',
       });
       closeTab(file.path);
@@ -679,7 +686,7 @@ export function FileTree({
         if (tab) {
           content = tab.content;
         } else {
-          const res = await fetch(`/api/v1/projects/${projectId}/files/${file.path}`);
+          const res = await fetch(`/api/v1/projects/${projectId}/files/${encodeFilePath(file.path)}`);
           if (res.ok) {
             const data = (await res.json()) as { content: string };
             content = data.content;
@@ -703,7 +710,7 @@ export function FileTree({
 
   async function handleDownload(file: FileEntry) {
     try {
-      const res = await fetch(`/api/v1/projects/${projectId}/files/${file.path}`);
+      const res = await fetch(`/api/v1/projects/${projectId}/files/${encodeFilePath(file.path)}`);
       if (!res.ok) throw new Error('Download failed');
       const data = (await res.json()) as { content: string };
       const blob = new Blob([data.content], { type: 'text/plain' });
@@ -739,7 +746,7 @@ export function FileTree({
     const folderPath = newFolderParent ? `${newFolderParent}/${name}` : name;
     // Create a .gitkeep file to materialize the folder
     try {
-      await fetch(`/api/v1/projects/${projectId}/files/${folderPath}/.gitkeep`, {
+      await fetch(`/api/v1/projects/${projectId}/files/${encodeFilePath(folderPath)}/.gitkeep`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: '' }),
@@ -785,7 +792,7 @@ export function FileTree({
           if (tab) {
             content = tab.content;
           } else {
-            const res = await fetch(`/api/v1/projects/${projectId}/files/${f.path}`);
+            const res = await fetch(`/api/v1/projects/${projectId}/files/${encodeFilePath(f.path)}`);
             if (res.ok) {
               const data = (await res.json()) as { content: string };
               content = data.content;
@@ -793,12 +800,12 @@ export function FileTree({
           }
         }
 
-        await fetch(`/api/v1/projects/${projectId}/files/${destPath}`, {
+        await fetch(`/api/v1/projects/${projectId}/files/${encodeFilePath(destPath)}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ content }),
         });
-        await fetch(`/api/v1/projects/${projectId}/files/${f.path}`, {
+        await fetch(`/api/v1/projects/${projectId}/files/${encodeFilePath(f.path)}`, {
           method: 'DELETE',
         });
         closeTab(f.path);
@@ -824,7 +831,7 @@ export function FileTree({
 
     try {
       for (const f of affectedFiles) {
-        await fetch(`/api/v1/projects/${projectId}/files/${f.path}`, {
+        await fetch(`/api/v1/projects/${projectId}/files/${encodeFilePath(f.path)}`, {
           method: 'DELETE',
         });
         closeTab(f.path);

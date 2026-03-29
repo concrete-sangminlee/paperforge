@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import {
   Card,
   CardContent,
@@ -29,7 +29,6 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{
     email?: string;
@@ -179,8 +178,7 @@ export function LoginForm() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
-                tabIndex={-1}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:rounded"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
@@ -193,21 +191,6 @@ export function LoginForm() {
             {fieldErrors.password && fieldErrors.password.trim() && (
               <p className="text-xs text-destructive">{fieldErrors.password}</p>
             )}
-          </div>
-
-          {/* Remember Me */}
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="remember-me"
-              checked={rememberMe}
-              onCheckedChange={setRememberMe}
-            />
-            <Label
-              htmlFor="remember-me"
-              className="text-sm font-normal text-muted-foreground cursor-pointer"
-            >
-              Remember me
-            </Label>
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>
