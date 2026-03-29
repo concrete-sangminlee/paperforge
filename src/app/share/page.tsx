@@ -1,11 +1,12 @@
 'use client';
 
+import 'katex/dist/katex.min.css';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { FlameIcon, CopyIcon, CheckIcon, CodeIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { copyToClipboard } from '@/lib/clipboard';
 
 function ShareContent() {
   const params = useSearchParams();
@@ -16,7 +17,7 @@ function ShareContent() {
 
   let decoded = '';
   try {
-    decoded = code ? decodeURIComponent(escape(atob(code))) : '';
+    decoded = code ? new TextDecoder().decode(Uint8Array.from(atob(code), c => c.charCodeAt(0))) : '';
   } catch {
     decoded = '';
   }
@@ -34,22 +35,30 @@ function ShareContent() {
 
     import('katex').then((katex) => {
       if (!previewRef.current) return;
-      const rendered = mathBlocks.map((latex) => {
+      // Clear previous content safely
+      previewRef.current.textContent = '';
+      for (const latex of mathBlocks) {
         try {
-          return `<div style="margin:12px 0;text-align:center">${katex.default.renderToString(latex.trim(), { displayMode: true, throwOnError: false })}</div>`;
-        } catch { return ''; }
-      }).join('');
-      if (previewRef.current && rendered) {
-        previewRef.current.innerHTML = rendered;
+          const wrapper = document.createElement('div');
+          wrapper.style.margin = '12px 0';
+          wrapper.style.textAlign = 'center';
+          // Use KaTeX DOM rendering instead of innerHTML to avoid XSS
+          katex.default.render(latex.trim(), wrapper, {
+            displayMode: true,
+            throwOnError: false,
+            trust: false,
+            maxSize: 500,
+            maxExpand: 100,
+          });
+          previewRef.current.appendChild(wrapper);
+        } catch { /* skip invalid math */ }
       }
     });
   }, [decoded]);
 
-  function handleCopy() {
-    navigator.clipboard.writeText(decoded);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-    toast.success('Code copied');
+  async function handleCopy() {
+    const ok = await copyToClipboard(decoded, 'Code copied');
+    if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000); }
   }
 
   if (!decoded) {
@@ -110,9 +119,34 @@ function ShareContent() {
   );
 }
 
+function ShareSkeleton() {
+  return (
+    <div className="min-h-screen bg-background">
+      <nav className="flex items-center justify-between border-b px-6 py-3">
+        <div className="h-5 w-28 animate-pulse rounded bg-muted" />
+        <div className="h-8 w-28 animate-pulse rounded bg-muted" />
+      </nav>
+      <div className="mx-auto max-w-3xl px-6 py-8">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="size-4 animate-pulse rounded bg-muted" />
+            <div className="h-5 w-32 animate-pulse rounded bg-muted" />
+          </div>
+          <div className="h-8 w-20 animate-pulse rounded bg-muted" />
+        </div>
+        <div className="space-y-2 rounded-lg border p-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="h-4 animate-pulse rounded bg-muted" style={{ width: `${60 + Math.random() * 40}%`, animationDelay: `${i * 50}ms` }} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SharePage() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-muted-foreground">Loading...</div>}>
+    <Suspense fallback={<ShareSkeleton />}>
       <ShareContent />
     </Suspense>
   );

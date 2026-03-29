@@ -43,7 +43,18 @@ export const LIMITS = {
 } as const;
 
 // ── File Path Validation ─────────────────────────────────
-/** Validate a file path is safe (no directory traversal). */
+/** Validate a file path is safe (no directory traversal, no control chars). */
 export function isValidFilePath(path: string): boolean {
-  return !path.includes('..') && !path.startsWith('/') && path.length <= 1024;
+  if (path.length > 1024 || path.length === 0) return false;
+  // Reject backslashes anywhere to prevent Windows-style traversal (foo\..\bar)
+  if (path.includes('\\')) return false;
+  if (path.includes('..')) return false;
+  if (path.startsWith('/')) return false;
+  // Block Windows absolute paths (C:\...) and UNC paths (\\server)
+  if (/^[A-Za-z]:/.test(path)) return false;
+  // Block null bytes and control characters
+  if (/[\x00-\x1f]/.test(path)) return false;
+  // Block double slashes that could confuse path resolution
+  if (path.includes('//')) return false;
+  return true;
 }
