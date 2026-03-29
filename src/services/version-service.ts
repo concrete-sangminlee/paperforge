@@ -7,6 +7,9 @@ import { ApiError } from '@/lib/errors';
 const REPOS_BASE = process.env.GIT_REPOS_PATH || '/tmp/paperforge-repos';
 
 function getRepoPath(projectId: string) {
+  if (!/^[a-zA-Z0-9_-]+$/.test(projectId)) {
+    throw new ApiError(400, 'Invalid project ID');
+  }
   return path.join(REPOS_BASE, projectId);
 }
 
@@ -38,12 +41,17 @@ export async function commitProjectFiles(
 
   for (const file of files) {
     const filePath = path.join(dir, file.path);
-    await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
-    // Write placeholder content for text files; binary files are omitted from
-    // the git diff view but their paths are still staged so history is accurate.
+    const resolved = path.resolve(filePath);
+
+    // Prevent directory traversal — resolved path must stay inside repo dir
+    if (!resolved.startsWith(path.resolve(dir) + path.sep)) {
+      console.error(`[version-service] Path traversal blocked: ${file.path}`);
+      continue;
+    }
+
+    await fs.promises.mkdir(path.dirname(resolved), { recursive: true });
     if (!file.isBinary) {
-      // In a full implementation this would fetch the actual content from MinIO.
-      await fs.promises.writeFile(filePath, '');
+      await fs.promises.writeFile(resolved, '');
     }
     await git.add({ fs, dir, filepath: file.path });
   }
@@ -85,6 +93,7 @@ export async function listVersions(projectId: string) {
 export async function getVersionDiff(projectId: string, versionId: string) {
   const version = await prisma.version.findUnique({ where: { id: versionId } });
   if (!version) throw new ApiError(404, 'Version not found');
+  if (version.projectId !== projectId) throw new ApiError(404, 'Version not found');
 
   const dir = getRepoPath(projectId);
 
@@ -105,6 +114,7 @@ export async function getVersionDiff(projectId: string, versionId: string) {
 export async function restoreVersion(projectId: string, versionId: string) {
   const version = await prisma.version.findUnique({ where: { id: versionId } });
   if (!version) throw new ApiError(404, 'Version not found');
+  if (version.projectId !== projectId) throw new ApiError(404, 'Version not found');
 
   const dir = getRepoPath(projectId);
 

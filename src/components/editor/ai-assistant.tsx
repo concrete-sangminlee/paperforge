@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useEditorStore } from '@/store/editor-store';
 import { toast } from 'sonner';
+import { copyToClipboard } from '@/lib/clipboard';
 
 type Mode = 'fix' | 'explain' | 'complete' | 'convert';
 
@@ -63,10 +64,9 @@ export const AiAssistant = memo(function AiAssistant() {
     toast.success('Inserted into editor');
   }
 
-  function handleCopy() {
-    navigator.clipboard.writeText(result);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  async function handleCopy() {
+    const ok = await copyToClipboard(result);
+    if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000); }
   }
 
   return (
@@ -77,10 +77,13 @@ export const AiAssistant = memo(function AiAssistant() {
       </div>
 
       {/* Mode selector */}
-      <div className="flex gap-0.5 border-b p-1.5">
+      <div className="flex gap-0.5 border-b p-1.5" role="tablist" aria-label="AI assistant mode">
         {MODES.map((m) => (
           <button
             key={m.value}
+            role="tab"
+            aria-selected={mode === m.value}
+            aria-label={`${m.label}: ${m.desc}`}
             className={`flex-1 rounded-md px-2 py-1 text-[10px] font-medium transition-colors ${
               mode === m.value
                 ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400'

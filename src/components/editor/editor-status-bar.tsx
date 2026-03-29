@@ -67,10 +67,15 @@ export function EditorStatusBar() {
   const [sessionMinutes, setSessionMinutes] = useState(0);
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
 
-  // Load word goal from localStorage
+  // Load word goal from localStorage (try/catch for incognito mode)
   useEffect(() => {
-    const saved = localStorage.getItem('paperforge-word-goal');
-    if (saved) setWordGoal(parseInt(saved, 10));
+    try {
+      const saved = localStorage.getItem('paperforge-word-goal');
+      if (saved) {
+        const num = parseInt(saved, 10);
+        if (!isNaN(num) && num > 0) setWordGoal(num);
+      }
+    } catch { /* localStorage unavailable (incognito/SSR) */ }
   }, []);
 
   // Track save events (dirty → clean transition)
@@ -105,10 +110,10 @@ export function EditorStatusBar() {
     const num = parseInt(goalInput, 10);
     if (num > 0) {
       setWordGoal(num);
-      localStorage.setItem('paperforge-word-goal', String(num));
+      try { localStorage.setItem('paperforge-word-goal', String(num)); } catch {}
     } else {
       setWordGoal(null);
-      localStorage.removeItem('paperforge-word-goal');
+      try { localStorage.removeItem('paperforge-word-goal'); } catch {}
     }
     setEditingGoal(false);
     setGoalInput('');
@@ -120,20 +125,20 @@ export function EditorStatusBar() {
   const goalColor = goalProgress >= 100 ? 'bg-green-500' : goalProgress >= 75 ? 'bg-amber-500' : 'bg-blue-500';
 
   return (
-    <div className="flex h-6 shrink-0 items-center justify-between border-t bg-muted/30 px-3 text-[11px] text-muted-foreground">
-      <div className="flex items-center gap-3">
-        <span className="font-medium">Ln {cursorLine}, Col {cursorCol}{selectionLength > 0 ? ` (${selectionLength} sel)` : ''}</span>
+    <div className="flex h-6 shrink-0 items-center justify-between gap-2 overflow-hidden border-t bg-muted/30 px-3 text-[11px] text-muted-foreground">
+      <div className="flex items-center gap-3 overflow-hidden">
+        <span className="shrink-0 font-medium">Ln {cursorLine}, Col {cursorCol}{selectionLength > 0 ? ` (${selectionLength} sel)` : ''}</span>
         {stats && stats.lines > 0 && (
           <>
-            <span className="text-border">|</span>
-            <span title="Scroll position">{Math.round((cursorLine / stats.lines) * 100)}%</span>
+            <span className="hidden sm:inline text-border">|</span>
+            <span className="hidden sm:inline" title="Scroll position">{Math.round((cursorLine / stats.lines) * 100)}%</span>
           </>
         )}
         <span className="text-border">|</span>
-        <span>{getFileType(tabData.path)}</span>
-        <span className="text-border">|</span>
-        <span>{stats.lines} lines</span>
-        <span className="text-border">|</span>
+        <span className="hidden lg:inline">{getFileType(tabData.path)}</span>
+        <span className="hidden lg:inline text-border">|</span>
+        <span className="hidden md:inline">{stats.lines} lines</span>
+        <span className="hidden md:inline text-border">|</span>
         <span>{stats.words} words</span>
         {wordGoal && (
           <span className="flex items-center gap-1">
@@ -148,10 +153,10 @@ export function EditorStatusBar() {
             </div>
           </span>
         )}
-        <span className="text-border">|</span>
-        <span>{stats.chars.toLocaleString()} chars</span>
+        <span className="hidden xl:inline text-border">|</span>
+        <span className="hidden xl:inline">{stats.chars.toLocaleString()} chars</span>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 overflow-hidden shrink-0">
         {/* Word goal toggle */}
         {editingGoal ? (
           <div className="flex items-center gap-1">
@@ -161,7 +166,7 @@ export function EditorStatusBar() {
               value={goalInput}
               onChange={(e) => setGoalInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleSetGoal(); if (e.key === 'Escape') setEditingGoal(false); }}
-              className="h-4 w-16 rounded border bg-background px-1 text-[10px] outline-none"
+              className="h-5 w-20 rounded border bg-background px-1.5 text-xs outline-none"
               autoFocus
             />
             <button onClick={handleSetGoal} className="text-[10px] text-blue-500 hover:underline">Set</button>
@@ -169,7 +174,7 @@ export function EditorStatusBar() {
         ) : (
           <button
             onClick={() => { setEditingGoal(true); setGoalInput(wordGoal?.toString() ?? ''); }}
-            className="flex items-center gap-0.5 hover:text-foreground"
+            className="hidden md:flex items-center gap-0.5 hover:text-foreground"
             title="Set word count goal"
           >
             <TargetIcon className="size-3" />
@@ -178,14 +183,14 @@ export function EditorStatusBar() {
         )}
         {compilationStatus === 'success' && compilationDuration != null && (
           <>
-            <span className="text-border">|</span>
-            <span className="text-emerald-500">Compiled {(compilationDuration / 1000).toFixed(1)}s</span>
+            <span className="hidden sm:inline text-border">|</span>
+            <span className="hidden sm:inline text-emerald-500">Compiled {(compilationDuration / 1000).toFixed(1)}s</span>
           </>
         )}
-        <span className="text-border">|</span>
-        <span>UTF-8</span>
-        <span className="text-border">|</span>
-        <span>{fontSize}px</span>
+        <span className="hidden lg:inline text-border">|</span>
+        <span className="hidden lg:inline">UTF-8</span>
+        <span className="hidden lg:inline text-border">|</span>
+        <span className="hidden lg:inline">{fontSize}px</span>
         {sessionMinutes > 0 && (
           <>
             <span className="text-border">|</span>
@@ -200,7 +205,7 @@ export function EditorStatusBar() {
         ) : lastSaved ? (
           <>
             <span className="text-border">|</span>
-            <span className="text-emerald-500/70">Saved {formatTimeAgo(lastSaved)}</span>
+            <span className="text-emerald-500/70 truncate">Saved {formatTimeAgo(lastSaved)}</span>
           </>
         ) : null}
       </div>

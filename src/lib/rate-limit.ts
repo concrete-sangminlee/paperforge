@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { redis } from './redis';
 
 export interface RateLimitResult {
@@ -7,11 +8,37 @@ export interface RateLimitResult {
 }
 
 /**
+ * Atomic Lua script for sliding-window rate limiting.
+ * Runs entirely on the Redis server so concurrent requests are serialized.
+ */
+const LUA_RATE_LIMIT = `
+  local key = KEYS[1]
+  local limit = tonumber(ARGV[1])
+  local windowMs = tonumber(ARGV[2])
+  local now = tonumber(ARGV[3])
+  local member = ARGV[4]
+
+  redis.call('ZREMRANGEBYSCORE', key, 0, now - windowMs)
+  local count = redis.call('ZCARD', key)
+
+  if count < limit then
+    redis.call('ZADD', key, now, member)
+    redis.call('EXPIRE', key, math.ceil(windowMs / 1000))
+    return limit - count - 1
+  else
+    local oldest = redis.call('ZRANGE', key, 0, 0, 'WITHSCORES')
+    if oldest and #oldest >= 2 then
+      return -(tonumber(oldest[2]) + windowMs - now)
+    end
+    return -1
+  end
+`;
+
+/**
  * Redis sorted-set sliding window rate limiter.
  *
- * Each request adds a member to a sorted set keyed by `key`.
- * The score is the current timestamp in milliseconds.
- * Old entries outside the window are pruned on each check.
+ * Uses an atomic Lua script to prevent TOCTOU race conditions
+ * where concurrent requests could bypass the limit.
  *
  * @param key - Unique identifier for the rate limit (e.g. "rate:login:192.168.1.1")
  * @param limit - Maximum number of requests allowed in the window
@@ -22,52 +49,27 @@ export async function checkRateLimit(
   limit: number,
   windowSeconds: number,
 ): Promise<RateLimitResult> {
-  // If Redis is not available, allow all requests
   if (!redis) {
+    console.warn(`[rate-limit] Redis unavailable — rate limiting disabled for key: ${key}`);
     return { allowed: true, remaining: limit };
   }
 
   const now = Date.now();
   const windowMs = windowSeconds * 1000;
-  const windowStart = now - windowMs;
+  const member = `${now}:${randomUUID()}`;
 
-  // Use a pipeline for atomicity
-  const pipeline = redis.pipeline();
+  const result = await redis.eval(
+    LUA_RATE_LIMIT, 1, key,
+    String(limit), String(windowMs), String(now), member,
+  ) as number;
 
-  // Remove entries outside the sliding window
-  pipeline.zremrangebyscore(key, 0, windowStart);
-
-  // Count current entries in the window
-  pipeline.zcard(key);
-
-  // Add the current request
-  pipeline.zadd(key, now.toString(), `${now}:${Math.random()}`);
-
-  // Set expiry on the key so it auto-cleans
-  pipeline.expire(key, windowSeconds);
-
-  const results = await pipeline.exec();
-
-  // zcard result is at index 1
-  const currentCount = (results?.[1]?.[1] as number) || 0;
-
-  if (currentCount >= limit) {
-    // Get the oldest entry to calculate retry-after
-    const oldest = await redis.zrange(key, 0, 0, 'WITHSCORES');
-    const oldestTimestamp = oldest.length >= 2 ? parseInt(oldest[1], 10) : now;
-    const retryAfter = Math.ceil((oldestTimestamp + windowMs - now) / 1000);
-
-    return {
-      allowed: false,
-      remaining: 0,
-      retryAfter: Math.max(retryAfter, 1),
-    };
+  if (result < 0) {
+    const retryAfterMs = Math.abs(result);
+    const retryAfter = Math.max(Math.ceil(retryAfterMs / 1000), 1);
+    return { allowed: false, remaining: 0, retryAfter };
   }
 
-  return {
-    allowed: true,
-    remaining: limit - currentCount - 1,
-  };
+  return { allowed: true, remaining: result };
 }
 
 /**

@@ -20,6 +20,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { useEditorStore } from '@/store/editor-store';
 import { cn } from '@/lib/utils';
+import { copyToClipboard } from '@/lib/clipboard';
 import { parseLatexLog, diagnosticSummary } from '@/lib/latex-error-parser';
 
 // ---------------------------------------------------------------------------
@@ -54,7 +55,7 @@ function classifyLine(text: string): LogLevel {
 }
 
 function parseLog(raw: string): ParsedLine[] {
-  if (!raw) return [];
+  if (!raw || typeof raw !== 'string') return [];
   return raw.split('\n').map((text, idx) => ({
     text,
     level: classifyLine(text),
@@ -158,21 +159,8 @@ export function CompilationLog() {
 
   const handleCopy = useCallback(async () => {
     if (!compilationLog) return;
-    try {
-      await navigator.clipboard.writeText(compilationLog);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Fallback for older browsers
-      const textarea = document.createElement('textarea');
-      textarea.value = compilationLog;
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+    const ok = await copyToClipboard(compilationLog, 'Log copied');
+    if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000); }
   }, [compilationLog]);
 
   const handleClear = useCallback(() => {
@@ -222,12 +210,12 @@ export function CompilationLog() {
   return (
     <div
       className={cn(
-        'flex flex-col bg-zinc-50 dark:bg-[#0d1117] transition-all duration-200',
+        'flex flex-col bg-muted/30 dark:bg-[#0d1117] transition-all duration-200',
         expanded ? 'h-[22rem]' : 'h-40',
       )}
     >
       {/* ---- Header ---- */}
-      <div className="flex items-center gap-1 border-t border-zinc-200 dark:border-zinc-800 px-2 py-1">
+      <div className="flex items-center gap-1 border-t border-border px-2 py-1">
         {/* Title + status */}
         <div className="flex items-center gap-1.5">
           <TerminalIcon className="size-3.5 text-zinc-400 dark:text-zinc-500" />
@@ -247,13 +235,13 @@ export function CompilationLog() {
             </span>
           )}
           {errorCount > 0 && (
-            <span className="flex items-center gap-0.5 rounded bg-red-900/50 px-1.5 py-0.5 text-[10px] font-medium text-red-400">
+            <span className="flex items-center gap-0.5 rounded bg-red-100 dark:bg-red-900/50 px-1.5 py-0.5 text-[10px] font-medium text-red-600 dark:text-red-400">
               <AlertCircleIcon className="size-2.5" />
               {errorCount}
             </span>
           )}
           {warningCount > 0 && (
-            <span className="flex items-center gap-0.5 rounded bg-yellow-900/40 px-1.5 py-0.5 text-[10px] font-medium text-yellow-400">
+            <span className="flex items-center gap-0.5 rounded bg-yellow-100 dark:bg-yellow-900/40 px-1.5 py-0.5 text-[10px] font-medium text-yellow-700 dark:text-yellow-400">
               <AlertTriangleIcon className="size-2.5" />
               {warningCount}
             </span>
@@ -268,11 +256,13 @@ export function CompilationLog() {
           <Button
             size="icon-xs"
             variant={showErrors ? 'destructive' : 'ghost'}
+            aria-pressed={showErrors}
+            aria-label={`Filter errors ${showErrors ? '(active)' : '(inactive)'}`}
             className={cn(
               'size-5',
               showErrors
-                ? 'bg-red-900/50 text-red-400 hover:bg-red-900/70'
-                : 'text-zinc-600 hover:text-zinc-400',
+                ? 'bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/70'
+                : 'text-muted-foreground hover:text-foreground',
             )}
             onClick={() => setShowErrors((v) => !v)}
             title="Toggle errors"
@@ -282,11 +272,13 @@ export function CompilationLog() {
           <Button
             size="icon-xs"
             variant={showWarnings ? 'secondary' : 'ghost'}
+            aria-pressed={showWarnings}
+            aria-label={`Filter warnings ${showWarnings ? '(active)' : '(inactive)'}`}
             className={cn(
               'size-5',
               showWarnings
-                ? 'bg-yellow-900/40 text-yellow-400 hover:bg-yellow-900/60'
-                : 'text-zinc-600 hover:text-zinc-400',
+                ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-200 dark:hover:bg-yellow-900/60'
+                : 'text-muted-foreground hover:text-foreground',
             )}
             onClick={() => setShowWarnings((v) => !v)}
             title="Toggle warnings"
@@ -296,11 +288,13 @@ export function CompilationLog() {
           <Button
             size="icon-xs"
             variant={showInfo ? 'secondary' : 'ghost'}
+            aria-pressed={showInfo}
+            aria-label={`Filter info ${showInfo ? '(active)' : '(inactive)'}`}
             className={cn(
               'size-5',
               showInfo
-                ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-                : 'text-zinc-600 hover:text-zinc-400',
+                ? 'bg-muted text-foreground hover:bg-muted/80'
+                : 'text-muted-foreground hover:text-foreground',
             )}
             onClick={() => setShowInfo((v) => !v)}
             title="Toggle info"
@@ -309,14 +303,14 @@ export function CompilationLog() {
           </Button>
         </div>
 
-        <div className="mx-1 h-3.5 w-px bg-zinc-800" />
+        <div className="mx-1 h-3.5 w-px bg-border" />
 
         {/* Action buttons */}
         <div className="flex items-center gap-0.5">
           <Button
             size="icon-xs"
             variant="ghost"
-            className="size-5 text-zinc-500 hover:text-zinc-300"
+            className="size-5 text-muted-foreground hover:text-foreground"
             onClick={toggleSearch}
             title="Search log"
           >
@@ -327,7 +321,7 @@ export function CompilationLog() {
             variant="ghost"
             className={cn(
               'relative size-5',
-              copied ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-300',
+              copied ? 'text-emerald-400' : 'text-muted-foreground hover:text-foreground',
             )}
             onClick={handleCopy}
             title={copied ? 'Copied!' : 'Copy log to clipboard'}
@@ -338,7 +332,7 @@ export function CompilationLog() {
           <Button
             size="icon-xs"
             variant="ghost"
-            className="size-5 text-zinc-500 hover:text-zinc-300"
+            className="size-5 text-muted-foreground hover:text-foreground"
             onClick={handleClear}
             title="Clear log"
             disabled={!compilationLog}
@@ -348,7 +342,7 @@ export function CompilationLog() {
           <Button
             size="icon-xs"
             variant="ghost"
-            className="size-5 text-zinc-500 hover:text-zinc-300"
+            className="size-5 text-muted-foreground hover:text-foreground"
             onClick={() => setExpanded((v) => !v)}
             title={expanded ? 'Collapse log' : 'Expand log'}
           >
@@ -363,7 +357,7 @@ export function CompilationLog() {
 
       {/* ---- Diagnostics summary ---- */}
       {diagnostics.length > 0 && compilationStatus !== 'compiling' && (
-        <div className="flex items-center gap-2 border-t border-zinc-800/60 bg-zinc-900/60 px-3 py-1">
+        <div className="flex items-center gap-2 border-t border-border bg-muted/60 px-3 py-1">
           {summary.errors > 0 && (
             <span className="flex items-center gap-1 text-[10px] text-red-400">
               <AlertCircleIcon className="size-2.5" />
@@ -377,7 +371,7 @@ export function CompilationLog() {
             </span>
           )}
           {diagnostics.filter(d => d.line).length > 0 && (
-            <span className="text-[10px] text-zinc-500">
+            <span className="text-[10px] text-muted-foreground">
               (click errors in log to see line numbers)
             </span>
           )}
@@ -386,25 +380,25 @@ export function CompilationLog() {
 
       {/* ---- Search bar (collapsible) ---- */}
       {showSearch && (
-        <div className="flex items-center gap-1.5 border-t border-zinc-800/60 bg-zinc-900/80 px-2 py-1">
-          <SearchIcon className="size-3 text-zinc-500" />
+        <div className="flex items-center gap-1.5 border-t border-border bg-muted px-2 py-1">
+          <SearchIcon className="size-3 text-muted-foreground" />
           <input
             ref={searchInputRef}
             type="text"
             placeholder="Filter log output..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-5 flex-1 bg-transparent text-xs text-zinc-300 placeholder:text-zinc-600 outline-none"
+            className="h-5 flex-1 bg-transparent text-xs text-foreground placeholder:text-muted-foreground outline-none"
           />
           {searchQuery && (
-            <span className="text-[10px] text-zinc-500">
+            <span className="text-[10px] text-muted-foreground">
               {filteredLines.length} match{filteredLines.length !== 1 ? 'es' : ''}
             </span>
           )}
           <Button
             size="icon-xs"
             variant="ghost"
-            className="size-4 text-zinc-500 hover:text-zinc-300"
+            className="size-4 text-muted-foreground hover:text-foreground"
             onClick={() => {
               setSearchQuery('');
               setShowSearch(false);
@@ -467,7 +461,7 @@ export function CompilationLog() {
                     );
                   })
                 ) : (
-                  <div className="flex items-center justify-center py-6 text-xs text-zinc-600">
+                  <div className="flex items-center justify-center py-6 text-xs text-muted-foreground">
                     No lines match your current filters.
                   </div>
                 )}
@@ -476,14 +470,14 @@ export function CompilationLog() {
             ) : (
               /* ---- Empty state ---- */
               <div className="flex h-full flex-col items-center justify-center gap-2 py-8 text-center">
-                <div className="rounded-full bg-zinc-800/60 p-3">
-                  <FileTextIcon className="size-5 text-zinc-600" />
+                <div className="rounded-full bg-muted p-3">
+                  <FileTextIcon className="size-5 text-muted-foreground" />
                 </div>
-                <p className="text-xs font-medium text-zinc-500">
+                <p className="text-xs font-medium text-muted-foreground">
                   No compilation output yet
                 </p>
-                <p className="text-[11px] text-zinc-600">
-                  Click <span className="font-semibold text-zinc-500">Compile</span> or start
+                <p className="text-[11px] text-muted-foreground">
+                  Click <span className="font-semibold text-foreground/70">Compile</span> or start
                   typing to trigger auto-compile.
                 </p>
               </div>
@@ -495,7 +489,7 @@ export function CompilationLog() {
         {userScrolledUp && compilationLog && (
           <button
             onClick={scrollToBottom}
-            className="absolute bottom-2 right-3 flex items-center gap-1 rounded-full border border-zinc-700 bg-zinc-800/90 px-2 py-1 text-[10px] font-medium text-zinc-300 shadow-lg backdrop-blur transition-colors hover:bg-zinc-700"
+            className="absolute bottom-2 right-3 flex items-center gap-1 rounded-full border border-border bg-background/90 px-2 py-1 text-[10px] font-medium text-foreground shadow-lg backdrop-blur transition-colors hover:bg-muted"
             title="Scroll to bottom"
           >
             <ArrowDownIcon className="size-2.5" />

@@ -104,7 +104,11 @@ export function EditorToolbar({ projectId, projectName, onCompileReady }: Editor
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: 'Compilation request failed' }));
-        setCompilationLog((err as { error?: string }).error ?? 'Compilation request failed');
+        const errPayload = (err as { error?: string | { message?: string } }).error;
+        const errMsg = typeof errPayload === 'string'
+          ? errPayload
+          : (errPayload as { message?: string } | undefined)?.message ?? 'Compilation request failed';
+        setCompilationLog(errMsg);
         setCompilationStatus('error');
         toast.error('Compilation failed');
         return;

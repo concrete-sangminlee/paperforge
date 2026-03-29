@@ -15,6 +15,7 @@ export interface LatexDiagnostic {
  */
 export function parseLatexLog(log: string): LatexDiagnostic[] {
   const diagnostics: LatexDiagnostic[] = [];
+  if (typeof log !== 'string') return diagnostics;
   const lines = log.split('\n');
 
   for (let i = 0; i < lines.length; i++) {
