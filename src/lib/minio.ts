@@ -25,11 +25,15 @@ export function getBucket(): string {
 
 /**
  * Ensures the configured bucket exists, creating it if necessary.
+ * Caches the result so subsequent calls skip the network roundtrip.
  */
+let bucketVerified = false;
 export async function ensureBucket(): Promise<void> {
+  if (bucketVerified) return;
   const bucket = getBucket();
   const exists = await minioClient.bucketExists(bucket);
   if (!exists) {
     await minioClient.makeBucket(bucket);
   }
+  bucketVerified = true;
 }

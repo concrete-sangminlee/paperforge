@@ -2,6 +2,33 @@ import { prisma } from '@/lib/prisma';
 import { minioClient, getBucket, ensureBucket } from '@/lib/minio';
 import { ApiError } from '@/lib/errors';
 
+/** Detect MIME type from file extension for text files. */
+function detectTextMimeType(filePath: string): string {
+  const ext = filePath.split('.').pop()?.toLowerCase();
+  switch (ext) {
+    case 'tex':
+    case 'ltx':
+    case 'cls':
+    case 'sty':
+      return 'text/x-tex';
+    case 'bib':
+    case 'bst':
+      return 'text/x-bibtex';
+    case 'md':
+      return 'text/markdown';
+    case 'json':
+      return 'application/json';
+    case 'yaml':
+    case 'yml':
+      return 'text/yaml';
+    case 'txt':
+    case 'log':
+      return 'text/plain';
+    default:
+      return 'text/plain';
+  }
+}
+
 /**
  * Uploads text content to MinIO and upserts the File record.
  * Uses findFirst + create/update because the partial unique index
@@ -14,6 +41,7 @@ export async function createFile(
 ) {
   const minioKey = `projects/${projectId}/files/${path}`;
   const buffer = Buffer.from(content, 'utf-8');
+  const mimeType = detectTextMimeType(path);
 
   // Try to upload to MinIO — skip gracefully if unavailable (e.g., Vercel)
   try {
@@ -36,7 +64,7 @@ export async function createFile(
         minioKey,
         deletedAt: null,
         isBinary: false,
-        mimeType: 'text/x-tex',
+        mimeType,
       },
     });
   }
@@ -47,7 +75,7 @@ export async function createFile(
       path,
       isBinary: false,
       sizeBytes: BigInt(buffer.length),
-      mimeType: 'text/x-tex',
+      mimeType,
       minioKey,
     },
   });

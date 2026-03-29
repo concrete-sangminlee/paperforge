@@ -17,7 +17,7 @@ interface HealthData {
 }
 
 export default function StatusPage() {
-  const { data, isLoading, mutate } = useSWR<HealthData>('/api/healthz', fetcher, { refreshInterval: 10000 });
+  const { data, error: fetchError, isLoading, mutate } = useSWR<HealthData>('/api/healthz', fetcher, { refreshInterval: 10000 });
 
   const Icon = data?.status === 'ok' ? CheckCircleIcon : data?.status === 'degraded' ? AlertTriangleIcon : XCircleIcon;
   const color = data?.status === 'ok' ? 'text-green-500' : data?.status === 'degraded' ? 'text-amber-500' : 'text-red-500';
@@ -75,6 +75,17 @@ export default function StatusPage() {
               Uptime: {Math.floor((data.uptime ?? 0) / 3600)}h {Math.floor(((data.uptime ?? 0) % 3600) / 60)}m · Auto-refreshes every 10s
             </p>
           </>
+        ) : fetchError ? (
+          <div className="mt-8 rounded-xl border border-red-500/20 bg-red-500/5 p-6 text-center">
+            <XCircleIcon className="mx-auto size-8 text-red-500" />
+            <h2 className="mt-3 text-lg font-semibold text-red-600 dark:text-red-400">Unable to Reach Status API</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              The health endpoint did not respond. This may indicate a network issue or a full outage.
+            </p>
+            <Button variant="outline" size="sm" onClick={() => mutate()} className="mt-4 gap-1.5">
+              <RefreshCcwIcon className="size-3.5" /> Try Again
+            </Button>
+          </div>
         ) : null}
       </div>
     </div>

@@ -65,6 +65,9 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
   const [mainFile, setMainFile] = useState(initialMainFile ?? 'main.tex');
   const [rightPanel, setRightPanel] = useState<RightPanel>('pdf');
   const [focusMode, setFocusMode] = useState(false);
+  const focusModeRef = useRef(false);
+  // Keep ref in sync so the keydown handler (registered once) reads the latest value
+  useEffect(() => { focusModeRef.current = focusMode; }, [focusMode]);
   const [pdfRefreshKey, setPdfRefreshKey] = useState(0);
   const providerRef = useRef<WebsocketProvider | null>(null);
   const [provider, setProvider] = useState<WebsocketProvider | null>(null);
@@ -248,8 +251,8 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
           setActiveTab(t[idx].path);
         }
       }
-      // Escape to exit focus mode
-      if (e.key === 'Escape' && focusMode) {
+      // Escape to exit focus mode (use ref to avoid stale closure)
+      if (e.key === 'Escape' && focusModeRef.current) {
         setFocusMode(false);
         return;
       }
@@ -485,32 +488,16 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
 
           {/* Tab context menu */}
           {tabContextMenu && (
-            <>
-              <div className="fixed inset-0 z-50" onClick={() => setTabContextMenu(null)} />
-              <div
-                className="fixed z-50 min-w-[160px] rounded-md border bg-popover p-1 shadow-lg"
-                style={{ left: tabContextMenu.x, top: tabContextMenu.y }}
-              >
-                <button
-                  className="flex w-full items-center rounded-sm px-2 py-1.5 text-xs hover:bg-accent"
-                  onClick={() => { closeTab(tabContextMenu.path); setTabContextMenu(null); }}
-                >
-                  Close
-                </button>
-                <button
-                  className="flex w-full items-center rounded-sm px-2 py-1.5 text-xs hover:bg-accent"
-                  onClick={() => { closeOtherTabs(tabContextMenu.path); setTabContextMenu(null); }}
-                >
-                  Close Others
-                </button>
-                <button
-                  className="flex w-full items-center rounded-sm px-2 py-1.5 text-xs hover:bg-accent text-destructive"
-                  onClick={() => { closeAllTabs(); setTabContextMenu(null); }}
-                >
-                  Close All
-                </button>
-              </div>
-            </>
+            <TabContextMenu
+              x={tabContextMenu.x}
+              y={tabContextMenu.y}
+              onClose={() => setTabContextMenu(null)}
+              actions={[
+                { label: 'Close', onAction: () => { closeTab(tabContextMenu.path); setTabContextMenu(null); } },
+                { label: 'Close Others', onAction: () => { closeOtherTabs(tabContextMenu.path); setTabContextMenu(null); } },
+                { label: 'Close All', onAction: () => { closeAllTabs(); setTabContextMenu(null); }, destructive: true },
+              ]}
+            />
           )}
 
           {/* Editor area */}
@@ -745,4 +732,82 @@ function TabFileIcon({ path }: { path: string }) {
     case 'cls': case 'sty': return <CodeIcon className={`${cls} text-purple-500`} />;
     default: return <FileIcon className={`${cls} text-muted-foreground`} />;
   }
+}
+
+/* ---------- Accessible tab context menu with keyboard navigation ---------- */
+interface ContextAction {
+  label: string;
+  onAction: () => void;
+  destructive?: boolean;
+}
+
+function TabContextMenu({ x, y, onClose, actions }: { x: number; y: number; onClose: () => void; actions: ContextAction[] }) {
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [focusIdx, setFocusIdx] = useState(0);
+
+  // Auto-focus the menu on mount and handle keyboard navigation
+  useEffect(() => {
+    menuRef.current?.focus();
+  }, []);
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    switch (e.key) {
+      case 'Escape':
+        e.preventDefault();
+        onClose();
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        setFocusIdx((prev) => (prev + 1) % actions.length);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setFocusIdx((prev) => (prev - 1 + actions.length) % actions.length);
+        break;
+      case 'Enter':
+      case ' ':
+        e.preventDefault();
+        actions[focusIdx].onAction();
+        break;
+      case 'Home':
+        e.preventDefault();
+        setFocusIdx(0);
+        break;
+      case 'End':
+        e.preventDefault();
+        setFocusIdx(actions.length - 1);
+        break;
+    }
+  }
+
+  return (
+    <>
+      <div className="fixed inset-0 z-50" onClick={onClose} />
+      <div
+        ref={menuRef}
+        role="menu"
+        tabIndex={-1}
+        onKeyDown={handleKeyDown}
+        className="fixed z-50 min-w-[160px] rounded-md border bg-popover p-1 shadow-lg outline-none"
+        style={{ left: x, top: y }}
+      >
+        {actions.map((action, i) => (
+          <button
+            key={action.label}
+            role="menuitem"
+            tabIndex={-1}
+            className={cn(
+              'flex w-full items-center rounded-sm px-2 py-1.5 text-xs transition-colors',
+              i === focusIdx ? 'bg-accent text-accent-foreground' : 'hover:bg-accent',
+              action.destructive && 'text-destructive',
+            )}
+            onMouseEnter={() => setFocusIdx(i)}
+            onClick={action.onAction}
+          >
+            {action.label}
+          </button>
+        ))}
+      </div>
+    </>
+  );
 }
