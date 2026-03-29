@@ -9,7 +9,21 @@ export const metadata: Metadata = {
 };
 
 const RELEASES = [
-  { version: '22.1.0', date: '2026-03-29', label: 'Latest', items: [
+  { version: '23.0.0', date: '2026-03-29', label: 'Latest', items: [
+    'Atomic Lua rate limiter — prevents TOCTOU race condition bypass',
+    'CSP hardened: removed unsafe-eval from script-src',
+    'KaTeX rendering: DOM-based render() replaces innerHTML in share/equation',
+    'File path encoding: all 15+ client fetch calls now URL-encode paths',
+    'Path validation: backslash, double-slash, Windows absolute path rejection',
+    'Register/invite: fire-and-forget emails prevent timing side-channels',
+    'Compilation log: full light theme support with semantic CSS classes',
+    'Status bar: responsive breakpoints prevent overflow on narrow screens',
+    'ARIA: tablist, progressbar, meter, aria-pressed across 12 components',
+    'AnimatedCounter: rAF cancelled on unmount (memory leak fix)',
+    'Clipboard: execCommand return value checked, try/finally cleanup',
+    'All 1,634 tests passing — 0 regressions across 9 review loops',
+  ]},
+  { version: '22.1.0', date: '2026-03-29', label: '', items: [
     'SyncTeX/ZIP export buffer size limits — all download routes protected',
     'Project creation rate limiting (20/hour per user)',
     'File CRUD API: path validation + content size cap + rate limiting',

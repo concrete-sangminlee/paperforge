@@ -201,20 +201,20 @@ export function Navbar() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer">
+            <DropdownMenuItem onClick={() => window.location.assign('/settings')} className="cursor-pointer">
               <SettingsIcon className="mr-2" />
               Settings
             </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer">
+            <DropdownMenuItem onClick={() => window.location.assign('/docs/getting-started')} className="cursor-pointer">
               <KeyboardIcon className="mr-2" />
               Keyboard Shortcuts
             </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer">
+            <DropdownMenuItem onClick={() => window.location.assign('/docs')} className="cursor-pointer">
               <HelpCircleIcon className="mr-2" />
               Help
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => window.location.assign('/settings')} className="cursor-pointer">
               <UserIcon className="mr-2" />
               Profile
             </DropdownMenuItem>
@@ -297,27 +297,30 @@ export function Navbar() {
             {/* mobile menu actions */}
             <div className="mt-auto border-t p-3">
               <div className="flex flex-col gap-1">
-                <button
+                <Link
+                  href="/settings"
                   onClick={() => setMobileOpen(false)}
                   className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                 >
                   <SettingsIcon className="size-4" />
                   Settings
-                </button>
-                <button
+                </Link>
+                <Link
+                  href="/docs/getting-started"
                   onClick={() => setMobileOpen(false)}
                   className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                 >
                   <KeyboardIcon className="size-4" />
                   Keyboard Shortcuts
-                </button>
-                <button
+                </Link>
+                <Link
+                  href="/docs"
                   onClick={() => setMobileOpen(false)}
                   className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                 >
                   <HelpCircleIcon className="size-4" />
                   Help
-                </button>
+                </Link>
                 <button
                   onClick={toggleTheme}
                   className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
