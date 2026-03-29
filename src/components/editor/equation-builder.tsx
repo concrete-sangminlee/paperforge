@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, memo } from 'react';
 import { FunctionSquareIcon, CopyIcon, CheckIcon, TrashIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { copyToClipboard } from '@/lib/clipboard';
 
 const TEMPLATES = [
   { label: 'Fraction', latex: '\\frac{a}{b}', cat: 'structure' },
@@ -40,23 +41,32 @@ export const EquationBuilder = memo(function EquationBuilder() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
 
-  // Render preview with KaTeX
+  // Render preview with KaTeX using DOM rendering (avoids innerHTML XSS)
   useEffect(() => {
     if (!previewRef.current || !equation.trim()) {
-      if (previewRef.current) previewRef.current.innerHTML = '';
+      if (previewRef.current) previewRef.current.textContent = '';
       return;
     }
     let cancelled = false;
     import('katex').then((katex) => {
       if (cancelled || !previewRef.current) return;
+      previewRef.current.textContent = '';
       try {
-        previewRef.current.innerHTML = katex.default.renderToString(equation, {
+        katex.default.render(equation, previewRef.current, {
           displayMode: true,
           throwOnError: false,
           trust: false,
+          maxSize: 500,
+          maxExpand: 100,
         });
       } catch {
-        if (previewRef.current) previewRef.current.innerHTML = '<span class="text-destructive text-xs">Invalid equation</span>';
+        if (previewRef.current) {
+          previewRef.current.textContent = '';
+          const errSpan = document.createElement('span');
+          errSpan.className = 'text-destructive text-xs';
+          errSpan.textContent = 'Invalid equation';
+          previewRef.current.appendChild(errSpan);
+        }
       }
     });
     return () => { cancelled = true; };
@@ -88,10 +98,9 @@ export const EquationBuilder = memo(function EquationBuilder() {
     toast.success('Equation inserted');
   }
 
-  function handleCopy() {
-    navigator.clipboard.writeText(equation);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  async function handleCopy() {
+    const ok = await copyToClipboard(equation);
+    if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000); }
   }
 
   return (
@@ -105,13 +114,13 @@ export const EquationBuilder = memo(function EquationBuilder() {
       <div className="space-y-2 border-b p-2">
         {Object.entries(CATEGORIES).map(([key, label]) => (
           <div key={key}>
-            <p className="mb-1 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
-            <div className="flex flex-wrap gap-1">
+            <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
+            <div className="flex flex-wrap gap-1" role="group" aria-label={`${label} templates`}>
               {TEMPLATES.filter((t) => t.cat === key).map((t) => (
                 <button
                   key={t.label}
                   onClick={() => insertTemplate(t.latex)}
-                  className="rounded border bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+                  className="rounded border bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   title={t.latex}
                 >
                   {t.label}

@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 // Common validation patterns
 const safeString = z.string().refine(
-  (v) => !/<script|javascript:|on\w+=/i.test(v),
-  'Contains invalid characters'
+  (v) => !/<[a-z/!]/i.test(v) && !/javascript:/i.test(v) && !/on\w+\s*=/i.test(v),
+  'Contains invalid characters — HTML tags are not allowed'
 );
 
 export const registerSchema = z.object({
@@ -63,10 +63,12 @@ export const inviteMemberSchema = z.object({
 export const filePathSchema = z.string()
   .min(1, 'File path required')
   .max(1024, 'Path too long')
-  .refine(
-    (v) => !v.includes('..') && !v.startsWith('/'),
-    'Invalid file path'
-  );
+  .refine((v) => !v.includes('\\'), 'Path must not contain backslashes')
+  .refine((v) => !v.includes('..'), 'Path must not contain ".."')
+  .refine((v) => !v.startsWith('/'), 'Path must not start with "/"')
+  .refine((v) => !v.includes('//'), 'Path must not contain double slashes')
+  .refine((v) => !/^[A-Za-z]:/.test(v), 'Absolute paths are not allowed')
+  .refine((v) => !/[\x00-\x1f]/.test(v), 'Path contains invalid characters');
 
 export const paginationSchema = z.object({
   page: z.coerce.number().int().positive().default(1),

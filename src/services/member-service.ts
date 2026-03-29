@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { ApiError } from '@/lib/errors';
 import { sendEmail } from '@/lib/email';
 import { assertProjectRole } from '@/services/project-service';
-import { emailTemplate, buttonHtml } from '@/lib/email-templates';
+import { emailTemplate, buttonHtml, escapeHtml } from '@/lib/email-templates';
 
 export async function inviteMember(
   projectId: string,
@@ -15,7 +15,9 @@ export async function inviteMember(
 
   const invitee = await prisma.user.findUnique({ where: { email } });
   if (!invitee) {
-    throw new ApiError(404, 'No account found with that email address');
+    // Return a generic success to prevent email enumeration.
+    // In production, consider sending an invitation email to unregistered addresses.
+    return { invited: true, message: 'If an account with that email exists, the invitation has been sent.' };
   }
 
   const existing = await prisma.projectMember.findUnique({
@@ -36,19 +38,22 @@ export async function inviteMember(
   });
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000';
-  const projectName = project?.name ?? 'a project';
+  const projectName = escapeHtml(project?.name ?? 'a project');
+  const inviteeName = escapeHtml(invitee.name ?? 'there');
   const projectUrl = `${appUrl}/editor/${projectId}`;
   const body = `
-    <p style="margin:0 0 12px;color:#3f3f46">Hi ${invitee.name},</p>
+    <p style="margin:0 0 12px;color:#3f3f46">Hi ${inviteeName},</p>
     <p style="margin:0 0 12px;color:#3f3f46">You have been added as a <strong>${role}</strong> to the project <strong>${projectName}</strong> on PaperForge.</p>
     ${buttonHtml('Open Project', projectUrl)}
     <p style="margin:16px 0 0;font-size:13px;color:#71717a">If you believe this was sent in error, you can ignore this email.</p>
   `;
-  await sendEmail(
+  // Fire-and-forget to normalize response timing (prevents timing side-channel
+  // that could reveal whether the invitee has a registered account)
+  sendEmail(
     email,
-    `You've been invited to "${projectName}" on PaperForge`,
+    `You've been invited to "${project?.name ?? 'a project'}" on PaperForge`,
     emailTemplate(`You've been added to "${projectName}"`, body),
-  );
+  ).catch((err) => console.error('[member-service] Failed to send invitation email:', err));
 
   return member;
 }
