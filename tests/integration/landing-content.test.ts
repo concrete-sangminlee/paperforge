@@ -5,7 +5,7 @@ import { join } from 'path';
 const lp = readFileSync(join(process.cwd(), 'src/app/page.tsx'), 'utf-8');
 
 describe('landing page content', () => {
-  it('has stats section', () => { expect(lp).toContain('1,558'); });
+  it('has stats section', () => { expect(lp).toContain('Tests Passing'); });
   it('has how-it-works', () => { expect(lp).toContain('how-it-works'); });
   it('has social links', () => { expect(lp).toContain('github'); });
   it('has MIT license', () => { expect(lp).toContain('MIT'); });

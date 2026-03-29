@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { FlameIcon, CopyIcon, CheckIcon } from 'lucide-react';
 import { useState } from 'react';
+import { copyToClipboard } from '@/lib/clipboard';
 
 const TEMPLATES = [
   { name: 'Article', code: `\\documentclass{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage{amsmath}\n\n\\title{Title}\n\\author{Author}\n\\date{\\today}\n\n\\begin{document}\n\\maketitle\n\n\\section{Introduction}\n\n\\end{document}` },
@@ -16,10 +17,9 @@ const TEMPLATES = [
 export default function TemplateDocsPage() {
   const [copied, setCopied] = useState<string | null>(null);
 
-  function copy(name: string, code: string) {
-    navigator.clipboard.writeText(code);
-    setCopied(name);
-    setTimeout(() => setCopied(null), 2000);
+  async function copy(name: string, code: string) {
+    const ok = await copyToClipboard(code);
+    if (ok) { setCopied(name); setTimeout(() => setCopied(null), 2000); }
   }
 
   return (
@@ -45,7 +45,8 @@ export default function TemplateDocsPage() {
               <div className="flex items-center justify-between border-b px-4 py-2">
                 <h2 className="font-semibold">{t.name}</h2>
                 <button onClick={() => copy(t.name, t.code)}
-                  className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted">
+                  aria-label={`Copy ${t.name} template`}
+                  className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   {copied === t.name ? <><CheckIcon className="size-3 text-green-500" /> Copied!</> : <><CopyIcon className="size-3" /> Copy</>}
                 </button>
               </div>
