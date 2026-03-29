@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, memo } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { Share2Icon, CopyIcon, CheckIcon, CodeIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useEditorStore } from '@/store/editor-store';
-import { toast } from 'sonner';
+import { copyToClipboard } from '@/lib/clipboard';
 
 export const ShareSnippet = memo(function ShareSnippet() {
   const [open, setOpen] = useState(false);
@@ -24,31 +24,28 @@ export const ShareSnippet = memo(function ShareSnippet() {
     if (!tabData) return '';
     // Encode content as base64 for URL sharing
     const content = tabData.content.slice(0, 2000); // Limit to 2KB
-    const encoded = btoa(unescape(encodeURIComponent(content)));
+    const encoded = btoa(Array.from(new TextEncoder().encode(content), b => String.fromCharCode(b)).join(''));
     const fileName = tabData.path.split('/').pop() || 'snippet.tex';
-    return `${window.location.origin}/share?code=${encoded}&name=${encodeURIComponent(fileName)}`;
+    return `${window.location.origin}/share?code=${encodeURIComponent(encoded)}&name=${encodeURIComponent(fileName)}`;
   }
 
-  function handleCopy() {
+  async function handleCopy() {
     const url = getSnippetUrl();
-    navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-    toast.success('Share link copied!');
+    const ok = await copyToClipboard(url, 'Share link copied!');
+    if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000); }
   }
 
-  function handleCopyCode() {
+  async function handleCopyCode() {
     if (!tabData) return;
-    navigator.clipboard.writeText(tabData.content);
-    toast.success('Code copied to clipboard');
+    await copyToClipboard(tabData.content, 'Code copied to clipboard');
   }
 
   // Listen for share-snippet event from command palette
-  useState(() => {
+  useEffect(() => {
     function handleEvent() { setOpen(true); }
     window.addEventListener('share-snippet', handleEvent);
     return () => window.removeEventListener('share-snippet', handleEvent);
-  });
+  }, []);
 
   if (!tabData) return null;
 
@@ -76,11 +73,9 @@ export const ShareSnippet = memo(function ShareSnippet() {
                 <CodeIcon className="size-3.5 text-muted-foreground" />
                 <span className="text-xs font-medium">{tabData.path}</span>
               </div>
-              <span className="text-[10px] text-muted-foreground">{lines} lines · {words} words</span>
+              <span className="text-xs text-muted-foreground" aria-label={`${lines} lines, ${words} words`}>{lines} lines · {words} words</span>
             </div>
-            <pre className="max-h-32 overflow-auto font-mono text-[10px] leading-relaxed text-muted-foreground">
-              {tabData.content.slice(0, 500)}{tabData.content.length > 500 ? '\n...' : ''}
-            </pre>
+            <pre className="max-h-32 overflow-auto font-mono text-xs leading-relaxed text-muted-foreground">{tabData.content.slice(0, 500)}{tabData.content.length > 500 ? '\n...' : ''}</pre>
           </div>
 
           {/* Actions */}
@@ -95,7 +90,7 @@ export const ShareSnippet = memo(function ShareSnippet() {
             </Button>
           </div>
 
-          <p className="text-[10px] text-muted-foreground text-center">
+          <p className="text-xs text-muted-foreground text-center">
             Share link includes the first 2KB of the file encoded in the URL.
           </p>
         </div>

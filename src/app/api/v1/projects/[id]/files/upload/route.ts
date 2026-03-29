@@ -24,9 +24,15 @@ export async function POST(
       return apiError('No file provided', 400, 'MISSING_FILE');
     }
 
-    const filePath =
+    let filePath =
       (formData.get('path') as string | null) || uploaded.name;
     const mimeType = uploaded.type || 'application/octet-stream';
+
+    // Decode any URL-encoded characters before validation to prevent double-encoding bypass
+    try { filePath = decodeURIComponent(filePath); } catch { /* keep as-is */ }
+
+    // Normalize backslashes to forward slashes (Windows path compat)
+    filePath = filePath.replace(/\\/g, '/');
 
     // Validate file path (prevent directory traversal)
     if (!isValidFilePath(filePath)) {
@@ -42,14 +48,19 @@ export async function POST(
       );
     }
 
-    // Validate file extension
-    const ext = '.' + filePath.split('.').pop()?.toLowerCase();
-    if (BLOCKED_EXTENSIONS.has(ext)) {
-      return apiError(
-        `File type ${ext} is not allowed`,
-        415,
-        'BLOCKED_FILE_TYPE',
-      );
+    // Validate file extensions — check ALL extensions to prevent double-extension bypass
+    // (e.g. "malware.exe.tex" or "exploit.ps1." should still be blocked)
+    const fileName = filePath.split('/').pop() ?? filePath;
+    const dotParts = fileName.split('.').slice(1); // all segments after the first dot
+    for (const part of dotParts) {
+      const normalised = `.${part.toLowerCase()}`;
+      if (BLOCKED_EXTENSIONS.has(normalised)) {
+        return apiError(
+          `File type ${normalised} is not allowed`,
+          415,
+          'BLOCKED_FILE_TYPE',
+        );
+      }
     }
 
     const arrayBuffer = await uploaded.arrayBuffer();

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useEditorStore } from '@/store/editor-store';
 import { toast } from 'sonner';
+import { copyToClipboard } from '@/lib/clipboard';
 
 interface BibEntry {
   key: string;
@@ -85,8 +86,7 @@ export const CitationPicker = memo(function CitationPicker() {
   }
 
   function handleCopy(key: string) {
-    navigator.clipboard.writeText(`\\cite{${key}}`);
-    toast.success('Copied to clipboard', { duration: 1500 });
+    void copyToClipboard(`\\cite{${key}}`);
   }
 
   return (
@@ -124,10 +124,13 @@ export const CitationPicker = memo(function CitationPicker() {
           <ScrollArea className="flex-1">
             <div className="space-y-0.5 p-1">
               {filtered.map((entry) => (
-                <button
+                <div
                   key={entry.key}
-                  className="group flex w-full flex-col gap-0.5 rounded-md px-2.5 py-2 text-left transition-colors hover:bg-accent"
+                  role="button"
+                  tabIndex={0}
+                  className="group flex w-full cursor-pointer flex-col gap-0.5 rounded-md px-2.5 py-2 text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   onClick={() => handleInsert(entry.key)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleInsert(entry.key); } }}
                   title={`Insert \\cite{${entry.key}}`}
                 >
                   <div className="flex items-center gap-1.5">
@@ -141,6 +144,7 @@ export const CitationPicker = memo(function CitationPicker() {
                     <button
                       className="ml-auto shrink-0 rounded p-0.5 opacity-0 transition-opacity hover:bg-muted group-hover:opacity-100"
                       onClick={(e) => { e.stopPropagation(); handleCopy(entry.key); }}
+                      aria-label={`Copy \\cite{${entry.key}} to clipboard`}
                       title="Copy \\cite command"
                     >
                       <CopyIcon className="size-3 text-muted-foreground" />
@@ -152,7 +156,7 @@ export const CitationPicker = memo(function CitationPicker() {
                   {entry.author && (
                     <p className="truncate text-[10px] text-muted-foreground/60">{entry.author}</p>
                   )}
-                </button>
+                </div>
               ))}
               {filtered.length === 0 && (
                 <p className="py-6 text-center text-xs text-muted-foreground">No citations match &ldquo;{filter}&rdquo;</p>

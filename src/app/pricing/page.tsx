@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { CheckIcon, FlameIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -96,7 +96,7 @@ export default function PricingPage() {
       </div>
 
       {/* Plans */}
-      <div className="mx-auto grid max-w-5xl gap-6 px-6 pb-24 sm:grid-cols-3">
+      <div className="mx-auto grid max-w-5xl gap-6 px-6 pb-24 sm:grid-cols-2 lg:grid-cols-3">
         {PLANS.map((plan) => (
           <div
             key={plan.name}
@@ -128,16 +128,17 @@ export default function PricingPage() {
               ))}
             </ul>
 
-            <Link href={plan.href} className="mt-8">
-              <Button
-                className={cn(
-                  'w-full',
-                  plan.popular && 'bg-orange-500 hover:bg-orange-600',
-                )}
-                variant={plan.popular ? 'default' : 'outline'}
-              >
-                {plan.cta}
-              </Button>
+            <Link
+              href={plan.href}
+              className={cn(
+                buttonVariants({
+                  variant: plan.popular ? 'default' : 'outline',
+                }),
+                'mt-8 w-full',
+                plan.popular && 'bg-orange-500 hover:bg-orange-600',
+              )}
+            >
+              {plan.cta}
             </Link>
           </div>
         ))}

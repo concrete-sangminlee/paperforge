@@ -20,6 +20,28 @@ describe('admin layout', () => {
   it('has back to app', () => { expect(al).toContain('Back to App'); });
 });
 
+describe('admin layout guards against non-admin access', () => {
+  const al = readFileSync(join(process.cwd(), 'src/app/admin/layout.tsx'), 'utf-8');
+
+  it('redirects when user is not admin before rendering children', () => {
+    // The layout must check the role AND redirect BEFORE rendering children.
+    // Verify the redirect call appears after auth/role check but before the JSX return.
+    const authIndex = al.indexOf('auth()');
+    const redirectIndex = al.indexOf('redirect(');
+    const returnIndex = al.indexOf('return (');
+    expect(authIndex).toBeGreaterThan(-1);
+    expect(redirectIndex).toBeGreaterThan(authIndex);
+    expect(returnIndex).toBeGreaterThan(redirectIndex);
+  });
+
+  it('checks role against a specific value, not just any truthy session', () => {
+    // Ensure the admin check is comparing against 'admin' role, not just session existence
+    const hasRoleComparison = /role\b.*(?:===|!==|includes).*['"]admin['"]/s.test(al)
+      || /['"]admin['"].*(?:===|!==|includes).*role\b/s.test(al);
+    expect(hasRoleComparison).toBe(true);
+  });
+});
+
 describe('admin users', () => {
   const au = readFileSync(join(process.cwd(), 'src/app/admin/users/page.tsx'), 'utf-8');
   it('has search', () => { expect(au).toContain('search'); });
@@ -48,6 +70,6 @@ describe('healthz endpoint', () => {
   it('checks database', () => { expect(hz).toContain('database'); });
   it('checks redis', () => { expect(hz).toContain('redis'); });
   it('checks storage', () => { expect(hz).toContain('storage'); });
-  it('has uptime', () => { expect(hz).toContain('uptime'); });
+  it('has version', () => { expect(hz).toContain('version'); });
   it('has degraded status', () => { expect(hz).toContain('degraded'); });
 });

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { FlameIcon, SearchIcon, CopyIcon, CheckIcon } from 'lucide-react';
+import { copyToClipboard } from '@/lib/clipboard';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 
@@ -51,10 +52,9 @@ export default function SymbolsPage() {
     items: g.items.filter(i => i.cmd.toLowerCase().includes(search.toLowerCase()) || i.desc.includes(search)),
   })).filter(g => g.items.length > 0);
 
-  function copy(cmd: string) {
-    navigator.clipboard.writeText(cmd);
-    setCopied(cmd);
-    setTimeout(() => setCopied(null), 1500);
+  async function copy(cmd: string) {
+    const ok = await copyToClipboard(cmd);
+    if (ok) { setCopied(cmd); setTimeout(() => setCopied(null), 1500); }
   }
 
   return (
@@ -86,10 +86,11 @@ export default function SymbolsPage() {
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
                 {g.items.map(i => (
                   <button key={i.cmd} onClick={() => copy(i.cmd)}
-                    className="flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition-all hover:bg-muted hover:shadow-sm">
-                    <span className="text-xl">{i.desc}</span>
+                    aria-label={`Copy ${i.cmd}`}
+                    className="flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition-all hover:bg-muted hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                    <span className="text-xl" aria-hidden="true">{i.desc}</span>
                     <code className="flex-1 truncate font-mono text-xs text-muted-foreground">{i.cmd}</code>
-                    {copied === i.cmd ? <CheckIcon className="size-3.5 text-green-500" /> : <CopyIcon className="size-3 text-muted-foreground/50" />}
+                    {copied === i.cmd ? <CheckIcon className="size-3.5 text-green-500" aria-hidden="true" /> : <CopyIcon className="size-3 text-muted-foreground/50" aria-hidden="true" />}
                   </button>
                 ))}
               </div>

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useEditorStore } from '@/store/editor-store';
 import { toast } from 'sonner';
+import { copyToClipboard } from '@/lib/clipboard';
 
 export const DocumentSummary = memo(function DocumentSummary() {
   const [summary, setSummary] = useState('');
@@ -45,10 +46,9 @@ export const DocumentSummary = memo(function DocumentSummary() {
     }
   }
 
-  function handleCopy() {
-    navigator.clipboard.writeText(summary);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  async function handleCopy() {
+    const ok = await copyToClipboard(summary);
+    if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000); }
   }
 
   function handleInsert() {
@@ -100,7 +100,15 @@ export const DocumentSummary = memo(function DocumentSummary() {
               {summary}
             </div>
           </div>
-        ) : !loading ? (
+        ) : loading ? (
+          <div className="flex flex-col items-center justify-center gap-3 p-8 text-center text-muted-foreground">
+            <LoaderCircleIcon className="size-8 animate-spin opacity-40" />
+            <p className="text-xs font-medium">Analyzing your document...</p>
+            <p className="max-w-[200px] text-[10px] opacity-60">
+              The AI is reading your LaTeX source and generating a concise abstract. This may take a few seconds.
+            </p>
+          </div>
+        ) : (
           <div className="flex flex-col items-center justify-center gap-2 p-8 text-center text-muted-foreground">
             <FileTextIcon className="size-8 opacity-20" />
             <p className="text-xs">Generate an AI-powered abstract</p>
@@ -108,7 +116,7 @@ export const DocumentSummary = memo(function DocumentSummary() {
               Click the button above to create a summary of your document. Insert it as \begin{'{abstract}'}.
             </p>
           </div>
-        ) : null}
+        )}
       </ScrollArea>
     </div>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -97,15 +97,15 @@ export function getStarredIds(): string[] {
 function useStarred(projectId: string) {
   const key = 'paperforge-starred';
   const [starred, setStarredState] = useState(false);
-  useState(() => {
+  useEffect(() => {
     try { setStarredState(JSON.parse(localStorage.getItem(key) || '[]').includes(projectId)); } catch {}
-  });
+  }, [projectId]);
   const toggle = () => {
     try {
       const list: string[] = JSON.parse(localStorage.getItem(key) || '[]');
-      const next = starred ? list.filter(id => id !== projectId) : [...list, projectId];
+      const next = list.includes(projectId) ? list.filter(id => id !== projectId) : [...list, projectId];
       localStorage.setItem(key, JSON.stringify(next));
-      setStarredState(!starred);
+      setStarredState((prev) => !prev);
     } catch {}
   };
   return { starred, toggle };
@@ -115,13 +115,16 @@ export function ProjectCard({ project, currentUserId, viewMode = 'grid' }: Proje
   const router = useRouter();
   const [shareOpen, setShareOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [renaming, setRenaming] = useState(false);
+  const [addingTag, setAddingTag] = useState(false);
+  const [tagInput, setTagInput] = useState('');
   const [newName, setNewName] = useState(project.name);
   const { starred, toggle: toggleStar } = useStarred(project.id);
   const [tags, setTags] = useState<string[]>([]);
-  useState(() => {
+  useEffect(() => {
     import('@/lib/project-tags').then(({ getProjectTags }) => setTags(getProjectTags(project.id)));
-  });
+  }, [project.id]);
   const maxAvatars = 3;
   const visibleMembers = project.members.slice(0, maxAvatars);
   const remainingCount = project.members.length - maxAvatars;
@@ -159,8 +162,14 @@ export function ProjectCard({ project, currentUserId, viewMode = 'grid' }: Proje
 
   async function handleDelete() {
     if (deleting) return;
-    const confirmed = window.confirm(`Delete "${project.name}"? This action cannot be undone.`);
-    if (!confirmed) return;
+    if (!deleteConfirm) {
+      setDeleteConfirm(true);
+      // Auto-reset after 5s if user doesn't confirm (longer window for accessibility)
+      const timer = setTimeout(() => setDeleteConfirm(false), 5000);
+      // Store timer so it can be cleared on unmount
+      return () => clearTimeout(timer);
+    }
+    setDeleteConfirm(false);
     setDeleting(true);
     try {
       const res = await fetch(`/api/v1/projects/${project.id}`, {
@@ -294,16 +303,7 @@ export function ProjectCard({ project, currentUserId, viewMode = 'grid' }: Proje
                   Rename
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem onClick={() => {
-                const tag = prompt('Add tag (e.g., thesis, paper, draft):');
-                if (tag?.trim()) {
-                  import('@/lib/project-tags').then(({ addTag }) => {
-                    addTag(project.id, tag.trim());
-                    setTags(prev => prev.includes(tag.trim()) ? prev : [...prev, tag.trim()]);
-                    toast.success(`Tagged: ${tag.trim()}`);
-                  });
-                }
-              }}>
+              <DropdownMenuItem onClick={() => { setAddingTag(true); setTagInput(''); }}>
                 <TagIcon className="size-4" />
                 Add Tag
               </DropdownMenuItem>
@@ -327,9 +327,11 @@ export function ProjectCard({ project, currentUserId, viewMode = 'grid' }: Proje
                     variant="destructive"
                     onClick={() => void handleDelete()}
                     disabled={deleting}
+                    aria-label={deleteConfirm ? 'Click again to confirm deletion' : `Delete ${project.name}`}
+                    className={deleteConfirm ? 'font-semibold animate-pulse' : ''}
                   >
                     <Trash2Icon className="size-4" />
-                    {deleting ? 'Deleting...' : 'Delete'}
+                    {deleting ? 'Deleting...' : deleteConfirm ? 'Click again to confirm' : 'Delete'}
                   </DropdownMenuItem>
                 </>
               )}
@@ -344,6 +346,32 @@ export function ProjectCard({ project, currentUserId, viewMode = 'grid' }: Proje
           open={shareOpen}
           onOpenChange={setShareOpen}
         />
+
+        {/* Inline tag input */}
+        {addingTag && (
+          <div className="absolute inset-x-0 bottom-0 z-20 flex items-center gap-1 rounded-b-xl border-t bg-background px-3 py-1.5 shadow-lg">
+            <TagIcon className="size-3 text-muted-foreground" />
+            <input
+              autoFocus
+              placeholder="e.g. thesis, draft"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && tagInput.trim()) {
+                  import('@/lib/project-tags').then(({ addTag }) => {
+                    addTag(project.id, tagInput.trim());
+                    setTags(prev => prev.includes(tagInput.trim()) ? prev : [...prev, tagInput.trim()]);
+                    toast.success(`Tagged: ${tagInput.trim()}`);
+                  });
+                  setAddingTag(false);
+                }
+                if (e.key === 'Escape') setAddingTag(false);
+              }}
+              onBlur={() => setAddingTag(false)}
+              className="h-5 flex-1 bg-transparent text-xs outline-none"
+            />
+          </div>
+        )}
       </div>
     );
   }
@@ -362,6 +390,7 @@ export function ProjectCard({ project, currentUserId, viewMode = 'grid' }: Proje
                   autoFocus
                   className="w-full rounded border bg-background px-2 py-0.5 text-sm font-semibold outline-none focus:ring-1 focus:ring-ring"
                   value={newName}
+                  maxLength={255}
                   onChange={(e) => setNewName(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') void handleRename(); if (e.key === 'Escape') setRenaming(false); }}
                   onBlur={() => void handleRename()}
@@ -485,9 +514,11 @@ export function ProjectCard({ project, currentUserId, viewMode = 'grid' }: Proje
                   variant="destructive"
                   onClick={() => void handleDelete()}
                   disabled={deleting}
+                  aria-label={deleteConfirm ? 'Click again to confirm deletion' : `Delete ${project.name}`}
+                  className={deleteConfirm ? 'font-semibold animate-pulse' : ''}
                 >
                   <Trash2Icon className="size-4" />
-                  {deleting ? 'Deleting...' : 'Delete'}
+                  {deleting ? 'Deleting...' : deleteConfirm ? 'Click again to confirm' : 'Delete'}
                 </DropdownMenuItem>
               </>
             )}

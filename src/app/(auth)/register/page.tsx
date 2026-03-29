@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import { RegisterForm } from "@/components/auth/register-form";
 import { OAuthButtons } from "@/components/auth/oauth-buttons";
 import { Separator } from "@/components/ui/separator";
+
+export const metadata: Metadata = { title: "Create Account" };
 
 export default function RegisterPage() {
   return (

@@ -1,12 +1,30 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { getProject } from '@/services/project-service';
 import { listFiles, createFile } from '@/services/file-service';
 import { EditorLayout } from '@/components/editor/editor-layout';
 import { ErrorBoundary } from '@/components/shared/error-boundary';
+import 'katex/dist/katex.min.css';
 
 interface EditorPageProps {
   params: Promise<{ projectId: string }>;
+}
+
+export async function generateMetadata({ params }: EditorPageProps): Promise<Metadata> {
+  const { projectId } = await params;
+  try {
+    const session = await auth();
+    if (!session?.user) return {};
+    const userId = (session.user as { id: string }).id;
+    const project = await getProject(projectId, userId);
+    return {
+      title: project.name,
+      robots: { index: false },
+    };
+  } catch {
+    return { title: 'Editor' };
+  }
 }
 
 const MAIN_TEX_TEMPLATE = `\\documentclass{article}

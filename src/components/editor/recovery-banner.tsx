@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { AlertTriangleIcon, XIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEditorStore } from '@/store/editor-store';
+import { toast } from 'sonner';
 
 export function RecoveryBanner() {
   const [show, setShow] = useState(false);
@@ -15,7 +16,8 @@ export function RecoveryBanner() {
     if (hasDirtyTabs && tabs.length > 0) {
       setShow(true);
     }
-  }, []); // Only check on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally only on mount
+  }, []);
 
   if (!show) return null;
 
@@ -23,12 +25,30 @@ export function RecoveryBanner() {
   if (dirtyCount === 0) return null;
 
   return (
-    <div className="flex items-center gap-2 bg-amber-50 px-3 py-1.5 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
-      <AlertTriangleIcon className="size-3.5 shrink-0" />
+    <div
+      role="alert"
+      aria-live="assertive"
+      className="flex items-center gap-2 bg-amber-50 px-3 py-1.5 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-300"
+    >
+      <AlertTriangleIcon className="size-3.5 shrink-0" aria-hidden="true" />
       <span>Recovered {dirtyCount} unsaved {dirtyCount === 1 ? 'file' : 'files'} from your last session</span>
-      <Button size="icon-xs" variant="ghost" onClick={() => setShow(false)} className="ml-auto" aria-label="Dismiss">
-        <XIcon className="size-3" />
-      </Button>
+      <div className="ml-auto flex items-center gap-1">
+        <Button
+          size="xs"
+          variant="outline"
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent('save-all'));
+            toast.success('Saving all recovered files...');
+            setShow(false);
+          }}
+          className="h-5 border-amber-300 bg-amber-100 px-2 text-[10px] font-medium text-amber-800 hover:bg-amber-200 dark:border-amber-700 dark:bg-amber-900/50 dark:text-amber-300 dark:hover:bg-amber-900"
+        >
+          Save All
+        </Button>
+        <Button size="icon-xs" variant="ghost" onClick={() => setShow(false)} aria-label="Dismiss recovery notification">
+          <XIcon className="size-3" />
+        </Button>
+      </div>
     </div>
   );
 }

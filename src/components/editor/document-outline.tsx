@@ -117,6 +117,7 @@ export const DocumentOutline = memo(function DocumentOutline() {
                   );
                 }}
                 title={`Line ${item.line}`}
+                aria-label={`Go to ${item.number} ${item.title}, line ${item.line}`}
               >
                 <Icon className="size-3 shrink-0 opacity-50" />
                 <span className="shrink-0 font-mono text-[10px] text-muted-foreground/50">{item.number}</span>

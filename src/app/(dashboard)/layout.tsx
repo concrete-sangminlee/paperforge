@@ -1,5 +1,11 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { Navbar } from '@/components/shared/navbar';
+
+export const metadata: Metadata = {
+  title: 'Dashboard',
+  robots: { index: false },
+};
 
 export default async function DashboardLayout({
   children,

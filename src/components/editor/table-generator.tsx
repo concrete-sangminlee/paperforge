@@ -4,6 +4,7 @@ import { useState, memo } from 'react';
 import { TableIcon, PlusIcon, MinusIcon, CopyIcon, CheckIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { copyToClipboard } from '@/lib/clipboard';
 
 export const TableGenerator = memo(function TableGenerator() {
   const [rows, setRows] = useState(3);
@@ -89,10 +90,9 @@ export const TableGenerator = memo(function TableGenerator() {
     toast.success('Table inserted');
   }
 
-  function handleCopy() {
-    navigator.clipboard.writeText(generateLatex());
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  async function handleCopy() {
+    const ok = await copyToClipboard(generateLatex());
+    if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000); }
   }
 
   return (
@@ -106,15 +106,15 @@ export const TableGenerator = memo(function TableGenerator() {
       <div className="flex flex-wrap items-center gap-2 border-b px-3 py-2">
         <div className="flex items-center gap-1 text-xs">
           <span className="text-muted-foreground">Rows:</span>
-          <Button size="icon-xs" variant="ghost" onClick={removeRow} disabled={rows <= 1}><MinusIcon className="size-3" /></Button>
-          <span className="w-4 text-center font-mono">{rows}</span>
-          <Button size="icon-xs" variant="ghost" onClick={addRow}><PlusIcon className="size-3" /></Button>
+          <Button size="icon-xs" variant="ghost" onClick={removeRow} disabled={rows <= 1} aria-label="Remove row"><MinusIcon className="size-3" /></Button>
+          <span className="w-4 text-center font-mono" aria-live="polite" aria-label={`${rows} rows`}>{rows}</span>
+          <Button size="icon-xs" variant="ghost" onClick={addRow} aria-label="Add row"><PlusIcon className="size-3" /></Button>
         </div>
         <div className="flex items-center gap-1 text-xs">
           <span className="text-muted-foreground">Cols:</span>
-          <Button size="icon-xs" variant="ghost" onClick={removeCol} disabled={cols <= 1}><MinusIcon className="size-3" /></Button>
-          <span className="w-4 text-center font-mono">{cols}</span>
-          <Button size="icon-xs" variant="ghost" onClick={addCol}><PlusIcon className="size-3" /></Button>
+          <Button size="icon-xs" variant="ghost" onClick={removeCol} disabled={cols <= 1} aria-label="Remove column"><MinusIcon className="size-3" /></Button>
+          <span className="w-4 text-center font-mono" aria-live="polite" aria-label={`${cols} columns`}>{cols}</span>
+          <Button size="icon-xs" variant="ghost" onClick={addCol} aria-label="Add column"><PlusIcon className="size-3" /></Button>
         </div>
         <label className="flex items-center gap-1 text-[10px] text-muted-foreground">
           <input type="checkbox" checked={hasHeader} onChange={(e) => setHasHeader(e.target.checked)} className="size-3" />
@@ -136,6 +136,7 @@ export const TableGenerator = memo(function TableGenerator() {
                 value={cell}
                 onChange={(e) => updateCell(ri, ci, e.target.value)}
                 placeholder={ri === 0 && hasHeader ? `Col ${ci + 1}` : ''}
+                aria-label={`Cell row ${ri + 1}, column ${ci + 1}${ri === 0 && hasHeader ? ' (header)' : ''}`}
                 className={`rounded border bg-background px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-ring ${
                   ri === 0 && hasHeader ? 'font-semibold' : ''
                 }`}

@@ -1,18 +1,10 @@
 import { NextResponse } from 'next/server';
 
-interface HealthStatus {
-  status: 'ok' | 'degraded' | 'down';
-  version: string;
-  timestamp: string;
-  uptime: number;
-  checks: Record<string, { status: 'ok' | 'error'; latency?: number; message?: string }>;
-}
-
-const startTime = Date.now();
+type CheckStatus = { status: 'ok' | 'error'; latency?: number; message?: string };
 
 export async function GET() {
-  const checks: HealthStatus['checks'] = {};
-  let overallStatus: HealthStatus['status'] = 'ok';
+  const checks: Record<string, CheckStatus> = {};
+  let overallStatus: 'ok' | 'degraded' | 'down' = 'ok';
 
   // Check database
   try {
@@ -53,15 +45,17 @@ export async function GET() {
   const allFailed = Object.values(checks).every(c => c.status === 'error');
   if (allFailed) overallStatus = 'down';
 
-  const health: HealthStatus = {
+  // Public response: only expose status, no latencies or infrastructure details
+  const publicHealth = {
     status: overallStatus,
-    version: process.env.npm_package_version || '1.9.0',
+    version: process.env.npm_package_version || '18.5.0',
     timestamp: new Date().toISOString(),
-    uptime: Math.floor((Date.now() - startTime) / 1000),
-    checks,
+    checks: Object.fromEntries(
+      Object.entries(checks).map(([k, v]) => [k, { status: v.status }])
+    ),
   };
 
-  return NextResponse.json(health, {
+  return NextResponse.json(publicHealth, {
     status: overallStatus === 'down' ? 503 : 200,
     headers: {
       'Cache-Control': 'no-cache, no-store, must-revalidate',

@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import { FlameIcon } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Sign In",
+  robots: { index: false },
+};
 
 export default function AuthLayout({
   children,

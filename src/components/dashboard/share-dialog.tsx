@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Share2Icon, CopyIcon, CheckIcon, UserMinusIcon, LoaderCircleIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import { copyToClipboard } from '@/lib/clipboard';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -170,9 +171,8 @@ export function ShareDialog({ projectId, currentUserRole, open: openProp, onOpen
 
   async function handleCopy() {
     if (!shareLink) return;
-    await navigator.clipboard.writeText(shareLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    const ok = await copyToClipboard(shareLink, 'Link copied');
+    if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000); }
   }
 
   return (

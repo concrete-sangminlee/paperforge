@@ -1,3 +1,13 @@
+/** Escape HTML special characters to prevent XSS in emails. */
+export function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export function emailTemplate(title: string, body: string): string {
   return `<!DOCTYPE html>
 <html>
@@ -8,7 +18,7 @@ export function emailTemplate(title: string, body: string): string {
       <h1 style="margin:0;font-size:20px;color:#18181b">PaperForge</h1>
     </div>
     <div style="padding:32px 40px">
-      <h2 style="margin:0 0 16px;font-size:18px;color:#18181b">${title}</h2>
+      <h2 style="margin:0 0 16px;font-size:18px;color:#18181b">${escapeHtml(title)}</h2>
       ${body}
     </div>
     <div style="padding:24px 40px;background:#fafafa;text-align:center;font-size:12px;color:#71717a">
@@ -20,5 +30,5 @@ export function emailTemplate(title: string, body: string): string {
 }
 
 export function buttonHtml(text: string, url: string): string {
-  return `<a href="${url}" style="display:inline-block;padding:12px 24px;background:#18181b;color:#fff;text-decoration:none;border-radius:6px;font-weight:500;margin:16px 0">${text}</a>`;
+  return `<a href="${escapeHtml(url)}" style="display:inline-block;padding:12px 24px;background:#18181b;color:#fff;text-decoration:none;border-radius:6px;font-weight:500;margin:16px 0">${escapeHtml(text)}</a>`;
 }

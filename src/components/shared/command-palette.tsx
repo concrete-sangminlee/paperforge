@@ -38,6 +38,8 @@ import {
   Keyboard,
   Share2,
   FileArchive,
+  FileText,
+  Sparkles,
   List,
 } from 'lucide-react'
 
@@ -74,8 +76,8 @@ export function CommandPalette() {
         e.preventDefault()
         // Load file list for quick open
         const match = pathname.match(/\/editor\/([^/]+)/)
-        if (match) {
-          fetch(`/api/v1/projects/${match[1]}/files`)
+        if (match && /^[a-zA-Z0-9_-]+$/.test(match[1])) {
+          fetch(`/api/v1/projects/${encodeURIComponent(match[1])}/files`)
             .then(r => r.json())
             .then(data => {
               const files = (data.data ?? data) as Array<{ path: string; isBinary: boolean }>
@@ -188,7 +190,7 @@ export function CommandPalette() {
       {
         id: 'editor-summarize',
         label: 'AI: Generate Abstract',
-        icon: <FileArchive className="size-4" />,
+        icon: <Sparkles className="size-4 text-orange-500" />,
         action: () => dispatchCustomEvent('generate-abstract'),
       },
       {
@@ -300,7 +302,7 @@ export function CommandPalette() {
     commands: quickOpenFiles.map((path) => ({
       id: `file-${path}`,
       label: path,
-      icon: <FileArchive className="size-4" />,
+      icon: <FileText className="size-4" />,
       action: () => {
         dispatchCustomEvent('editor-open-file-at-line', { path, line: 1 })
         setQuickOpenFiles([])
@@ -362,6 +364,15 @@ export function CommandPalette() {
           </React.Fragment>
         ))}
       </CommandList>
+      <div className="flex items-center justify-between border-t px-3 py-2 text-[11px] text-muted-foreground">
+        <div className="flex items-center gap-3">
+          <span><kbd className="rounded border bg-muted px-1 py-0.5 font-mono text-[10px]">Ctrl</kbd> + <kbd className="rounded border bg-muted px-1 py-0.5 font-mono text-[10px]">K</kbd> Commands</span>
+          {isEditorPage && (
+            <span><kbd className="rounded border bg-muted px-1 py-0.5 font-mono text-[10px]">Ctrl</kbd> + <kbd className="rounded border bg-muted px-1 py-0.5 font-mono text-[10px]">P</kbd> Quick Open</span>
+          )}
+        </div>
+        <span><kbd className="rounded border bg-muted px-1 py-0.5 font-mono text-[10px]">Esc</kbd> to close</span>
+      </div>
     </CommandDialog>
   )
 }

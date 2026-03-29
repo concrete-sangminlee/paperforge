@@ -542,19 +542,29 @@ export default function HomePage() {
 
         {/* Mobile nav dropdown */}
         {mobileMenuOpen && (
-          <div
-            className="border-t bg-background px-4 py-3 md:hidden"
-            onKeyDown={(e) => { if (e.key === 'Escape') setMobileMenuOpen(false); }}
-          >
-            <nav className="flex flex-col gap-2 text-sm font-medium">
-              <Link href="#features" className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Features</Link>
-              <Link href="#how-it-works" className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>How It Works</Link>
-              <Link href="#comparison" className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Comparison</Link>
-              <Link href="#testimonials" className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Testimonials</Link>
-              <Link href="/docs" className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Documentation</Link>
-              <Link href="/pricing" className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Pricing</Link>
-            </nav>
-          </div>
+          <>
+            {/* Backdrop overlay to close menu on outside click */}
+            <div
+              className="fixed inset-0 z-40 md:hidden"
+              aria-hidden="true"
+              onClick={() => setMobileMenuOpen(false)}
+            />
+            <div
+              className="relative z-50 border-t bg-background px-4 py-3 md:hidden"
+              role="navigation"
+              aria-label="Mobile navigation"
+              onKeyDown={(e) => { if (e.key === 'Escape') setMobileMenuOpen(false); }}
+            >
+              <nav className="flex flex-col gap-2 text-sm font-medium">
+                <Link href="#features" className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Features</Link>
+                <Link href="#how-it-works" className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>How It Works</Link>
+                <Link href="#comparison" className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Comparison</Link>
+                <Link href="#testimonials" className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Testimonials</Link>
+                <Link href="/docs" className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Documentation</Link>
+                <Link href="/pricing" className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Pricing</Link>
+              </nav>
+            </div>
+          </>
         )}
       </header>
 

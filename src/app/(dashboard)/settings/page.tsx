@@ -446,7 +446,12 @@ export default function SettingsPage() {
       });
       if (res.ok) {
         window.location.href = '/login';
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error((data as { error?: string }).error || 'Failed to delete account. Please try again.');
       }
+    } catch {
+      toast.error('Network error. Please check your connection and try again.');
     } finally {
       setDeleting(false);
     }
@@ -620,7 +625,15 @@ export default function SettingsPage() {
                     {formatBytes(usedBytes)} / {formatBytes(quotaBytes)}
                   </span>
                 </div>
-                <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  role="progressbar"
+                  aria-label="Storage usage"
+                  aria-valuenow={Math.round(usagePercent)}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuetext={`${formatBytes(usedBytes)} of ${formatBytes(quotaBytes)} used (${usagePercent.toFixed(1)}%)`}
+                  className="h-2.5 w-full overflow-hidden rounded-full bg-muted"
+                >
                   <div
                     className={`h-full rounded-full transition-all ${
                       usagePercent > 90
@@ -681,7 +694,15 @@ export default function SettingsPage() {
                     {/* Password strength indicator */}
                     {newPassword && passwordStrength && (
                       <div className="flex flex-col gap-1.5 mt-1">
-                        <div className="flex gap-1">
+                        <div
+                          role="meter"
+                          aria-label="Password strength"
+                          aria-valuenow={passwordStrength.score}
+                          aria-valuemin={0}
+                          aria-valuemax={5}
+                          aria-valuetext={`${passwordStrength.label} (${passwordStrength.score} of 5)`}
+                          className="flex gap-1"
+                        >
                           {[1, 2, 3, 4, 5].map((level) => (
                             <div
                               key={level}
@@ -702,7 +723,7 @@ export default function SettingsPage() {
                                 : 'text-green-600 dark:text-green-400'
                           }`}
                         >
-                          {passwordStrength.label}
+                          {passwordStrength.label} &mdash; {passwordStrength.score}/5
                         </p>
                       </div>
                     )}
@@ -778,7 +799,7 @@ export default function SettingsPage() {
                       This action cannot be undone.
                     </p>
                   </div>
-                  <Dialog>
+                  <Dialog onOpenChange={(open) => { if (!open) setDeleteConfirmText(''); }}>
                     <DialogTrigger
                       render={
                         <Button variant="destructive" size="sm">

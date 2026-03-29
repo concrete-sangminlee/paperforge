@@ -5,6 +5,7 @@ import { ApiErrors } from '@/lib/api-response';
 import { assertProjectRole } from '@/services/project-service';
 import { prisma } from '@/lib/prisma';
 import { minioClient, getBucket } from '@/lib/minio';
+import { LIMITS, isValidFilePath } from '@/lib/constants';
 
 export async function GET(
   _request: NextRequest,
@@ -31,14 +32,26 @@ export async function GET(
     if (!compilation.synctexMinioKey) {
       throw new ApiError(404, 'SyncTeX file not available for this compilation');
     }
+    if (!isValidFilePath(compilation.synctexMinioKey)) {
+      throw new ApiError(500, 'Invalid storage key');
+    }
 
     const bucket = getBucket();
     const stream = await minioClient.getObject(bucket, compilation.synctexMinioKey);
 
-    // Collect the stream into a buffer and return as a synctex.gz response
+    // Collect the stream into a buffer with size limit
     const chunks: Buffer[] = [];
+    let totalSize = 0;
     await new Promise<void>((resolve, reject) => {
-      stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+      stream.on('data', (chunk: Buffer) => {
+        totalSize += chunk.length;
+        if (totalSize > LIMITS.MAX_FILE_SIZE) {
+          stream.destroy();
+          reject(new ApiError(413, 'SyncTeX file exceeds maximum size'));
+          return;
+        }
+        chunks.push(chunk);
+      });
       stream.on('end', resolve);
       stream.on('error', reject);
     });

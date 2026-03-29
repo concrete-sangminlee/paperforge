@@ -5,7 +5,7 @@ import { assertProjectRole, getProject } from '@/services/project-service';
 import { listFiles, getFileContent } from '@/services/file-service';
 import { ApiErrors } from '@/lib/api-response';
 import { checkRateLimit } from '@/lib/rate-limit';
-import { RATE_LIMITS } from '@/lib/constants';
+import { RATE_LIMITS, LIMITS } from '@/lib/constants';
 
 /**
  * GET /api/v1/projects/:id/export
@@ -73,6 +73,12 @@ export async function GET(
     offset += metaHeader.length + metaContent.length;
 
     for (const file of files) {
+      // Sanitize path for ZIP entry: strip leading slashes, reject traversal
+      const safePath = file.path.replace(/^\/+/, '');
+      if (!safePath || safePath.includes('..') || /^[A-Za-z]:/.test(safePath)) {
+        continue; // skip unsafe paths
+      }
+
       let content: Uint8Array;
       try {
         const text = await getFileContent(id, file.path);
@@ -82,7 +88,7 @@ export async function GET(
         continue;
       }
 
-      const pathBytes = encoder.encode(file.path);
+      const pathBytes = encoder.encode(safePath);
       const crc = crc32(content);
 
       // Local file header
@@ -104,6 +110,15 @@ export async function GET(
       zipParts.push(header);
       zipParts.push(content);
 
+      // Enforce total export size limit (500MB = MAX_PROJECT_SIZE)
+      offset += header.length + content.length;
+      if (offset > LIMITS.MAX_PROJECT_SIZE) {
+        return NextResponse.json(
+          { error: 'Project too large to export as ZIP' },
+          { status: 413 },
+        );
+      }
+
       // Central directory entry
       const cdEntry = new Uint8Array(46 + pathBytes.length);
       const cdView = new DataView(cdEntry.buffer);
@@ -123,11 +138,10 @@ export async function GET(
       cdView.setUint16(34, 0, true); // disk number
       cdView.setUint16(36, 0, true); // internal attrs
       cdView.setUint32(38, 0, true); // external attrs
-      cdView.setUint32(42, offset, true); // local header offset
+      cdView.setUint32(42, offset - header.length - content.length, true); // local header offset
       cdEntry.set(pathBytes, 46);
 
       centralDir.push(cdEntry);
-      offset += header.length + content.length;
     }
 
     // End of central directory

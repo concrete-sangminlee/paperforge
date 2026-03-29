@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/fetcher';
 import { SearchIcon, FileTextIcon, BookOpenIcon, PresentationIcon, MailIcon, UserIcon } from 'lucide-react';
@@ -153,13 +154,14 @@ export default function TemplatesPage() {
       </div>
 
       {/* Category tabs */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by category">
         {CATEGORIES.map((cat) => (
           <Button
             key={cat.value}
             variant={activeCategory === cat.value ? 'default' : 'outline'}
             size="sm"
             onClick={() => setActiveCategory(cat.value)}
+            aria-pressed={activeCategory === cat.value}
           >
             <cat.icon className="mr-1.5 size-4" />
             {cat.label}
@@ -181,10 +183,13 @@ export default function TemplatesPage() {
               <CardHeader className="flex flex-row items-start gap-4 space-y-0 pb-2">
                 <div className="flex size-16 shrink-0 items-center justify-center rounded-lg bg-muted">
                   {template.thumbnailUrl ? (
-                    <img
+                    <Image
                       src={template.thumbnailUrl}
                       alt={template.name}
+                      width={64}
+                      height={64}
                       className="size-full rounded-lg object-cover"
+                      unoptimized
                     />
                   ) : (
                     <CategoryIcon category={template.category} />

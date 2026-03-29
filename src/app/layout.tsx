@@ -6,7 +6,6 @@ import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { NavigationProgress } from "@/components/shared/navigation-progress";
-import "katex/dist/katex.min.css";
 
 const CommandPalette = dynamic(
   () => import("@/components/shared/command-palette").then((m) => m.CommandPalette),

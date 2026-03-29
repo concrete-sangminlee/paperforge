@@ -64,7 +64,14 @@ export function NavigationProgress() {
   if (!visible) return null;
 
   return (
-    <div className="fixed inset-x-0 top-0 z-[9999] h-0.5">
+    <div
+      className="fixed inset-x-0 top-0 z-[9999] h-0.5"
+      role="progressbar"
+      aria-label="Page loading"
+      aria-valuenow={Math.round(progress)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+    >
       <div
         className="h-full bg-orange-500 transition-all duration-200 ease-out"
         style={{ width: `${progress}%` }}

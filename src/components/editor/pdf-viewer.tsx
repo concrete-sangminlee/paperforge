@@ -134,6 +134,8 @@ export function PdfViewer({ refreshKey, projectName }: PdfViewerProps) {
 
     return () => {
       cancelled = true;
+      pdfDocRef.current?.destroy();
+      pdfDocRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [latestPdfUrl, refreshKey]);
@@ -436,8 +438,9 @@ export function PdfViewer({ refreshKey, projectName }: PdfViewerProps) {
           <button
             onClick={resetZoom}
             disabled={isLoading}
-            className="min-w-[3rem] rounded px-1 py-0.5 text-center text-xs tabular-nums text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+            className="min-w-[3rem] rounded px-1 py-0.5 text-center text-xs tabular-nums text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
             title="Reset zoom to 100% (0 or Ctrl+0)"
+            aria-label={`Zoom level ${Math.round(scale * 100)}%, click to reset to 100%`}
           >
             {Math.round(scale * 100)}%
           </button>
@@ -521,8 +524,13 @@ export function PdfViewer({ refreshKey, projectName }: PdfViewerProps) {
       <div ref={containerRef} className="relative flex-1 overflow-auto">
         {/* Loading overlay */}
         {isLoading && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-sm">
-            <Loader2Icon className="size-8 animate-spin text-primary" />
+          <div
+            role="status"
+            aria-live="polite"
+            aria-label="Loading PDF document"
+            className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-sm"
+          >
+            <Loader2Icon className="size-8 animate-spin text-primary" aria-hidden="true" />
             <p className="text-sm text-muted-foreground">Loading PDF...</p>
           </div>
         )}
@@ -539,6 +547,9 @@ export function PdfViewer({ refreshKey, projectName }: PdfViewerProps) {
                 <p className="mt-0.5 text-muted-foreground">{error}</p>
               </div>
             </div>
+            <Button variant="outline" size="sm" onClick={() => { setError(null); setIsLoading(true); }} className="gap-1.5">
+              Retry
+            </Button>
           </div>
         )}
 

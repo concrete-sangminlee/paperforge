@@ -5,8 +5,21 @@ import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
 
+// Whitelist of allowed settings keys to prevent prototype pollution
+const ALLOWED_SETTINGS_KEYS = new Set([
+  'theme', 'fontSize', 'fontFamily', 'lineHeight', 'wordWrap',
+  'showLineNumbers', 'editorMode', 'language', 'autoCompile',
+  'spellcheck', 'notifications', 'compactMode', 'sidebarWidth',
+]);
+
+const settingValueSchema = z.union([
+  z.string().max(200),
+  z.number().int().min(1).max(200),
+  z.boolean(),
+]);
+
 const patchSettingsSchema = z.object({
-  settings: z.record(z.string(), z.unknown()),
+  settings: z.record(z.string(), settingValueSchema),
 });
 
 export async function GET() {
@@ -35,6 +48,14 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const { settings: incoming } = patchSettingsSchema.parse(body);
 
+    // Sanitize: only allow whitelisted keys, block prototype pollution vectors
+    const sanitized: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(incoming)) {
+      if (ALLOWED_SETTINGS_KEYS.has(key) && !key.startsWith('__') && key !== 'constructor') {
+        sanitized[key] = value;
+      }
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { settings: true },
@@ -45,7 +66,7 @@ export async function PATCH(request: NextRequest) {
         ? (user.settings as Record<string, unknown>)
         : {};
 
-    const merged = { ...current, ...incoming };
+    const merged = { ...current, ...sanitized };
 
     const updated = await prisma.user.update({
       where: { id: userId },
