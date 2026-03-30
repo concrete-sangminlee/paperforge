@@ -108,7 +108,7 @@ export function PdfViewer({ refreshKey, projectName }: PdfViewerProps) {
     (async () => {
       try {
         const pdfjsLib = await import('pdfjs-dist');
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+        pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
         pdfDocRef.current?.destroy();
         const doc = (await pdfjsLib.getDocument(urlWithBust)
