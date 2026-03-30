@@ -129,6 +129,7 @@ model Compilation {
   compiler       String   @db.VarChar(20)
   log            String?
   pdfMinioKey    String?  @map("pdf_minio_key")
+  pdfData        Bytes?   @map("pdf_data")  /// PDF stored directly in DB when MinIO unavailable
   synctexMinioKey String? @map("synctex_minio_key")
   docxMinioKey   String?  @map("docx_minio_key")
   durationMs     Int?     @map("duration_ms")

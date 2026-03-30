@@ -88,12 +88,14 @@ async function compileViaAPI(
       const pdfBuffer = Buffer.from(await response.arrayBuffer());
       const pdfMinioKey = `compilations/${compilationId}/output.pdf`;
 
-      // Try to store in MinIO, but don't fail if unavailable
+      // Try to store in MinIO; fall back to DB storage
+      let minioOk = false;
       try {
         await ensureBucket();
         await minioClient.putObject(getBucket(), pdfMinioKey, pdfBuffer);
+        minioOk = true;
       } catch {
-        // MinIO unavailable — store PDF in compilation record as base64
+        // MinIO unavailable — will store in DB
       }
 
       await prisma.compilation.update({
@@ -102,7 +104,8 @@ async function compileViaAPI(
           status: 'success',
           log: `Compilation successful (${(durationMs / 1000).toFixed(1)}s via LaTeX API)`,
           durationMs,
-          pdfMinioKey,
+          pdfMinioKey: minioOk ? pdfMinioKey : null,
+          pdfData: minioOk ? null : pdfBuffer,
         },
       });
     } else {

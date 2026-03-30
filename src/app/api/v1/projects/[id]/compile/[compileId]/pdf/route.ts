@@ -23,41 +23,51 @@ export async function GET(
 
     const compilation = await prisma.compilation.findFirst({
       where: { id: compileId, projectId: id },
-      select: { pdfMinioKey: true, status: true },
+      select: { pdfMinioKey: true, pdfData: true, status: true },
     });
 
     if (!compilation) {
       throw new ApiError(404, 'Compilation not found');
     }
-    if (!compilation.pdfMinioKey) {
+
+    let buffer: Buffer;
+
+    // Try MinIO first, then fall back to DB-stored PDF
+    if (compilation.pdfMinioKey && isValidFilePath(compilation.pdfMinioKey)) {
+      try {
+        const stream = await minioClient.getObject(getBucket(), compilation.pdfMinioKey);
+        const chunks: Buffer[] = [];
+        let totalSize = 0;
+        await new Promise<void>((resolve, reject) => {
+          stream.on('data', (chunk: Buffer) => {
+            totalSize += chunk.length;
+            if (totalSize > LIMITS.MAX_FILE_SIZE) {
+              stream.destroy();
+              reject(new ApiError(413, 'PDF file exceeds maximum size'));
+              return;
+            }
+            chunks.push(chunk);
+          });
+          stream.on('end', resolve);
+          stream.on('error', reject);
+        });
+        buffer = Buffer.concat(chunks);
+      } catch {
+        // MinIO failed — try DB fallback
+        if (compilation.pdfData) {
+          buffer = Buffer.from(compilation.pdfData);
+        } else {
+          throw new ApiError(404, 'PDF not available (storage unavailable)');
+        }
+      }
+    } else if (compilation.pdfData) {
+      // No MinIO key — serve from DB
+      buffer = Buffer.from(compilation.pdfData);
+    } else {
       throw new ApiError(404, 'PDF not available for this compilation');
     }
-    if (!isValidFilePath(compilation.pdfMinioKey)) {
-      throw new ApiError(500, 'Invalid storage key');
-    }
 
-    const bucket = getBucket();
-    const stream = await minioClient.getObject(bucket, compilation.pdfMinioKey);
-
-    // Collect the stream into a buffer with size limit
-    const chunks: Buffer[] = [];
-    let totalSize = 0;
-    await new Promise<void>((resolve, reject) => {
-      stream.on('data', (chunk: Buffer) => {
-        totalSize += chunk.length;
-        if (totalSize > LIMITS.MAX_FILE_SIZE) {
-          stream.destroy();
-          reject(new ApiError(413, 'PDF file exceeds maximum size'));
-          return;
-        }
-        chunks.push(chunk);
-      });
-      stream.on('end', resolve);
-      stream.on('error', reject);
-    });
-
-    const buffer = Buffer.concat(chunks);
-    return new NextResponse(buffer, {
+    return new NextResponse(new Uint8Array(buffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
