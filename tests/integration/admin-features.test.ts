@@ -36,8 +36,8 @@ describe('admin layout guards against non-admin access', () => {
 
   it('checks role against a specific value, not just any truthy session', () => {
     // Ensure the admin check is comparing against 'admin' role, not just session existence
-    const hasRoleComparison = /role\b.*(?:===|!==|includes).*['"]admin['"]/s.test(al)
-      || /['"]admin['"].*(?:===|!==|includes).*role\b/s.test(al);
+    const hasRoleComparison = /role\b[\s\S]*(?:===|!==|includes)[\s\S]*['"]admin['"]/.test(al)
+      || /['"]admin['"][\s\S]*(?:===|!==|includes)[\s\S]*role\b/.test(al);
     expect(hasRoleComparison).toBe(true);
   });
 });
