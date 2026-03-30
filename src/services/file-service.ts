@@ -96,6 +96,7 @@ export async function createFile(
         deletedAt: null,
         isBinary: false,
         mimeType,
+        content,
       },
     });
   }
@@ -108,6 +109,7 @@ export async function createFile(
       sizeBytes: BigInt(buffer.length),
       mimeType,
       minioKey,
+      content,
     },
   });
 }
@@ -119,21 +121,32 @@ export async function getFileContent(projectId: string, path: string): Promise<s
   const file = await prisma.file.findFirst({
     where: { projectId, path, deletedAt: null },
   });
-  if (!file || !file.minioKey) throw new ApiError(404, 'File not found');
+  if (!file) throw new ApiError(404, 'File not found');
 
-  try {
-    const stream = await minioClient.getObject(getBucket(), file.minioKey);
-    const chunks: Buffer[] = [];
-    for await (const chunk of stream as AsyncIterable<Buffer>) {
-      chunks.push(chunk);
+  // 1. Try MinIO (production storage)
+  if (file.minioKey) {
+    try {
+      const stream = await minioClient.getObject(getBucket(), file.minioKey);
+      const chunks: Buffer[] = [];
+      for await (const chunk of stream as AsyncIterable<Buffer>) {
+        chunks.push(chunk);
+      }
+      return Buffer.concat(chunks).toString('utf-8');
+    } catch {
+      // MinIO unavailable — try fallbacks
     }
-    return Buffer.concat(chunks).toString('utf-8');
-  } catch {
-    // MinIO not available — try local filesystem fallback
+  }
+
+  // 2. Try DB content (works on Vercel/serverless)
+  if (file.content) return file.content;
+
+  // 3. Try local filesystem (dev fallback)
+  if (file.minioKey) {
     const localBuf = await readLocal(file.minioKey);
     if (localBuf) return localBuf.toString('utf-8');
-    return '';
   }
+
+  return '';
 }
 
 /**

@@ -107,6 +107,7 @@ model File {
   sizeBytes BigInt    @default(0) @map("size_bytes")
   mimeType  String?   @map("mime_type") @db.VarChar(255)
   minioKey  String?   @map("minio_key")
+  content   String?   /// Text content stored directly in DB (fallback when MinIO unavailable)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz()
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
