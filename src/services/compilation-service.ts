@@ -30,13 +30,14 @@ export async function triggerCompilation(projectId: string, userId: string) {
     throw new ApiError(400, 'Invalid main file path');
   }
 
-  const compilation = await prisma.compilation.create({
-    data: { projectId, userId, status: 'queued', compiler: project.compiler },
-  });
-
+  // Check queue BEFORE creating a DB record to avoid orphaned 'queued' entries
   if (!compilationQueue) {
     throw new ApiError(503, 'Compilation service unavailable (Redis not configured)');
   }
+
+  const compilation = await prisma.compilation.create({
+    data: { projectId, userId, status: 'queued', compiler: project.compiler },
+  });
 
   await compilationQueue.add(
     'compile',
