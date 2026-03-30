@@ -8,6 +8,7 @@ import { prisma } from '@/lib/prisma';
 import { ApiError } from '@/lib/errors';
 import { isValidFilePath } from '@/lib/constants';
 import { minioClient, getBucket, ensureBucket } from '@/lib/minio';
+import { getFileContent } from '@/services/file-service';
 
 const execFileAsync = promisify(execFile);
 
@@ -35,7 +36,7 @@ async function compileLocally(
   projectId: string,
   mainFile: string,
   compiler: string,
-  files: Array<{ path: string; minioKey: string | null }>,
+  files: Array<{ path: string }>,
 ) {
   const tmpDir = path.join(os.tmpdir(), `paperforge-compile-${compilationId}`);
   await fs.promises.mkdir(tmpDir, { recursive: true });
@@ -49,17 +50,13 @@ async function compileLocally(
 
       await fs.promises.mkdir(path.dirname(resolved), { recursive: true });
 
-      if (file.minioKey) {
-        try {
-          const stream = await minioClient.getObject(getBucket(), file.minioKey);
-          const chunks: Buffer[] = [];
-          for await (const chunk of stream as AsyncIterable<Buffer>) {
-            chunks.push(chunk);
-          }
-          await fs.promises.writeFile(resolved, Buffer.concat(chunks));
-        } catch {
-          // Skip files that can't be read from MinIO
+      try {
+        const content = await getFileContent(projectId, file.path);
+        if (content) {
+          await fs.promises.writeFile(resolved, content, 'utf-8');
         }
+      } catch {
+        // Skip files that can't be read
       }
     }
 
@@ -187,7 +184,7 @@ export async function triggerCompilation(projectId: string, userId: string) {
       projectId,
       project.mainFile,
       project.compiler,
-      project.files.map((f) => ({ path: f.path, minioKey: f.minioKey })),
+      project.files.map((f) => ({ path: f.path })),
     ).catch((err) => {
       console.error('[compilation] Local compile failed:', err);
       prisma.compilation.update({

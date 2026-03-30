@@ -1,6 +1,36 @@
+import fs from 'fs';
+import pathModule from 'path';
 import { prisma } from '@/lib/prisma';
 import { minioClient, getBucket, ensureBucket } from '@/lib/minio';
 import { ApiError } from '@/lib/errors';
+
+/**
+ * Local filesystem fallback for file storage when MinIO is unavailable.
+ * Used for development and single-user deployments.
+ */
+const LOCAL_STORAGE = pathModule.join(process.env.LOCAL_STORAGE_PATH || (process.cwd() + '/.local-storage'));
+
+function localPath(minioKey: string): string {
+  const resolved = pathModule.resolve(LOCAL_STORAGE, minioKey);
+  if (!resolved.startsWith(pathModule.resolve(LOCAL_STORAGE) + pathModule.sep)) {
+    throw new Error('Path traversal blocked');
+  }
+  return resolved;
+}
+
+async function writeLocal(minioKey: string, buffer: Buffer): Promise<void> {
+  const dest = localPath(minioKey);
+  await fs.promises.mkdir(pathModule.dirname(dest), { recursive: true });
+  await fs.promises.writeFile(dest, buffer);
+}
+
+async function readLocal(minioKey: string): Promise<Buffer | null> {
+  try {
+    return await fs.promises.readFile(localPath(minioKey));
+  } catch {
+    return null;
+  }
+}
 
 /** Detect MIME type from file extension for text files. */
 function detectTextMimeType(filePath: string): string {
@@ -43,13 +73,14 @@ export async function createFile(
   const buffer = Buffer.from(content, 'utf-8');
   const mimeType = detectTextMimeType(path);
 
-  // Try to upload to MinIO — skip gracefully if unavailable (e.g., Vercel)
+  // Try to upload to MinIO — fall back to local filesystem if unavailable
   try {
     await ensureBucket();
     const bucket = getBucket();
     await minioClient.putObject(bucket, minioKey, buffer);
   } catch {
-    // MinIO not available — file record will still be created in DB
+    // MinIO not available — save to local filesystem as fallback
+    await writeLocal(minioKey, buffer).catch(() => {});
   }
 
   const existing = await prisma.file.findFirst({
@@ -98,7 +129,9 @@ export async function getFileContent(projectId: string, path: string): Promise<s
     }
     return Buffer.concat(chunks).toString('utf-8');
   } catch {
-    // MinIO not available — return empty content for files created without storage
+    // MinIO not available — try local filesystem fallback
+    const localBuf = await readLocal(file.minioKey);
+    if (localBuf) return localBuf.toString('utf-8');
     return '';
   }
 }
