@@ -32,7 +32,7 @@ interface LaTeXEditorProps {
 const themeCompartment = new Compartment();
 const wrapCompartment = new Compartment();
 
-const WS_BASE = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4001';
+const WS_BASE = process.env.NEXT_PUBLIC_WS_URL || '';
 
 /** Wrap the current selection with prefix/suffix, or insert at cursor if no selection. */
 function wrapSelection(view: EditorView, prefix: string, suffix: string): boolean {
@@ -56,30 +56,41 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
   useEffect(() => {
     if (!editorRef.current) return;
 
-    // --- Yjs setup ---
-    const ydoc = new Y.Doc();
-    const wsUrl = `${WS_BASE}/ws/${projectId}`;
-    const provider = new WebsocketProvider(wsUrl, projectId, ydoc);
-    onProviderReady?.(provider);
+    // --- Yjs setup (only when WebSocket URL is configured) ---
+    let ydoc: Y.Doc | null = null;
+    let provider: WebsocketProvider | null = null;
+    let ytext: Y.Text | null = null;
+    let handleStatus: (({ status }: { status: string }) => void) | null = null;
+    let handleSync: ((synced: boolean) => void) | null = null;
 
-    // --- Connection status tracking ---
-    const handleStatus = ({ status }: { status: string }) => {
-      onConnectionChange?.(status === 'connected');
-    };
-    provider.on('status', handleStatus);
+    if (WS_BASE) {
+      ydoc = new Y.Doc();
+      const wsUrl = `${WS_BASE}/ws/${projectId}`;
+      provider = new WebsocketProvider(wsUrl, projectId, ydoc);
+      onProviderReady?.(provider);
 
-    // Use filePath as the key for the shared text within the project doc
-    const ytext = ydoc.getText(filePath);
+      // --- Connection status tracking ---
+      handleStatus = ({ status }: { status: string }) => {
+        onConnectionChange?.(status === 'connected');
+      };
+      provider.on('status', handleStatus);
 
-    // Initialise ytext with the existing content only when the doc is empty
-    // (first load / no remote state yet). Once remote state syncs it will
-    // override this, which is the correct CRDT behaviour.
-    const handleSync = (synced: boolean) => {
-      if (synced && ytext.length === 0 && initialContent) {
-        ytext.insert(0, initialContent);
-      }
-    };
-    provider.on('sync', handleSync);
+      // Use filePath as the key for the shared text within the project doc
+      ytext = ydoc.getText(filePath);
+
+      // Initialise ytext with the existing content only when the doc is empty
+      // (first load / no remote state yet). Once remote state syncs it will
+      // override this, which is the correct CRDT behaviour.
+      handleSync = (synced: boolean) => {
+        if (synced && ytext!.length === 0 && initialContent) {
+          ytext!.insert(0, initialContent);
+        }
+      };
+      provider.on('sync', handleSync);
+    } else {
+      // No WebSocket configured — single-user mode, no collaboration
+      onConnectionChange?.(true);
+    }
 
     const saveKeymap = keymap.of([
       {
@@ -272,7 +283,7 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
     ]);
 
     const startState = EditorState.create({
-      doc: ytext.toString() || initialContent,
+      doc: ytext ? ytext.toString() || initialContent : initialContent,
       extensions: [
         lineNumbers(),
         highlightActiveLineGutter(),
@@ -344,8 +355,8 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
           }
         }),
         // Yjs collaboration extension — binds ytext to CodeMirror and exposes
-        // remote cursors/selections via awareness
-        yCollab(ytext, provider.awareness),
+        // remote cursors/selections via awareness (only when WS is configured)
+        ...(ytext && provider ? [yCollab(ytext, provider.awareness)] : []),
       ],
     });
 
@@ -358,11 +369,13 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
     return () => {
       view.destroy();
       viewRef.current = null;
-      provider.off('status', handleStatus);
-      provider.off('sync', handleSync);
-      provider.awareness.destroy();
-      provider.disconnect();
-      ydoc.destroy();
+      if (provider) {
+        if (handleStatus) provider.off('status', handleStatus);
+        if (handleSync) provider.off('sync', handleSync);
+        provider.awareness.destroy();
+        provider.disconnect();
+      }
+      if (ydoc) ydoc.destroy();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filePath, projectId]);

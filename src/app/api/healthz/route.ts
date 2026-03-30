@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 
-type CheckStatus = { status: 'ok' | 'error'; latency?: number; message?: string };
+type CheckStatus = { status: 'ok' | 'error' | 'skipped'; latency?: number; message?: string };
 
 export async function GET() {
   const checks: Record<string, CheckStatus> = {};
   let overallStatus: 'ok' | 'degraded' | 'down' = 'ok';
 
-  // Check database
+  // Check database (required service — only this can degrade the overall status)
   try {
     const start = Date.now();
     const { prisma } = await import('@/lib/prisma');
@@ -17,33 +17,43 @@ export async function GET() {
     overallStatus = 'degraded';
   }
 
-  // Check Redis
-  try {
-    const start = Date.now();
-    const mod = await import('@/lib/redis');
-    if (!mod.redis) throw new Error('Redis not configured');
-    await mod.redis.ping();
-    checks.redis = { status: 'ok', latency: Date.now() - start };
-  } catch {
-    checks.redis = { status: 'error', message: 'Redis unreachable' };
-    overallStatus = 'degraded';
+  // Check Redis (optional — app works with in-memory fallback)
+  const redisConfigured = !!(process.env.REDIS_URL || process.env.REDIS_HOST);
+  if (redisConfigured) {
+    try {
+      const start = Date.now();
+      const mod = await import('@/lib/redis');
+      if (!mod.redis) throw new Error('Redis not configured');
+      await mod.redis.ping();
+      checks.redis = { status: 'ok', latency: Date.now() - start };
+    } catch {
+      checks.redis = { status: 'skipped', message: 'Redis unavailable (using in-memory fallback)' };
+    }
+  } else {
+    checks.redis = { status: 'skipped', message: 'Redis not configured' };
   }
 
-  // Check MinIO
-  try {
-    const start = Date.now();
-    const mod = await import('@/lib/minio');
-    if (!mod.minioClient) throw new Error('MinIO not configured');
-    await mod.minioClient.listBuckets();
-    checks.storage = { status: 'ok', latency: Date.now() - start };
-  } catch {
-    checks.storage = { status: 'error', message: 'Storage unreachable' };
-    overallStatus = 'degraded';
+  // Check MinIO (optional — app stores content in DB as fallback)
+  const minioEndpoint = process.env.MINIO_ENDPOINT || '';
+  const minioConfigured = !!minioEndpoint && minioEndpoint !== 'localhost';
+  if (minioConfigured) {
+    try {
+      const start = Date.now();
+      const mod = await import('@/lib/minio');
+      if (!mod.minioClient) throw new Error('MinIO not configured');
+      await mod.minioClient.listBuckets();
+      checks.storage = { status: 'ok', latency: Date.now() - start };
+    } catch {
+      checks.storage = { status: 'skipped', message: 'Storage unavailable (using DB fallback)' };
+    }
+  } else {
+    checks.storage = { status: 'skipped', message: 'External storage not configured' };
   }
 
-  // If all checks failed, mark as down
-  const allFailed = Object.values(checks).every(c => c.status === 'error');
-  if (allFailed) overallStatus = 'down';
+  // Only mark as down if the database (the only required service) is unreachable
+  if (checks.database.status === 'error') {
+    overallStatus = 'down';
+  }
 
   // Public response: only expose status, no latencies or infrastructure details
   const publicHealth = {

@@ -184,6 +184,8 @@ export async function deleteFile(projectId: string, path: string) {
 
 /**
  * Uploads binary data to MinIO and upserts the File record with isBinary=true.
+ * For small binary files (< 4MB), a base64-encoded copy is stored in the DB
+ * content column so the file survives when MinIO is unavailable (e.g., Vercel).
  */
 export async function uploadBinaryFile(
   projectId: string,
@@ -194,12 +196,20 @@ export async function uploadBinaryFile(
   const minioKey = `projects/${projectId}/files/${path}`;
 
   // Try to upload to MinIO — skip gracefully if unavailable (e.g., Vercel)
+  let minioAvailable = false;
   try {
     await ensureBucket();
     await minioClient.putObject(getBucket(), minioKey, buffer);
+    minioAvailable = true;
   } catch {
-    // MinIO not available — file record will still be created in DB
+    // MinIO not available — fall back to local storage then DB
+    await writeLocal(minioKey, buffer).catch(() => {});
   }
+
+  // Store base64 in DB content column for small binaries when MinIO is unavailable
+  const dbContent = !minioAvailable && buffer.length < 4 * 1024 * 1024
+    ? buffer.toString('base64')
+    : undefined;
 
   const existing = await prisma.file.findFirst({
     where: { projectId, path },
@@ -214,6 +224,7 @@ export async function uploadBinaryFile(
         mimeType,
         isBinary: true,
         deletedAt: null,
+        ...(dbContent !== undefined ? { content: dbContent } : {}),
       },
     });
   }
@@ -226,6 +237,7 @@ export async function uploadBinaryFile(
       sizeBytes: BigInt(buffer.length),
       mimeType,
       minioKey,
+      ...(dbContent !== undefined ? { content: dbContent } : {}),
     },
   });
 }

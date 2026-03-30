@@ -376,7 +376,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
           You are offline. Changes will sync when your internet connection is restored.
         </div>
       )}
-      {isOnline && !wsConnected && (
+      {isOnline && !wsConnected && process.env.NEXT_PUBLIC_WS_URL && (
         <div className="flex items-center gap-2 bg-amber-500/10 border-b border-amber-500/20 px-4 py-1.5 text-xs text-amber-600">
           <WifiOff className="size-3.5" />
           Connection lost. Changes will sync when reconnected.
