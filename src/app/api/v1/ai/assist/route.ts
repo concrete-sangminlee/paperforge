@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
         system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }],
       }),
+      signal: AbortSignal.timeout(30000),
     });
 
     if (!res.ok) {

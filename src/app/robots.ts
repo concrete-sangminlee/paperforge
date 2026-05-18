@@ -1,7 +1,8 @@
 import type { MetadataRoute } from 'next';
+import { getAppBaseUrl } from '@/lib/app-url';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXTAUTH_URL || 'https://paperforge.dev';
+  const baseUrl = getAppBaseUrl();
 
   return {
     rules: [

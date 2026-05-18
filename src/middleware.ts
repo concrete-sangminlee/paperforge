@@ -38,8 +38,8 @@ export function middleware(request: NextRequest) {
       const secFetchSite = request.headers.get('sec-fetch-site');
       // Allow: same-origin, none (direct navigation), and missing header (older browsers/curl)
       if (secFetchSite && secFetchSite !== 'same-origin' && secFetchSite !== 'none') {
-        // Skip CSRF check for NextAuth callback routes (OAuth providers use /api/auth/)
-        if (!pathname.startsWith('/api/auth/')) {
+        // Skip CSRF check for Auth.js callback routes.
+        if (!pathname.startsWith('/api/v1/auth/') && !pathname.startsWith('/api/auth/')) {
           return new NextResponse(JSON.stringify({ error: 'CSRF validation failed' }), {
             status: 403,
             headers: { 'Content-Type': 'application/json' },

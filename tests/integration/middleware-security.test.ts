@@ -10,6 +10,7 @@ describe('middleware + security', () => {
   it('middleware adds X-Request-ID', () => { expect(mw).toContain('X-Request-ID'); });
   it('middleware handles CORS', () => { expect(mw).toContain('Access-Control-Allow-Origin'); });
   it('middleware protects /admin', () => { expect(mw).toContain('/admin'); });
+  it('middleware allows current Auth.js callback basePath', () => { expect(mw).toContain('/api/v1/auth/'); });
   it('validation has XSS prevention', () => { expect(val).toContain('script'); });
   it('validation has path traversal check', () => { expect(val).toContain('..'); });
   it('validation has BLOCKED_EXTENSIONS', () => { expect(val).toContain('.exe'); });

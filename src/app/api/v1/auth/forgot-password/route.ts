@@ -8,6 +8,7 @@ import { emailTemplate, buttonHtml, escapeHtml } from '@/lib/email-templates';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { RATE_LIMITS } from '@/lib/constants';
+import { getAppBaseUrl } from '@/lib/app-url';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email(),
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
         '1h',
       );
 
-      const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+      const baseUrl = getAppBaseUrl();
       const resetUrl = `${baseUrl}/reset-password?token=${token}`;
 
       const body = `

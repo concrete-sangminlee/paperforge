@@ -4,6 +4,7 @@ import { ApiError } from '@/lib/errors';
 import { sendEmail } from '@/lib/email';
 import { assertProjectRole } from '@/services/project-service';
 import { emailTemplate, buttonHtml, escapeHtml } from '@/lib/email-templates';
+import { getAppBaseUrl } from '@/lib/app-url';
 
 export async function inviteMember(
   projectId: string,
@@ -37,7 +38,7 @@ export async function inviteMember(
     select: { name: true },
   });
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  const appUrl = getAppBaseUrl();
   const projectName = escapeHtml(project?.name ?? 'a project');
   const inviteeName = escapeHtml(invitee.name ?? 'there');
   const projectUrl = `${appUrl}/editor/${projectId}`;

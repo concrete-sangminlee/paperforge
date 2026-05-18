@@ -15,6 +15,7 @@ describe('environment validation', () => {
       'REDIS_PASSWORD',
       'RATE_LIMIT_STRICT',
       'NEXTAUTH_SECRET',
+      'AUTH_SECRET',
       'NEXTAUTH_URL',
       'ENCRYPTION_KEY',
       'MINIO_ENDPOINT',
@@ -29,6 +30,7 @@ describe('environment validation', () => {
       'WS_PORT',
       'GIT_REPOS_PATH',
       'NEXT_PUBLIC_WS_URL',
+      'NEXT_PUBLIC_APP_URL',
       'AUTH_GOOGLE_ID',
       'AUTH_GITHUB_ID',
     ];
@@ -40,6 +42,7 @@ describe('environment validation', () => {
   it('env module exports required vars', () => {
     expect(envModule).toContain('DATABASE_URL');
     expect(envModule).toContain('NEXTAUTH_SECRET');
+    expect(envModule).toContain('AUTH_SECRET');
     expect(envModule).toContain('ENCRYPTION_KEY');
     expect(envModule).toContain('isProduction');
   });

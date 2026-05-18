@@ -1,5 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { afterEach, describe, it, expect } from 'vitest';
 import { createSignedToken, verifySignedToken } from '@/lib/jwt-utils';
+
+const originalEnv = { ...process.env };
+
+afterEach(() => {
+  process.env = { ...originalEnv };
+});
 
 describe('jwt-utils', () => {
   it('should create and verify a token roundtrip', () => {
@@ -23,5 +29,13 @@ describe('jwt-utils', () => {
     // Wait a moment for expiration
     await new Promise((resolve) => setTimeout(resolve, 1100));
     expect(() => verifySignedToken(token)).toThrow();
+  });
+
+  it('supports AUTH_SECRET as the preferred Auth.js secret', () => {
+    process.env.AUTH_SECRET = 'auth-secret-at-least-32-characters-long';
+    delete process.env.NEXTAUTH_SECRET;
+
+    const token = createSignedToken({ userId: 'auth-secret-user' }, '1h');
+    expect(verifySignedToken(token)).toMatchObject({ userId: 'auth-secret-user' });
   });
 });

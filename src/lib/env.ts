@@ -23,7 +23,8 @@ export const env = {
   DATABASE_URL: required('DATABASE_URL'),
 
   // Auth
-  NEXTAUTH_SECRET: required('NEXTAUTH_SECRET'),
+  AUTH_SECRET: optional('AUTH_SECRET'),
+  NEXTAUTH_SECRET: optional('NEXTAUTH_SECRET', process.env.AUTH_SECRET ?? ''),
   NEXTAUTH_URL: optional('NEXTAUTH_URL', 'http://localhost:3000'),
 
   // Encryption
@@ -62,6 +63,7 @@ export const env = {
   GITHUB_CLIENT_SECRET: optional('GITHUB_CLIENT_SECRET'),
 
   // Public
+  NEXT_PUBLIC_APP_URL: optional('NEXT_PUBLIC_APP_URL'),
   NEXT_PUBLIC_WS_URL: optional('NEXT_PUBLIC_WS_URL', 'ws://localhost:4001'),
 
   // Runtime

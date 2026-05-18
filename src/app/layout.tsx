@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import localFont from "next/font/local";
 import { AppProviders } from "./providers";
+import { getAppBaseUrl } from "@/lib/app-url";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -29,7 +30,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXTAUTH_URL || "https://paperforge.dev"),
+  metadataBase: new URL(getAppBaseUrl()),
   title: {
     default: "PaperForge - Open-Source Collaborative LaTeX Editor",
     template: "%s | PaperForge",

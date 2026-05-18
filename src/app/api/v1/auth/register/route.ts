@@ -8,6 +8,7 @@ import { emailTemplate, buttonHtml, escapeHtml } from '@/lib/email-templates';
 import { checkRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
 import { apiSuccess, apiError } from '@/lib/api-response';
 import { RATE_LIMITS } from '@/lib/constants';
+import { getAppBaseUrl } from '@/lib/app-url';
 
 export async function POST(request: Request) {
   try {
@@ -39,7 +40,7 @@ export async function POST(request: Request) {
       '24h',
     );
 
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const baseUrl = getAppBaseUrl();
     const verifyUrl = `${baseUrl}/api/v1/auth/verify-email/${token}`;
 
     const body = `

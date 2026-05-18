@@ -20,12 +20,23 @@ const prisma = new PrismaClient({ adapter: new PrismaPg(databaseUrl) });
 // ---------------------------------------------------------------------------
 // Redis connection (maxRetriesPerRequest must be null for BullMQ workers)
 // ---------------------------------------------------------------------------
-const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+function createRedisConnection() {
+  const options = { maxRetriesPerRequest: null };
+  if (process.env.REDIS_URL) {
+    return new Redis(process.env.REDIS_URL, options);
+  }
+  return new Redis({
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379', 10),
+    password: process.env.REDIS_PASSWORD || undefined,
+    ...options,
+  });
+}
 
-const connection = new Redis(redisUrl, { maxRetriesPerRequest: null });
+const connection = createRedisConnection();
 
 // Separate pub/sub publisher client
-const publisher = new Redis(redisUrl, { maxRetriesPerRequest: null });
+const publisher = createRedisConnection();
 
 // ---------------------------------------------------------------------------
 // MinIO client

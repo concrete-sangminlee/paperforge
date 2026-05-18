@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { verifySignedToken } from '@/lib/jwt-utils';
 import { prisma } from '@/lib/prisma';
 import { errorResponse, ApiError } from '@/lib/errors';
+import { getAppBaseUrl } from '@/lib/app-url';
 
 export async function GET(
   _request: Request,
@@ -25,7 +26,7 @@ export async function GET(
       data: { emailVerified: true },
     });
 
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const baseUrl = getAppBaseUrl();
     return NextResponse.redirect(`${baseUrl}/login?verified=true`);
   } catch (error) {
     return errorResponse(error);
