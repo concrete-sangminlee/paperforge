@@ -26,6 +26,7 @@ const API_ROUTES = [
   'src/app/api/v1/admin/workers/route.ts',
   'src/app/api/v1/templates/route.ts',
   'src/app/api/v1/user/profile/route.ts',
+  'src/app/api/v1/user/avatar/route.ts',
   'src/app/api/v1/user/settings/route.ts',
   'src/app/api/v1/user/git-credentials/route.ts',
   'src/app/api/v1/join/[token]/route.ts',

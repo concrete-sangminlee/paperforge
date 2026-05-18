@@ -7,6 +7,7 @@ import { loginSchema } from '@/lib/validation';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { RATE_LIMITS } from '@/lib/constants';
 import { getOAuthProviderConfig } from '@/lib/oauth-providers';
+import { prisma } from '@/lib/prisma';
 
 import type { Provider } from 'next-auth/providers';
 
@@ -84,10 +85,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: '/login',
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
         token.role = (user as { role?: string }).role ?? 'user';
+      }
+      // Refresh avatar on initial sign-in and when the session is explicitly updated.
+      // Avoids hammering the DB on every request while keeping the navbar avatar fresh.
+      if (token.id && (user || trigger === 'update' || token.picture === undefined)) {
+        try {
+          const u = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { avatarUrl: true, name: true },
+          });
+          token.picture = u?.avatarUrl ?? null;
+          if (u?.name) token.name = u.name;
+        } catch {
+          // DB unavailable — keep prior picture value
+        }
       }
       return token;
     },
@@ -95,6 +110,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token) {
         session.user.id = token.id as string;
         (session.user as { role?: string }).role = token.role as string;
+        if (token.picture !== undefined) {
+          session.user.image = token.picture as string | null;
+        }
       }
       return session;
     },

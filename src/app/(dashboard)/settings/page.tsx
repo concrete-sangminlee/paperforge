@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useRef, useState, useEffect, useMemo, useCallback } from 'react';
 import useSWR, { mutate } from 'swr';
 import { fetcher } from '@/lib/fetcher';
+import { useSession } from 'next-auth/react';
 import { useTheme } from 'next-themes';
 import {
   SaveIcon,
@@ -58,7 +59,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 
 
@@ -68,6 +69,7 @@ interface UserProfile {
   email: string;
   institution?: string | null;
   bio?: string | null;
+  avatarUrl?: string | null;
   settings: Record<string, unknown>;
   storageUsedBytes: number | string;
   storageQuotaBytes: number | string;
@@ -170,6 +172,7 @@ const PROFILE_KEY = '/api/v1/user/profile';
 
 export default function SettingsPage() {
   const { data: profile } = useSWR<UserProfile>(PROFILE_KEY, fetcher);
+  const { update: updateSession } = useSession();
   const { theme: currentTheme, setTheme: setAppTheme } = useTheme();
 
   // ---- Profile state ----
@@ -178,6 +181,10 @@ export default function SettingsPage() {
   const [bio, setBio] = useState('');
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState('');
+
+  // ---- Avatar state ----
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
+  const [avatarSaving, setAvatarSaving] = useState(false);
 
   // ---- Password state ----
   const [currentPassword, setCurrentPassword] = useState('');
@@ -253,6 +260,48 @@ export default function SettingsPage() {
       ? parseFloat(profile.storageQuotaBytes)
       : (profile?.storageQuotaBytes ?? 1);
   const usagePercent = Math.min(100, (usedBytes / quotaBytes) * 100);
+
+  // ---- Avatar handlers ----
+  const uploadAvatar = useCallback(async (file: File) => {
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Avatar must be under 2 MB');
+      return;
+    }
+    setAvatarSaving(true);
+    try {
+      const form = new FormData();
+      form.append('avatar', file);
+      const res = await fetch('/api/v1/user/avatar', { method: 'POST', body: form });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        toast.error(d?.error?.message ?? d?.error ?? 'Failed to upload avatar');
+      } else {
+        mutate(PROFILE_KEY);
+        void updateSession();
+        toast.success('Avatar updated');
+      }
+    } finally {
+      setAvatarSaving(false);
+      if (avatarInputRef.current) avatarInputRef.current.value = '';
+    }
+  }, [updateSession]);
+
+  const removeAvatar = useCallback(async () => {
+    setAvatarSaving(true);
+    try {
+      const res = await fetch('/api/v1/user/avatar', { method: 'DELETE' });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        toast.error(d?.error?.message ?? d?.error ?? 'Failed to remove avatar');
+      } else {
+        mutate(PROFILE_KEY);
+        void updateSession();
+        toast.success('Avatar removed');
+      }
+    } finally {
+      setAvatarSaving(false);
+    }
+  }, [updateSession]);
 
   // ---- Handlers ----
   const saveProfile = useCallback(
@@ -515,21 +564,55 @@ export default function SettingsPage() {
                   <div className="flex items-start gap-6">
                     <div className="flex flex-col items-center gap-2">
                       <Avatar size="lg" className="size-20">
+                        {profile?.avatarUrl && (
+                          <AvatarImage src={profile.avatarUrl} alt={profile.name ?? 'Avatar'} />
+                        )}
                         <AvatarFallback className="text-lg font-semibold bg-primary/10 text-primary">
                           {initials}
                         </AvatarFallback>
                       </Avatar>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="xs"
-                        className="gap-1"
-                        disabled
-                        title="Avatar upload coming soon"
-                      >
-                        <CameraIcon className="size-3" />
-                        Coming Soon
-                      </Button>
+                      <input
+                        ref={avatarInputRef}
+                        id="avatar-upload"
+                        type="file"
+                        accept="image/png,image/jpeg,image/gif,image/webp"
+                        className="sr-only"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) void uploadAvatar(file);
+                        }}
+                      />
+                      <div className="flex flex-col items-stretch gap-1">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="xs"
+                          className="gap-1"
+                          disabled={avatarSaving}
+                          onClick={() => avatarInputRef.current?.click()}
+                        >
+                          {avatarSaving ? (
+                            <Loader2Icon className="size-3 animate-spin" />
+                          ) : (
+                            <CameraIcon className="size-3" />
+                          )}
+                          {profile?.avatarUrl ? 'Change' : 'Upload'}
+                        </Button>
+                        {profile?.avatarUrl && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="xs"
+                            className="gap-1 text-muted-foreground"
+                            disabled={avatarSaving}
+                            onClick={removeAvatar}
+                          >
+                            <TrashIcon className="size-3" />
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">PNG, JPG, GIF, WebP · 2 MB max</p>
                     </div>
                     <div className="flex-1 grid gap-4">
                       <div className="grid gap-1.5">
