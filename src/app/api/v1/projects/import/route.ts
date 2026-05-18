@@ -6,6 +6,8 @@ import { createFile } from '@/services/file-service';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
 import { isValidFilePath, LIMITS } from '@/lib/constants';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * POST /api/v1/projects/import
  * Import a project from a ZIP file upload.

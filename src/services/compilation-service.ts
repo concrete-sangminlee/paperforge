@@ -6,8 +6,12 @@ import { minioClient, getBucket, ensureBucket } from '@/lib/minio';
 import { getFileContent } from '@/services/file-service';
 
 let compilationQueue: Queue | null = null;
+const isBuildPhase =
+  process.env.NEXT_PHASE === 'phase-production-build' ||
+  process.env.npm_lifecycle_event === 'build';
+
 try {
-  if (process.env.REDIS_URL || process.env.REDIS_HOST) {
+  if (!isBuildPhase && (process.env.REDIS_URL || process.env.REDIS_HOST)) {
     compilationQueue = new Queue('compilation', {
       connection: {
         host: process.env.REDIS_HOST || 'localhost',

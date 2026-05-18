@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
 
+export const dynamic = 'force-dynamic';
+
 // Whitelist of allowed settings keys to prevent prototype pollution
 const ALLOWED_SETTINGS_KEYS = new Set([
   'theme', 'fontSize', 'fontFamily', 'lineHeight', 'wordWrap',

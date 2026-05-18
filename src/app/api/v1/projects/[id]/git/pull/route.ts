@@ -5,6 +5,8 @@ import { errorResponse } from '@/lib/errors';
 import { assertProjectRole } from '@/services/project-service';
 import { pullFromRemote } from '@/services/git-service';
 
+export const dynamic = 'force-dynamic';
+
 type RouteParams = { params: Promise<{ id: string }> };
 
 export async function POST(_request: NextRequest, { params }: RouteParams) {

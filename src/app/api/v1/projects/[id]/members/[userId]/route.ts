@@ -5,6 +5,8 @@ import { apiSuccess, ApiErrors } from '@/lib/api-response';
 import { errorResponse } from '@/lib/errors';
 import { updateMemberRole, removeMember } from '@/services/member-service';
 
+export const dynamic = 'force-dynamic';
+
 type RouteParams = { params: Promise<{ id: string; userId: string }> };
 
 const updateRoleSchema = z.object({

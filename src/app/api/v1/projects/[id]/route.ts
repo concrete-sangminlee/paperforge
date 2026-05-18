@@ -9,6 +9,8 @@ import {
 } from '@/services/project-service';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },

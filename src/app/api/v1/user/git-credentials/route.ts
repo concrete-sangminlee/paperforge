@@ -9,6 +9,8 @@ import {
 import { apiSuccess, apiError, ApiErrors } from '@/lib/api-response';
 import { checkRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 const ALLOWED_PROVIDERS = ['github', 'gitlab', 'bitbucket', 'gitea', 'azure-devops'] as const;
 
 const addCredentialSchema = z.object({

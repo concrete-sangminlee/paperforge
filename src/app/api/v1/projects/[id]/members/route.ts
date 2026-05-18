@@ -6,6 +6,8 @@ import { inviteMemberSchema } from '@/lib/validation';
 import { getMembers, inviteMember } from '@/services/member-service';
 import { checkRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 type RouteParams = { params: Promise<{ id: string }> };
 
 export async function GET(_request: NextRequest, { params }: RouteParams) {

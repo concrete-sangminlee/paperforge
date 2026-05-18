@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 type CheckStatus = { status: 'ok' | 'error' | 'skipped'; latency?: number; message?: string };
 
 export async function GET() {

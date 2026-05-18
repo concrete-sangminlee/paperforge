@@ -6,6 +6,8 @@ import { errorResponse } from '@/lib/errors';
 import { assertProjectRole } from '@/services/project-service';
 import { linkGitRemote } from '@/services/git-service';
 
+export const dynamic = 'force-dynamic';
+
 type RouteParams = { params: Promise<{ id: string }> };
 
 const linkSchema = z.object({

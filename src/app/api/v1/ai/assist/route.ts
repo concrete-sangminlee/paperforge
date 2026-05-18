@@ -5,6 +5,8 @@ import { errorResponse } from '@/lib/errors';
 import { apiSuccess, apiError, ApiErrors } from '@/lib/api-response';
 import { checkRateLimit } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 const assistSchema = z.object({
   prompt: z.string().min(1).max(2000),
   context: z.string().max(5000).optional(),

@@ -5,6 +5,8 @@ import { assertProjectRole } from '@/services/project-service';
 import { prisma } from '@/lib/prisma';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },

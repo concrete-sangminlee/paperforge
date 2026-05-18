@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { errorResponse } from '@/lib/errors';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
 
+export const dynamic = 'force-dynamic';
+
 export async function DELETE() {
   try {
     const session = await auth();

@@ -4,6 +4,8 @@ import { errorResponse } from '@/lib/errors';
 import { joinViaShareLink } from '@/services/member-service';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
 
+export const dynamic = 'force-dynamic';
+
 type RouteParams = { params: Promise<{ token: string }> };
 
 export async function GET(_request: NextRequest, { params }: RouteParams) {

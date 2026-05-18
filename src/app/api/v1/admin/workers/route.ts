@@ -3,6 +3,8 @@ import { errorResponse } from '@/lib/errors';
 import { ApiErrors, apiSuccess } from '@/lib/api-response';
 import { redis } from '@/lib/redis';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const session = await auth();

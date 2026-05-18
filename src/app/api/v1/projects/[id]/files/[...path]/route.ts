@@ -11,6 +11,8 @@ import {
 import { isValidFilePath, LIMITS } from '@/lib/constants';
 import { checkRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 type RouteParams = { params: Promise<{ id: string; path: string[] }> };
 
 export async function GET(_request: NextRequest, { params }: RouteParams) {

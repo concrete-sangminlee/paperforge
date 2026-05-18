@@ -7,6 +7,8 @@ import { prisma } from '@/lib/prisma';
 import { minioClient, getBucket } from '@/lib/minio';
 import { LIMITS, isValidFilePath } from '@/lib/constants';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string; compileId: string }> },

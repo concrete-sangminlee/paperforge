@@ -5,6 +5,8 @@ import { errorResponse } from '@/lib/errors';
 import { createProjectFromTemplate } from '@/services/template-service';
 import { z } from 'zod';
 
+export const dynamic = 'force-dynamic';
+
 const schema = z.object({
   projectName: z.string().min(1).max(255),
 });

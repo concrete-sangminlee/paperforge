@@ -7,6 +7,8 @@ import { triggerCompilation } from '@/services/compilation-service';
 import { apiSuccess, apiError, ApiErrors } from '@/lib/api-response';
 import { RATE_LIMITS } from '@/lib/constants';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },

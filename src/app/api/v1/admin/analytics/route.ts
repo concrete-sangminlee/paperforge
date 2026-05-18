@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { errorResponse } from '@/lib/errors';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/v1/admin/analytics
  * Detailed platform analytics for admin dashboard.

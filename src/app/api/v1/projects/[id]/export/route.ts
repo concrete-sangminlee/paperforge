@@ -7,6 +7,8 @@ import { ApiErrors } from '@/lib/api-response';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { RATE_LIMITS, LIMITS } from '@/lib/constants';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/v1/projects/:id/export
  * Export entire project as a downloadable ZIP archive.

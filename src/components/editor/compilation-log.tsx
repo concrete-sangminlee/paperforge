@@ -117,9 +117,10 @@ export function CompilationLog() {
     return lines;
   }, [parsedLines, showErrors, showWarnings, showInfo, searchQuery]);
 
-  // Counts for badges
-  const errorCount = useMemo(() => parsedLines.filter((l) => l.level === 'error').length, [parsedLines]);
-  const warningCount = useMemo(() => parsedLines.filter((l) => l.level === 'warning').length, [parsedLines]);
+  // Counts for badges use structured diagnostics so source line references like
+  // "l.42" do not inflate the error count.
+  const errorCount = summary.errors;
+  const warningCount = summary.warnings;
 
   // -----------------------------------------------------------------------
   // Auto-scroll logic

@@ -10,6 +10,39 @@ export interface LatexDiagnostic {
   raw: string;
 }
 
+const FILE_REFERENCE_RE = /\((?:\.\/)?([^\s()]+?\.(?:tex|sty|cls|bib|bst|bbl|toc|aux|lof|lot))(?:\)|\s|$)/gi;
+
+function extractFileReferences(line: string): string[] {
+  return Array.from(line.matchAll(FILE_REFERENCE_RE), match => match[1]);
+}
+
+function findNearestFile(lines: string[], index: number): string | undefined {
+  for (let i = index; i >= Math.max(0, index - 20); i--) {
+    const refs = extractFileReferences(lines[i]);
+    if (refs.length > 0) return refs[refs.length - 1];
+  }
+  return undefined;
+}
+
+function findFollowingSourceLine(lines: string[], index: number): number | undefined {
+  for (let i = index + 1; i < Math.min(index + 8, lines.length); i++) {
+    const lineMatch = lines[i].match(/^l\.(\d+)\b/);
+    if (lineMatch) return parseInt(lineMatch[1], 10);
+  }
+  return undefined;
+}
+
+function parseLineReference(line: string): number | undefined {
+  const match =
+    line.match(/\b(?:on input line|at line|line|lines?)\s+(\d+)/i) ||
+    line.match(/\bl\.(\d+)\b/i);
+  return match ? parseInt(match[1], 10) : undefined;
+}
+
+function parseQuotedKey(line: string): string | undefined {
+  return line.match(/[`']([^`']+)'/)?.[1] || line.match(/"([^"]+)"/)?.[1];
+}
+
 /**
  * Parse LaTeX log output into structured diagnostics.
  */
@@ -23,43 +56,29 @@ export function parseLatexLog(log: string): LatexDiagnostic[] {
 
     // LaTeX errors: lines starting with "!"
     if (line.startsWith('!')) {
-      const message = line.slice(2).trim();
-      // Look for line number in nearby lines (e.g., "l.42 ...")
-      let fileLine: number | undefined;
-      let fileName: string | undefined;
-      for (let j = i + 1; j < Math.min(i + 5, lines.length); j++) {
-        const lineMatch = lines[j].match(/^l\.(\d+)/);
-        if (lineMatch) {
-          fileLine = parseInt(lineMatch[1], 10);
-          break;
-        }
-      }
-      // Look for file reference in previous lines
-      for (let j = i - 1; j >= Math.max(0, i - 3); j--) {
-        const fileMatch = lines[j].match(/\(\.\/([^)]+)\)/);
-        if (fileMatch) {
-          fileName = fileMatch[1];
-          break;
-        }
-      }
       diagnostics.push({
         type: 'error',
-        message,
-        file: fileName,
-        line: fileLine,
+        message: line.replace(/^!\s*/, '').trim(),
+        file: findNearestFile(lines, i),
+        line: findFollowingSourceLine(lines, i),
         raw: line,
       });
+      continue;
     }
 
-    // LaTeX warnings
-    if (line.includes('Warning:') || line.includes('Overfull') || line.includes('Underfull')) {
-      const lineMatch = line.match(/line (\d+)/i) || line.match(/at line (\d+)/i);
+    // Badbox details with measurements. Handle these before generic warnings
+    // to avoid double-counting the same Overfull/Underfull line.
+    const badboxMatch = line.match(/^(Over|Under)full \\[hv]box\b/i);
+    if (badboxMatch) {
+      const ptMatch = line.match(/([\d.]+)pt/);
       diagnostics.push({
         type: 'warning',
-        message: line.trim(),
-        line: lineMatch ? parseInt(lineMatch[1], 10) : undefined,
+        message: `${badboxMatch[1]}full box${ptMatch ? ` (${ptMatch[1]}pt)` : ''}`,
+        file: findNearestFile(lines, i),
+        line: parseLineReference(line),
         raw: line,
       });
+      continue;
     }
 
     // Package/class errors
@@ -67,41 +86,59 @@ export function parseLatexLog(log: string): LatexDiagnostic[] {
       diagnostics.push({
         type: 'error',
         message: line.trim(),
+        file: findNearestFile(lines, i),
+        line: parseLineReference(line),
         raw: line,
       });
+      continue;
     }
 
     // Reference/citation warnings
-    if (line.includes('Reference') && line.includes('undefined')) {
-      const refMatch = line.match(/`([^']+)'/);
+    if (/\bReference\b/i.test(line) && /\bundefined\b/i.test(line)) {
+      const ref = parseQuotedKey(line);
       diagnostics.push({
         type: 'warning',
-        message: refMatch ? `Undefined reference: ${refMatch[1]}` : line.trim(),
+        message: ref ? `Undefined reference: ${ref}` : line.trim(),
+        file: findNearestFile(lines, i),
+        line: parseLineReference(line),
         raw: line,
       });
-    }
-    if (line.includes('Citation') && (line.includes('undefined') || line.includes('not found'))) {
-      const citeMatch = line.match(/`([^']+)'/);
-      diagnostics.push({
-        type: 'warning',
-        message: citeMatch ? `Undefined citation: ${citeMatch[1]}` : line.trim(),
-        raw: line,
-      });
-    }
-    if (line.includes('Empty bibliography')) {
-      diagnostics.push({ type: 'warning', message: 'Empty bibliography — no entries found', raw: line });
+      continue;
     }
 
-    // Badbox details with measurements
-    if (line.match(/^(Over|Under)full \\[hv]box/)) {
-      const ptMatch = line.match(/([\d.]+)pt/);
-      const lineMatch = line.match(/at lines? (\d+)/);
+    if (/\bCitation\b/i.test(line) && (/\bundefined\b/i.test(line) || /\bnot found\b/i.test(line))) {
+      const cite = parseQuotedKey(line);
       diagnostics.push({
         type: 'warning',
-        message: `${line.match(/Overfull/) ? 'Overfull' : 'Underfull'} box${ptMatch ? ` (${ptMatch[1]}pt)` : ''}`,
-        line: lineMatch ? parseInt(lineMatch[1], 10) : undefined,
+        message: cite ? `Undefined citation: ${cite}` : line.trim(),
+        file: findNearestFile(lines, i),
+        line: parseLineReference(line),
         raw: line,
       });
+      continue;
+    }
+
+    if (line.includes('Empty bibliography')) {
+      diagnostics.push({
+        type: 'warning',
+        message: 'Empty bibliography: no entries found',
+        file: findNearestFile(lines, i),
+        line: parseLineReference(line),
+        raw: line,
+      });
+      continue;
+    }
+
+    // LaTeX warnings
+    if (line.includes('Warning:') || line.includes('Overfull') || line.includes('Underfull')) {
+      diagnostics.push({
+        type: 'warning',
+        message: line.trim(),
+        file: findNearestFile(lines, i),
+        line: parseLineReference(line),
+        raw: line,
+      });
+      continue;
     }
 
     // Runaway argument / paragraph ended
@@ -109,8 +146,11 @@ export function parseLatexLog(log: string): LatexDiagnostic[] {
       diagnostics.push({
         type: 'error',
         message: line.trim(),
+        file: findNearestFile(lines, i),
+        line: parseLineReference(line),
         raw: line,
       });
+      continue;
     }
 
     // Missing number / illegal unit
@@ -118,6 +158,8 @@ export function parseLatexLog(log: string): LatexDiagnostic[] {
       diagnostics.push({
         type: 'error',
         message: line.trim(),
+        file: findNearestFile(lines, i),
+        line: parseLineReference(line),
         raw: line,
       });
     }

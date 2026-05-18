@@ -3,6 +3,8 @@ import { errorResponse } from '@/lib/errors';
 import { ApiErrors, apiSuccess } from '@/lib/api-response';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const session = await auth();

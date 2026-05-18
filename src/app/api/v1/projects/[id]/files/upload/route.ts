@@ -7,6 +7,8 @@ import { isValidFilePath } from '@/lib/constants';
 import { apiSuccess, apiError, ApiErrors } from '@/lib/api-response';
 import { BLOCKED_EXTENSIONS, MAX_FILE_SIZE } from '@/lib/validation';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },

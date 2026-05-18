@@ -4,6 +4,8 @@ import { errorResponse } from '@/lib/errors';
 import { deleteGitCredential } from '@/services/git-service';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
 
+export const dynamic = 'force-dynamic';
+
 type RouteParams = { params: Promise<{ credentialId: string }> };
 
 export async function DELETE(

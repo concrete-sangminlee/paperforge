@@ -7,6 +7,8 @@ import { createFile } from '@/services/file-service';
 import { apiSuccess, apiError, ApiErrors } from '@/lib/api-response';
 import { isValidFilePath } from '@/lib/constants';
 
+export const dynamic = 'force-dynamic';
+
 const importUrlSchema = z.object({
   url: z.string().url().refine(
     (u) => /^https:\/\/github\.com\/[^/]+\/[^/]+/.test(u),

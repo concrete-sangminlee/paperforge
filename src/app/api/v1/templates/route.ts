@@ -5,6 +5,8 @@ import { listTemplates, submitTemplate } from '@/services/template-service';
 import { z } from 'zod';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
 
+export const dynamic = 'force-dynamic';
+
 const submitTemplateSchema = z.object({
   projectId: z.string().uuid(),
   name: z.string().min(1).max(255),

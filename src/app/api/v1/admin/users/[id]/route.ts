@@ -6,6 +6,8 @@ import { prisma } from '@/lib/prisma';
 import { logAuditAction } from '@/services/audit-service';
 import { z } from 'zod';
 
+export const dynamic = 'force-dynamic';
+
 const patchUserSchema = z.object({
   role: z.enum(['user', 'admin']).optional(),
   suspend: z.boolean().optional(),

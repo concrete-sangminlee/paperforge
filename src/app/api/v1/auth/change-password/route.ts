@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma';
 import { errorResponse, ApiError } from '@/lib/errors';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
 
+export const dynamic = 'force-dynamic';
+
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
   newPassword: z

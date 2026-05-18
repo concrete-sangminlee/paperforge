@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
 
+export const dynamic = 'force-dynamic';
+
 const patchProfileSchema = z.object({
   name: z.string().min(1).max(255).optional(),
   institution: z.string().max(255).optional().nullable(),

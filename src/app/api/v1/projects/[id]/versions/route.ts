@@ -6,6 +6,8 @@ import { errorResponse } from '@/lib/errors';
 import { assertProjectRole } from '@/services/project-service';
 import { createVersion, listVersions } from '@/services/version-service';
 
+export const dynamic = 'force-dynamic';
+
 type RouteParams = { params: Promise<{ id: string }> };
 
 const createVersionSchema = z.object({

@@ -6,6 +6,8 @@ import { createProject, listProjects } from '@/services/project-service';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
 import { checkRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const session = await auth();

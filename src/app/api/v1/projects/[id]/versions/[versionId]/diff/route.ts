@@ -5,6 +5,8 @@ import { errorResponse } from '@/lib/errors';
 import { assertProjectRole } from '@/services/project-service';
 import { getVersionDiff } from '@/services/version-service';
 
+export const dynamic = 'force-dynamic';
+
 type RouteParams = { params: Promise<{ id: string; versionId: string }> };
 
 export async function GET(_request: NextRequest, { params }: RouteParams) {

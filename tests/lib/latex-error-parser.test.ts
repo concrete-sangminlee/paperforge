@@ -17,6 +17,17 @@ l.42 \\foo
     expect(error!.line).toBe(42);
   });
 
+  it('keeps file context from unclosed LaTeX file markers', () => {
+    const log = `(./chapters/intro.tex
+! Missing $ inserted.
+l.17 Price is $5`;
+
+    const diagnostics = parseLatexLog(log);
+    const error = diagnostics.find(d => d.type === 'error');
+    expect(error?.file).toBe('chapters/intro.tex');
+    expect(error?.line).toBe(17);
+  });
+
   it('parses warnings', () => {
     const log = `LaTeX Warning: Reference 'fig:test' on page 1 undefined on line 15.
 Overfull \\hbox (4.2pt too wide) in paragraph at line 23`;
@@ -24,6 +35,24 @@ Overfull \\hbox (4.2pt too wide) in paragraph at line 23`;
     const diagnostics = parseLatexLog(log);
     const warnings = diagnostics.filter(d => d.type === 'warning');
     expect(warnings.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('does not duplicate structured reference and badbox warnings', () => {
+    const log = `LaTeX Warning: Reference 'fig:test' on page 1 undefined on input line 15.
+Overfull \\hbox (4.2pt too wide) in paragraph at lines 23--24`;
+
+    const diagnostics = parseLatexLog(log);
+    expect(diagnostics).toHaveLength(2);
+    expect(diagnostics[0]).toMatchObject({
+      type: 'warning',
+      message: 'Undefined reference: fig:test',
+      line: 15,
+    });
+    expect(diagnostics[1]).toMatchObject({
+      type: 'warning',
+      message: 'Overfull box (4.2pt)',
+      line: 23,
+    });
   });
 
   it('handles Overfull/Underfull warnings', () => {

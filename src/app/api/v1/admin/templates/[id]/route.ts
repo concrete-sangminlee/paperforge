@@ -6,6 +6,8 @@ import { prisma } from '@/lib/prisma';
 import { logAuditAction } from '@/services/audit-service';
 import { z } from 'zod';
 
+export const dynamic = 'force-dynamic';
+
 const patchTemplateSchema = z.object({
   approved: z.boolean(),
 });
