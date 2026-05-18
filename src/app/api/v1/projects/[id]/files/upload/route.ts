@@ -3,9 +3,10 @@ import { auth } from '@/lib/auth';
 import { errorResponse } from '@/lib/errors';
 import { assertProjectRole } from '@/services/project-service';
 import { uploadBinaryFile } from '@/services/file-service';
-import { isValidFilePath } from '@/lib/constants';
+import { isValidFilePath, RATE_LIMITS } from '@/lib/constants';
 import { apiSuccess, apiError, ApiErrors } from '@/lib/api-response';
 import { BLOCKED_EXTENSIONS, MAX_FILE_SIZE } from '@/lib/validation';
+import { enforceRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +20,13 @@ export async function POST(
     const userId = (session.user as { id: string }).id;
     const { id } = await params;
     await assertProjectRole(id, userId, ['owner', 'editor']);
+
+    const limited = await enforceRateLimit(
+      `rate:upload:${userId}`,
+      RATE_LIMITS.FILE_UPLOAD,
+      'Too many file uploads. Please wait a moment and try again.',
+    );
+    if (limited) return limited;
 
     const formData = await request.formData();
     const uploaded = formData.get('file');

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ApiError } from './errors';
 
 // Common validation patterns
 const safeString = z.string().refine(
@@ -111,3 +112,29 @@ export const BLOCKED_EXTENSIONS = new Set([
 export const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 export const MAX_PROJECT_SIZE = 500 * 1024 * 1024; // 500MB
 export const MAX_USER_STORAGE = 2 * 1024 * 1024 * 1024; // 2GB
+
+/**
+ * UUID v1-v5 pattern. Accepts both lower- and upper-case but Postgres only
+ * stores lowercase, so callers should `.toLowerCase()` after validation if
+ * they intend to pass through to Prisma.
+ */
+export const uuidSchema = z
+  .string()
+  .regex(
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/,
+    'Invalid UUID',
+  );
+
+/**
+ * Convenience wrapper for validating a path parameter that should be a UUID.
+ * Returns the value (lowercased) or throws an ApiError(400). Use in routes
+ * where the param is fed straight into Prisma — fails fast with a clear
+ * 400 instead of producing a 500.
+ */
+export function parseUuidParam(value: unknown, name = 'id'): string {
+  const result = uuidSchema.safeParse(value);
+  if (!result.success) {
+    throw new ApiError(400, `Invalid ${name}: expected a UUID`, 'INVALID_UUID');
+  }
+  return result.data.toLowerCase();
+}

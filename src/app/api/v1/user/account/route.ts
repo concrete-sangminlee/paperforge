@@ -2,6 +2,8 @@ import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { errorResponse } from '@/lib/errors';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
+import { enforceRateLimit } from '@/lib/rate-limit';
+import { RATE_LIMITS } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,6 +12,13 @@ export async function DELETE() {
     const session = await auth();
     if (!session?.user) return ApiErrors.unauthorized();
     const userId = (session.user as { id: string }).id;
+
+    const limited = await enforceRateLimit(
+      `rate:delete-account:${userId}`,
+      RATE_LIMITS.ACCOUNT_DELETE,
+      'Account deletion has been requested too many times. Please contact support if you are stuck.',
+    );
+    if (limited) return limited;
 
     // Delete in dependency order to respect foreign keys
     // 1. Delete user's git credentials

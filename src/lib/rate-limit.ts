@@ -150,3 +150,42 @@ export function rateLimitHeaders(
   }
   return headers;
 }
+
+import { NextResponse } from 'next/server';
+import { apiError } from './api-response';
+
+/**
+ * Convenience wrapper: enforce a rate limit and short-circuit with a 429
+ * response if exceeded. Returns null when the request is allowed.
+ *
+ * Usage:
+ *   const limited = await enforceRateLimit(key, RATE_LIMITS.GIT_OP);
+ *   if (limited) return limited;
+ */
+export async function enforceRateLimit(
+  key: string,
+  config: { limit: number; windowSeconds: number },
+  message = 'Too many requests. Please slow down and try again.',
+): Promise<NextResponse | null> {
+  const result = await checkRateLimit(key, config.limit, config.windowSeconds);
+  if (result.allowed) return null;
+  const res = apiError(message, 429, 'RATE_LIMITED');
+  Object.entries(rateLimitHeaders(config.limit, result)).forEach(([k, v]) => {
+    res.headers.set(k, v);
+  });
+  return res;
+}
+
+/**
+ * Best-effort client IP extraction from common proxy headers. Falls back to
+ * a stable sentinel when the IP cannot be determined so rate-limit keys
+ * remain deterministic per-deployment-environment.
+ */
+export function getClientIp(headers: Headers): string {
+  const forwarded = headers.get('x-forwarded-for');
+  if (forwarded) {
+    const first = forwarded.split(',')[0]?.trim();
+    if (first) return first;
+  }
+  return headers.get('x-real-ip') || headers.get('cf-connecting-ip') || 'unknown';
+}

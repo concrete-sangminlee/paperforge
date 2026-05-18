@@ -4,6 +4,8 @@ import { auth } from '@/lib/auth';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
 import { errorResponse } from '@/lib/errors';
 import { createShareLink } from '@/services/member-service';
+import { enforceRateLimit } from '@/lib/rate-limit';
+import { RATE_LIMITS } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +23,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return ApiErrors.unauthorized();
     }
     const userId = (session.user as { id: string }).id;
+
+    const limited = await enforceRateLimit(
+      `rate:share-link:${userId}`,
+      RATE_LIMITS.SHARE_LINK,
+      'You have created too many share links recently. Please wait before creating more.',
+    );
+    if (limited) return limited;
+
     const { id } = await params;
     const body = await request.json();
     const { permission, expiresAt } = createShareLinkSchema.parse(body);

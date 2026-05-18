@@ -381,7 +381,7 @@ export function ProjectCard({ project, currentUserId, viewMode = 'grid' }: Proje
     <div className="group relative block">
       <Link href={`/editor/${project.id}`} className="block">
         <Card
-          className={`border-l-4 transition-all duration-200 hover:shadow-lg hover:ring-foreground/20 hover:-translate-y-1 hover:scale-[1.02] ${accent}`}
+          className={`border-l-4 transition-[transform,box-shadow] duration-200 hover:shadow-lg hover:ring-foreground/20 hover:-translate-y-1 ${accent}`}
         >
           <CardHeader>
             <div className="flex items-start justify-between gap-2">

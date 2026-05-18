@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect, useMemo, useCallback } from 'react';
 import useSWR, { mutate } from 'swr';
 import { fetcher } from '@/lib/fetcher';
+import { formatBytes, getInitials } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
 import { useTheme } from 'next-themes';
 import {
@@ -76,23 +77,6 @@ interface UserProfile {
   role: string;
 }
 
-function formatBytes(bytes: number | string): string {
-  const n = typeof bytes === 'string' ? parseFloat(bytes) : bytes;
-  if (n < 1024) return `${n} B`;
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
-  if (n < 1024 * 1024 * 1024) return `${(n / (1024 * 1024)).toFixed(1)} MB`;
-  return `${(n / (1024 * 1024 * 1024)).toFixed(2)} GB`;
-}
-
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map((part) => part[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
-}
 
 function getPasswordStrength(password: string): {
   score: number;
@@ -161,6 +145,8 @@ function StatusMessage({ message, isSuccess }: { message: string; isSuccess: boo
   if (!message) return null;
   return (
     <span
+      role={isSuccess ? 'status' : 'alert'}
+      aria-live={isSuccess ? 'polite' : 'assertive'}
       className={`text-sm ${isSuccess ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}
     >
       {message}

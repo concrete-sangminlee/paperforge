@@ -2,6 +2,7 @@
 
 import useSWR from 'swr';
 import { fetcher } from '@/lib/fetcher';
+import { formatBytes } from '@/lib/utils';
 import Link from 'next/link';
 import {
   UsersIcon,
@@ -22,14 +23,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
-
-function formatBytes(bytes: string | number): string {
-  const n = typeof bytes === 'string' ? parseFloat(bytes) : bytes;
-  if (n < 1024) return `${n} B`;
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
-  if (n < 1024 * 1024 * 1024) return `${(n / (1024 * 1024)).toFixed(1)} MB`;
-  return `${(n / (1024 * 1024 * 1024)).toFixed(2)} GB`;
-}
 
 interface Stats {
   userCount: number;

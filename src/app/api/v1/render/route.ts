@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { errorResponse } from '@/lib/errors';
 import { apiError } from '@/lib/api-response';
+import { enforceRateLimit, getClientIp } from '@/lib/rate-limit';
+import { RATE_LIMITS } from '@/lib/constants';
 
 const renderSchema = z.object({
   latex: z.string().min(1).max(5000),
@@ -16,6 +18,10 @@ const renderSchema = z.object({
  */
 export async function POST(request: NextRequest) {
   try {
+    const ip = getClientIp(request.headers);
+    const limited = await enforceRateLimit(`rate:render:${ip}`, RATE_LIMITS.RENDER);
+    if (limited) return limited;
+
     const body = await request.json();
     const { latex, displayMode } = renderSchema.parse(body);
 

@@ -1,19 +1,11 @@
 'use client';
 
-import { cn } from '@/lib/utils';
+import { cn, formatBytes } from '@/lib/utils';
 
 interface StorageBarProps {
   usedBytes: number;
   quotaBytes: number;
   className?: string;
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  const value = bytes / Math.pow(1024, i);
-  return `${value.toFixed(value >= 100 ? 0 : value >= 10 ? 1 : 2)} ${units[i]}`;
 }
 
 export function StorageBar({ usedBytes, quotaBytes, className }: StorageBarProps) {

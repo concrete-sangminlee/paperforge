@@ -4,8 +4,9 @@ import { errorResponse } from '@/lib/errors';
 import { createProject } from '@/services/project-service';
 import { createFile } from '@/services/file-service';
 import { apiSuccess, apiError, ApiErrors } from '@/lib/api-response';
-import { isValidFilePath, LIMITS } from '@/lib/constants';
+import { isValidFilePath, LIMITS, RATE_LIMITS } from '@/lib/constants';
 import { parseZipTextEntries, ZIP_IMPORT_LIMITS } from '@/lib/zip-import';
+import { enforceRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +20,13 @@ export async function POST(request: NextRequest) {
     const session = await auth();
     if (!session?.user) return ApiErrors.unauthorized();
     const userId = (session.user as { id: string }).id;
+
+    const limited = await enforceRateLimit(
+      `rate:import:${userId}`,
+      RATE_LIMITS.IMPORT,
+      'You have imported too many projects recently. Please try again later.',
+    );
+    if (limited) return limited;
 
     const formData = await request.formData();
     const zipFile = formData.get('file') as File | null;

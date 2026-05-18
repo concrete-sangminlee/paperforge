@@ -4,6 +4,7 @@ import { useMemo, useState, useDeferredValue } from 'react';
 import { useSession } from 'next-auth/react';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/fetcher';
+import { formatBytes } from '@/lib/utils';
 import {
   SearchIcon,
   ArrowUpDownIcon,
@@ -39,17 +40,9 @@ const sortLabels: Record<SortOption, string> = {
   created: 'Date Created',
 };
 
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  const value = bytes / Math.pow(1024, i);
-  return `${value.toFixed(value >= 100 ? 0 : value >= 10 ? 1 : 2)} ${units[i]}`;
-}
-
 export default function ProjectsPage() {
   const { data: session } = useSession();
-  const { data: projects, isLoading, error: fetchError } = useSWR<ProjectData[]>(
+  const { data: projects, isLoading, error: fetchError, mutate: refetchProjects } = useSWR<ProjectData[]>(
     '/api/v1/projects',
     fetcher,
     { shouldRetryOnError: true, errorRetryCount: 3, revalidateOnFocus: false, dedupingInterval: 10000 },
@@ -245,7 +238,7 @@ export default function ProjectsPage() {
         <p className="mt-1 max-w-sm text-center text-sm text-muted-foreground">
           We couldn&apos;t fetch your projects. Please check your connection and try again.
         </p>
-        <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
+        <Button variant="outline" className="mt-4" onClick={() => refetchProjects()}>
           Retry
         </Button>
       </div>

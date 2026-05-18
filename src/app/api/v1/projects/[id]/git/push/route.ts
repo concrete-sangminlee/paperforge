@@ -4,6 +4,8 @@ import { apiSuccess, ApiErrors } from '@/lib/api-response';
 import { errorResponse } from '@/lib/errors';
 import { assertProjectRole } from '@/services/project-service';
 import { pushToRemote } from '@/services/git-service';
+import { enforceRateLimit } from '@/lib/rate-limit';
+import { RATE_LIMITS } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +21,13 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
     const { id } = await params;
 
     await assertProjectRole(id, userId, ['owner', 'editor']);
+
+    const limited = await enforceRateLimit(
+      `rate:git-push:${userId}:${id}`,
+      RATE_LIMITS.GIT_OP,
+      'Too many git push requests. Please wait before retrying.',
+    );
+    if (limited) return limited;
 
     await pushToRemote(id, userId);
     return apiSuccess({ success: true });
