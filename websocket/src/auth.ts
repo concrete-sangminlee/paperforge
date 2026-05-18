@@ -1,9 +1,17 @@
 import jwt from 'jsonwebtoken';
 import { IncomingMessage } from 'http';
 
-const SECRET = process.env.NEXTAUTH_SECRET;
+const SECRET = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
 if (!SECRET) {
-  console.error('[WebSocket] FATAL: NEXTAUTH_SECRET not set — authentication will reject all connections');
+  // Refuse to start instead of silently rejecting every cookie — running
+  // the websocket in this state means real users see opaque 401s and ops
+  // never finds out their secret is missing. Fail fast at deploy time.
+  console.error('[WebSocket] FATAL: NEXTAUTH_SECRET (or AUTH_SECRET) is not set');
+  process.exit(1);
+}
+
+export function hasSecret(): boolean {
+  return !!SECRET;
 }
 
 export function authenticateFromCookie(req: IncomingMessage): { id: string; role: string } | null {

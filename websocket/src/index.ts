@@ -1,6 +1,6 @@
 import http from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
-import { authenticateFromCookie } from './auth';
+import { authenticateFromCookie, hasSecret } from './auth';
 import { getProjectRole } from './authorization';
 import { handleConnection } from './yjs-server';
 
@@ -8,11 +8,30 @@ const PORT = parseInt(process.env.WS_PORT || '4001', 10);
 const MAX_CONNECTIONS_PER_USER = 20;
 const MAX_MESSAGE_SIZE = 10 * 1024 * 1024; // 10MB
 const PING_INTERVAL = 30_000; // 30s
+// 30 minutes of total silence terminates the socket. Keep-alive pings reset
+// the watchdog every PING_INTERVAL, so a healthy idle tab survives.
+const IDLE_TIMEOUT_MS = parseInt(process.env.WS_IDLE_TIMEOUT_MS || `${30 * 60 * 1000}`, 10);
 
 // Track connections per user for rate limiting
 const userConnectionCount = new Map<string, number>();
 
-const server = http.createServer((_req, res) => {
+const startedAt = Date.now();
+
+const server = http.createServer((req, res) => {
+  // Healthz: exposes auth-secret presence + connection counters so an
+  // orchestrator can tell a wedged process from a healthy idle one.
+  if (req.url === '/healthz') {
+    const body = {
+      status: hasSecret() ? 'ok' : 'degraded',
+      service: 'paperforge-ws',
+      uptimeSeconds: Math.round((Date.now() - startedAt) / 1000),
+      connections: { totalUsers: userConnectionCount.size },
+      hasAuthSecret: hasSecret(),
+    };
+    res.writeHead(hasSecret() ? 200 : 503, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(body));
+    return;
+  }
   res.writeHead(200, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({ status: 'ok', service: 'paperforge-ws' }));
 });
@@ -85,7 +104,18 @@ server.on('upgrade', async (req, socket, head) => {
 wss.on('connection', (ws: WebSocket, _req: http.IncomingMessage, projectId: string, isReadOnly: boolean) => {
   handleConnection(ws, projectId, isReadOnly);
 
+  // Idle watchdog — closes connections that go fully silent (no msgs, no
+  // pongs) for IDLE_TIMEOUT_MS. Resets on any incoming traffic.
+  let idleTimer = setTimeout(() => ws.close(1001, 'Idle timeout'), IDLE_TIMEOUT_MS);
+  const resetIdle = () => {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => ws.close(1001, 'Idle timeout'), IDLE_TIMEOUT_MS);
+  };
+  ws.on('message', resetIdle);
+  ws.on('pong', resetIdle);
+
   ws.on('close', () => {
+    clearTimeout(idleTimer);
     const userId = (ws as WebSocket & { _userId?: string })._userId;
     if (userId) {
       const count = (userConnectionCount.get(userId) ?? 1) - 1;
