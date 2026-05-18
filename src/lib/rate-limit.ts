@@ -7,6 +7,54 @@ export interface RateLimitResult {
   retryAfter?: number;
 }
 
+type MemoryWindow = { hits: number[]; lastSeen: number };
+
+const globalForRateLimit = globalThis as unknown as {
+  _rateLimitMemory?: Map<string, MemoryWindow>;
+  _rateLimitLastSweep?: number;
+};
+
+const MEMORY_SWEEP_INTERVAL_MS = 60_000;
+const MEMORY_ENTRY_TTL_MS = 10 * 60_000;
+
+function memoryStore(): Map<string, MemoryWindow> {
+  if (!globalForRateLimit._rateLimitMemory) {
+    globalForRateLimit._rateLimitMemory = new Map();
+  }
+  return globalForRateLimit._rateLimitMemory;
+}
+
+function sweepMemoryStore(now: number) {
+  if ((globalForRateLimit._rateLimitLastSweep ?? 0) + MEMORY_SWEEP_INTERVAL_MS > now) return;
+  globalForRateLimit._rateLimitLastSweep = now;
+
+  memoryStore().forEach((bucket, key) => {
+    if (bucket.lastSeen + MEMORY_ENTRY_TTL_MS < now) {
+      memoryStore().delete(key);
+    }
+  });
+}
+
+function checkMemoryRateLimit(key: string, limit: number, windowMs: number, now: number): RateLimitResult {
+  sweepMemoryStore(now);
+
+  const store = memoryStore();
+  const cutoff = now - windowMs;
+  const bucket = store.get(key) ?? { hits: [], lastSeen: now };
+  bucket.hits = bucket.hits.filter((timestamp) => timestamp > cutoff);
+  bucket.lastSeen = now;
+
+  if (bucket.hits.length >= limit) {
+    const retryAfter = Math.max(Math.ceil((bucket.hits[0] + windowMs - now) / 1000), 1);
+    store.set(key, bucket);
+    return { allowed: false, remaining: 0, retryAfter };
+  }
+
+  bucket.hits.push(now);
+  store.set(key, bucket);
+  return { allowed: true, remaining: Math.max(limit - bucket.hits.length, 0) };
+}
+
 /**
  * Atomic Lua script for sliding-window rate limiting.
  * Runs entirely on the Redis server so concurrent requests are serialized.
@@ -49,19 +97,30 @@ export async function checkRateLimit(
   limit: number,
   windowSeconds: number,
 ): Promise<RateLimitResult> {
-  if (!redis) {
-    console.warn(`[rate-limit] Redis unavailable — rate limiting disabled for key: ${key}`);
-    return { allowed: true, remaining: limit };
-  }
-
   const now = Date.now();
   const windowMs = windowSeconds * 1000;
+
+  if (!redis) {
+    if (process.env.RATE_LIMIT_STRICT === 'true') {
+      return { allowed: false, remaining: 0, retryAfter: windowSeconds };
+    }
+    return checkMemoryRateLimit(key, limit, windowMs, now);
+  }
+
   const member = `${now}:${randomUUID()}`;
 
-  const result = await redis.eval(
-    LUA_RATE_LIMIT, 1, key,
-    String(limit), String(windowMs), String(now), member,
-  ) as number;
+  let result: number;
+  try {
+    result = await redis.eval(
+      LUA_RATE_LIMIT, 1, key,
+      String(limit), String(windowMs), String(now), member,
+    ) as number;
+  } catch {
+    if (process.env.RATE_LIMIT_STRICT === 'true') {
+      return { allowed: false, remaining: 0, retryAfter: windowSeconds };
+    }
+    return checkMemoryRateLimit(key, limit, windowMs, now);
+  }
 
   if (result < 0) {
     const retryAfterMs = Math.abs(result);

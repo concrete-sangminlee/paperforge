@@ -10,6 +10,10 @@ describe('environment validation', () => {
     const criticalVars = [
       'DATABASE_URL',
       'REDIS_URL',
+      'REDIS_HOST',
+      'REDIS_PORT',
+      'REDIS_PASSWORD',
+      'RATE_LIMIT_STRICT',
       'NEXTAUTH_SECRET',
       'NEXTAUTH_URL',
       'ENCRYPTION_KEY',
@@ -25,6 +29,8 @@ describe('environment validation', () => {
       'WS_PORT',
       'GIT_REPOS_PATH',
       'NEXT_PUBLIC_WS_URL',
+      'AUTH_GOOGLE_ID',
+      'AUTH_GITHUB_ID',
     ];
     for (const v of criticalVars) {
       expect(envExample).toContain(v);

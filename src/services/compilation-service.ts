@@ -10,19 +10,51 @@ const isBuildPhase =
   process.env.NEXT_PHASE === 'phase-production-build' ||
   process.env.npm_lifecycle_event === 'build';
 
+function getRedisConnectionOptions() {
+  if (process.env.REDIS_URL) {
+    const parsed = new URL(process.env.REDIS_URL);
+    return {
+      host: parsed.hostname,
+      port: parseInt(parsed.port || '6379', 10),
+      username: parsed.username ? decodeURIComponent(parsed.username) : undefined,
+      password: parsed.password ? decodeURIComponent(parsed.password) : undefined,
+      db: parsed.pathname.length > 1 ? parseInt(parsed.pathname.slice(1), 10) : undefined,
+      tls: parsed.protocol === 'rediss:' ? {} : undefined,
+      maxRetriesPerRequest: null,
+    };
+  }
+
+  return {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379', 10),
+    password: process.env.REDIS_PASSWORD || undefined,
+    maxRetriesPerRequest: null,
+  };
+}
+
 try {
   if (!isBuildPhase && (process.env.REDIS_URL || process.env.REDIS_HOST)) {
     compilationQueue = new Queue('compilation', {
-      connection: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379'),
-        maxRetriesPerRequest: null,
-      },
+      connection: getRedisConnectionOptions(),
     });
   }
 } catch {
   console.warn('BullMQ queue unavailable (no Redis)');
 }
+
+const compilationSelect = {
+  id: true,
+  projectId: true,
+  userId: true,
+  status: true,
+  compiler: true,
+  log: true,
+  pdfMinioKey: true,
+  synctexMinioKey: true,
+  docxMinioKey: true,
+  durationMs: true,
+  createdAt: true,
+} as const;
 
 /**
  * Serverless-compatible compilation using latex.ytotech.com API.
@@ -162,24 +194,29 @@ export async function triggerCompilation(projectId: string, userId: string) {
         projectId,
         mainFile: project.mainFile,
         compiler: project.compiler,
-        files: project.files.filter((f) => f.minioKey).map((f) => ({ path: f.path, minioKey: f.minioKey as string })),
+        files: project.files.map((f) => ({
+          path: f.path,
+          minioKey: f.minioKey,
+          content: f.content,
+          isBinary: f.isBinary,
+        })),
       },
       { priority: 2, attempts: 2, backoff: { type: 'exponential', delay: 5000 } },
     );
   } else {
-    // Serverless fallback: compile via external API
-    compileViaAPI(
+    // Serverless fallback: finish the external API call before returning.
+    // Fire-and-forget work can be terminated after the HTTP response on serverless hosts.
+    await compileViaAPI(
       compilation.id,
       projectId,
       project.mainFile,
       project.compiler,
       project.files.map((f) => ({ path: f.path })),
-    ).catch((err) => {
-      console.error('[compilation] API compile failed:', err);
-      prisma.compilation.update({
-        where: { id: compilation.id },
-        data: { status: 'failed', log: err instanceof Error ? err.message : 'Compilation failed' },
-      }).catch(() => {});
+    );
+
+    return prisma.compilation.findUnique({
+      where: { id: compilation.id },
+      select: compilationSelect,
     });
   }
 

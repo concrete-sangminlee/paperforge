@@ -1,16 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Suspense } from "react";
-import dynamic from "next/dynamic";
+import type { ReactNode } from "react";
 import localFont from "next/font/local";
-import { SessionProvider } from "next-auth/react";
-import { ThemeProvider } from "next-themes";
-import { Toaster } from "@/components/ui/sonner";
-import { NavigationProgress } from "@/components/shared/navigation-progress";
-
-const CommandPalette = dynamic(
-  () => import("@/components/shared/command-palette").then((m) => m.CommandPalette),
-  { ssr: false }
-);
+import { AppProviders } from "./providers";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -40,11 +31,11 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXTAUTH_URL || "https://paperforge.dev"),
   title: {
-    default: "PaperForge — Open-Source Collaborative LaTeX Editor",
+    default: "PaperForge - Open-Source Collaborative LaTeX Editor",
     template: "%s | PaperForge",
   },
   description:
-    "Write, collaborate, and publish LaTeX documents in your browser. Real-time co-authoring, instant PDF preview, Git integration, and unlimited collaborators — free and open-source.",
+    "Write, collaborate, and publish LaTeX documents in your browser. Real-time co-authoring, instant PDF preview, Git integration, and unlimited collaborators - free and open-source.",
   keywords: [
     "LaTeX editor",
     "collaborative LaTeX",
@@ -77,13 +68,13 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     siteName: "PaperForge",
-    title: "PaperForge — Open-Source Collaborative LaTeX Editor",
+    title: "PaperForge - Open-Source Collaborative LaTeX Editor",
     description:
       "Write, collaborate, and publish LaTeX documents in your browser. Free, open-source Overleaf alternative with unlimited collaborators.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "PaperForge — Open-Source Collaborative LaTeX Editor",
+    title: "PaperForge - Open-Source Collaborative LaTeX Editor",
     description:
       "Free, open-source Overleaf alternative. Real-time collaboration, Git integration, instant PDF preview.",
   },
@@ -98,34 +89,22 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
       >
-        <SessionProvider basePath="/api/v1/auth">
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
+        <AppProviders>
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[9999] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:shadow-lg"
           >
-            <a
-              href="#main-content"
-              className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[9999] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:shadow-lg"
-            >
-              Skip to main content
-            </a>
-            <Suspense fallback={null}>
-              <NavigationProgress />
-            </Suspense>
-            <div id="main-content">{children}</div>
-            <CommandPalette />
-            <Toaster />
-          </ThemeProvider>
-        </SessionProvider>
+            Skip to main content
+          </a>
+          <div id="main-content">{children}</div>
+        </AppProviders>
       </body>
     </html>
   );

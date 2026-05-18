@@ -1,8 +1,21 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { loginSchema, registerSchema } from '@/lib/validation';
 import { checkRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
 
 describe('auth security configuration', () => {
+  it('supports Auth.js OAuth env names and legacy aliases', () => {
+    const authModule = readFileSync(join(process.cwd(), 'src/lib/auth.ts'), 'utf-8');
+    const oauthModule = readFileSync(join(process.cwd(), 'src/lib/oauth-providers.ts'), 'utf-8');
+
+    expect(authModule).toContain('getOAuthProviderConfig');
+    expect(oauthModule).toContain('AUTH_GOOGLE_ID');
+    expect(oauthModule).toContain('GOOGLE_CLIENT_ID');
+    expect(oauthModule).toContain('AUTH_GITHUB_ID');
+    expect(oauthModule).toContain('GITHUB_CLIENT_ID');
+  });
+
   describe('login validation', () => {
     it('rejects empty email', () => {
       const result = loginSchema.safeParse({ email: '', password: 'test' });

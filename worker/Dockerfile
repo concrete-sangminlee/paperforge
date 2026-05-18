@@ -13,12 +13,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-COPY package.json ./
-RUN npm install --omit=dev
+COPY package.json package-lock.json ./
+RUN npm ci
 
 COPY prisma ./prisma/
 RUN npx prisma generate
 
 COPY dist ./dist/
+RUN npm prune --omit=dev
 
 CMD ["node", "dist/index.js"]

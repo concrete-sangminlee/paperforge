@@ -8,6 +8,7 @@ import { apiSuccess, apiError, ApiErrors } from '@/lib/api-response';
 import { RATE_LIMITS } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 180;
 
 export async function POST(
   request: NextRequest,
@@ -26,13 +27,13 @@ export async function POST(
     const rateLimit = await checkRateLimit(rateLimitKey, RATE_LIMITS.COMPILATION.limit, RATE_LIMITS.COMPILATION.windowSeconds);
     if (!rateLimit.allowed) {
       const res = apiError('Too many compilation requests. Please wait before retrying.', 429, 'RATE_LIMITED');
-      Object.entries(rateLimitHeaders(10, rateLimit)).forEach(([k, v]) => res.headers.set(k, v));
+      Object.entries(rateLimitHeaders(RATE_LIMITS.COMPILATION.limit, rateLimit)).forEach(([k, v]) => res.headers.set(k, v));
       return res;
     }
 
     const compilation = await triggerCompilation(id, userId);
     const res = apiSuccess(compilation, 202);
-    Object.entries(rateLimitHeaders(10, rateLimit)).forEach(([k, v]) => res.headers.set(k, v));
+    Object.entries(rateLimitHeaders(RATE_LIMITS.COMPILATION.limit, rateLimit)).forEach(([k, v]) => res.headers.set(k, v));
     return res;
   } catch (error) {
     return errorResponse(error);

@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -103,6 +102,7 @@ model File {
   sizeBytes BigInt    @default(0) @map("size_bytes")
   mimeType  String?   @map("mime_type") @db.VarChar(255)
   minioKey  String?   @map("minio_key")
+  content   String?
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz()
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
@@ -111,6 +111,7 @@ model File {
 
   @@index([projectId])
   @@index([projectId, path])
+  @@index([projectId, deletedAt])
   @@map("files")
 }
 
@@ -122,7 +123,9 @@ model Compilation {
   compiler        String   @db.VarChar(20)
   log             String?
   pdfMinioKey     String?  @map("pdf_minio_key")
+  pdfData         Bytes?   @map("pdf_data")
   synctexMinioKey String?  @map("synctex_minio_key")
+  docxMinioKey    String?  @map("docx_minio_key")
   durationMs      Int?     @map("duration_ms")
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
@@ -132,6 +135,8 @@ model Compilation {
   @@index([projectId])
   @@index([userId, createdAt])
   @@index([projectId, createdAt(sort: Desc)])
+  @@index([projectId, userId, status])
+  @@index([status, createdAt(sort: Desc)])
   @@map("compilations")
 }
 
@@ -147,6 +152,7 @@ model Version {
   user    User?   @relation(fields: [userId], references: [id])
 
   @@index([projectId])
+  @@index([projectId, createdAt(sort: Desc)])
   @@map("versions")
 }
 
@@ -166,6 +172,7 @@ model Template {
   author        User?    @relation("TemplateAuthor", fields: [authorId], references: [id])
 
   @@index([category])
+  @@index([authorId])
   @@map("templates")
 }
 
@@ -180,6 +187,7 @@ model GitCredential {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
   @@map("git_credentials")
 }
 
@@ -193,6 +201,7 @@ model ShareLink {
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
+  @@index([projectId])
   @@map("share_links")
 }
 
@@ -208,6 +217,8 @@ model AuditLog {
   admin User @relation(fields: [adminId], references: [id])
 
   @@index([adminId])
+  @@index([adminId, createdAt(sort: Desc)])
   @@index([targetType, targetId])
+  @@index([createdAt(sort: Desc)])
   @@map("audit_log")
 }

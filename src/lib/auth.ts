@@ -6,6 +6,7 @@ import { verifyCredentials } from '@/services/user-service';
 import { loginSchema } from '@/lib/validation';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { RATE_LIMITS } from '@/lib/constants';
+import { getOAuthProviderConfig } from '@/lib/oauth-providers';
 
 import type { Provider } from 'next-auth/providers';
 
@@ -37,22 +38,24 @@ const providers: Provider[] = [
   }),
 ];
 
+const oauthProviders = getOAuthProviderConfig();
+
 // Conditionally add Google OAuth provider
-if (process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET) {
+if (oauthProviders.google) {
   providers.push(
     Google({
-      clientId: process.env.AUTH_GOOGLE_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET,
+      clientId: oauthProviders.google.clientId,
+      clientSecret: oauthProviders.google.clientSecret,
     }),
   );
 }
 
 // Conditionally add GitHub OAuth provider
-if (process.env.AUTH_GITHUB_ID && process.env.AUTH_GITHUB_SECRET) {
+if (oauthProviders.github) {
   providers.push(
     GitHub({
-      clientId: process.env.AUTH_GITHUB_ID,
-      clientSecret: process.env.AUTH_GITHUB_SECRET,
+      clientId: oauthProviders.github.clientId,
+      clientSecret: oauthProviders.github.clientSecret,
     }),
   );
 }

@@ -31,6 +31,10 @@ export const env = {
 
   // Redis
   REDIS_URL: optional('REDIS_URL'),
+  REDIS_HOST: optional('REDIS_HOST'),
+  REDIS_PORT: optional('REDIS_PORT', '6379'),
+  REDIS_PASSWORD: optional('REDIS_PASSWORD'),
+  RATE_LIMIT_STRICT: optional('RATE_LIMIT_STRICT', 'false'),
 
   // MinIO
   MINIO_ENDPOINT: optional('MINIO_ENDPOINT', 'localhost'),
@@ -48,6 +52,10 @@ export const env = {
   SMTP_FROM: optional('SMTP_FROM', 'PaperForge <noreply@paperforge.dev>'),
 
   // OAuth
+  AUTH_GOOGLE_ID: optional('AUTH_GOOGLE_ID'),
+  AUTH_GOOGLE_SECRET: optional('AUTH_GOOGLE_SECRET'),
+  AUTH_GITHUB_ID: optional('AUTH_GITHUB_ID'),
+  AUTH_GITHUB_SECRET: optional('AUTH_GITHUB_SECRET'),
   GOOGLE_CLIENT_ID: optional('GOOGLE_CLIENT_ID'),
   GOOGLE_CLIENT_SECRET: optional('GOOGLE_CLIENT_SECRET'),
   GITHUB_CLIENT_ID: optional('GITHUB_CLIENT_ID'),

@@ -4,13 +4,18 @@ import { Client as MinioClient } from 'minio';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
 import { compileLatex, CompilerType } from './compiler';
 
 // ---------------------------------------------------------------------------
-// Prisma client (standard JS client — no custom adapter needed in the worker)
+// Prisma client for the worker process.
 // ---------------------------------------------------------------------------
-const prisma = new PrismaClient();
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+  throw new Error('DATABASE_URL is required for the compilation worker');
+}
+const prisma = new PrismaClient({ adapter: new PrismaPg(databaseUrl) });
 
 // ---------------------------------------------------------------------------
 // Redis connection (maxRetriesPerRequest must be null for BullMQ workers)
@@ -43,14 +48,14 @@ interface CompilationJobData {
   projectId: string;
   mainFile: string;
   compiler: CompilerType;
-  files: Array<{ path: string; minioKey: string }>;
+  files: Array<{ path: string; minioKey?: string | null; content?: string | null; isBinary?: boolean }>;
 }
 
 // ---------------------------------------------------------------------------
 // Helper: download all project files into a temp directory, preserving paths
 // ---------------------------------------------------------------------------
 async function downloadProjectFiles(
-  files: Array<{ path: string; minioKey: string }>,
+  files: CompilationJobData['files'],
   workDir: string,
 ): Promise<void> {
   await Promise.all(
@@ -68,7 +73,17 @@ async function downloadProjectFiles(
       }
       const destDir = path.dirname(destPath);
       fs.mkdirSync(destDir, { recursive: true });
-      await minioClient.fGetObject(BUCKET, file.minioKey, destPath);
+      if (file.minioKey) {
+        try {
+          await minioClient.fGetObject(BUCKET, file.minioKey, destPath);
+          return;
+        } catch {
+          // Fall through to DB-backed content when object storage is unavailable.
+        }
+      }
+      if (typeof file.content === 'string' && !file.isBinary) {
+        fs.writeFileSync(destPath, file.content, 'utf8');
+      }
     }),
   );
 }

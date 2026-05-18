@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import packageJson from '../../../../package.json';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,6 +35,10 @@ export async function GET() {
   } else {
     checks.redis = { status: 'skipped', message: 'Redis not configured' };
   }
+  checks.rateLimit = {
+    status: 'ok',
+    message: checks.redis.status === 'ok' ? 'Using Redis' : 'Using in-memory fallback',
+  };
 
   // Check MinIO (optional — app stores content in DB as fallback)
   const minioEndpoint = process.env.MINIO_ENDPOINT || '';
@@ -60,7 +65,7 @@ export async function GET() {
   // Public response: only expose status, no latencies or infrastructure details
   const publicHealth = {
     status: overallStatus,
-    version: process.env.npm_package_version || '18.5.0',
+    version: process.env.NEXT_PUBLIC_APP_VERSION || packageJson.version,
     timestamp: new Date().toISOString(),
     checks: Object.fromEntries(
       Object.entries(checks).map(([k, v]) => [k, { status: v.status }])

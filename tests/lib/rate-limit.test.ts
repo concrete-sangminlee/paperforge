@@ -28,6 +28,26 @@ afterAll(async () => {
 });
 
 describe('rate-limit', () => {
+  it('enforces limits through the available backend', async () => {
+    const key = `test:rate-limit:fallback:${Date.now()}`;
+    const limit = 2;
+    const windowSeconds = 60;
+
+    expect(await checkRateLimit(key, limit, windowSeconds)).toMatchObject({
+      allowed: true,
+      remaining: 1,
+    });
+    expect(await checkRateLimit(key, limit, windowSeconds)).toMatchObject({
+      allowed: true,
+      remaining: 0,
+    });
+
+    const blocked = await checkRateLimit(key, limit, windowSeconds);
+    expect(blocked.allowed).toBe(false);
+    expect(blocked.remaining).toBe(0);
+    expect(blocked.retryAfter).toBeGreaterThan(0);
+  });
+
   it.skipIf(!redisAvailable)('should allow requests within the limit', async () => {
     const key = `test:rate-limit:${Date.now()}`;
     const limit = 5;
