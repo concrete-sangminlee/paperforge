@@ -241,5 +241,13 @@ export async function getLatestCompilation(projectId: string) {
   return prisma.compilation.findFirst({
     where: { projectId, status: 'success' },
     orderBy: { createdAt: 'desc' },
+    select: {
+      id: true,
+      status: true,
+      durationMs: true,
+      createdAt: true,
+      pdfMinioKey: true,
+      docxMinioKey: true,
+    },
   });
 }

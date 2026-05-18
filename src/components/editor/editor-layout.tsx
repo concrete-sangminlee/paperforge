@@ -165,7 +165,10 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
     const tabData = state.tabs.find((t) => t.path === currentTab);
     if (!tabData) return;
 
-    // Auto-save
+    // Auto-save — only mark clean if the server actually persisted the
+    // content. Previously a 5xx silently left the tab in "saved" state
+    // because we only branched on success without surfacing the failure.
+    let saved = false;
     try {
       const res = await fetch(`/api/v1/projects/${projectId}/files/${currentTab}`, {
         method: 'PUT',
@@ -174,13 +177,19 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
       });
       if (res.ok) {
         useEditorStore.getState().markSaved(currentTab);
+        saved = true;
+      } else {
+        console.error('Auto-save failed:', res.status, await res.text().catch(() => ''));
+        toast.error('Auto-save failed — file is still dirty. Use Ctrl+S to retry.');
       }
     } catch (err) {
       console.error('Auto-save error:', err);
+      toast.error('Auto-save failed (network). Use Ctrl+S to retry.');
     }
 
-    // Trigger compile via the registered compile function
-    if (compileFnRef.current) {
+    // Only kick off a compile when the file is actually on disk, otherwise
+    // the compiler runs against a stale version and confuses users.
+    if (saved && compileFnRef.current) {
       await compileFnRef.current();
       // Increment refreshKey so the PDF viewer reloads even if the URL is unchanged
       setPdfRefreshKey((k) => k + 1);
@@ -359,6 +368,9 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
     function handleBeforeUnload(e: BeforeUnloadEvent) {
       if (useEditorStore.getState().hasUnsavedChanges()) {
         e.preventDefault();
+        // Some Chromium/legacy Safari builds still require returnValue
+        // even though the spec deprecated it. Setting both is harmless.
+        e.returnValue = '';
       }
     }
     window.addEventListener('beforeunload', handleBeforeUnload);

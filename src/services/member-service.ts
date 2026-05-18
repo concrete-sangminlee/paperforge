@@ -14,24 +14,31 @@ export async function inviteMember(
 ) {
   await assertProjectRole(projectId, inviterId, ['owner']);
 
-  const invitee = await prisma.user.findUnique({ where: { email } });
+  const invitee = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, name: true },
+  });
   if (!invitee) {
     // Return a generic success to prevent email enumeration.
     // In production, consider sending an invitation email to unregistered addresses.
     return { invited: true, message: 'If an account with that email exists, the invitation has been sent.' };
   }
 
-  const existing = await prisma.projectMember.findUnique({
-    where: { projectId_userId: { projectId, userId: invitee.id } },
-  });
-  if (existing) {
-    throw new ApiError(409, 'User is already a member of this project');
+  // Race-safe insert: rely on the (projectId, userId) unique constraint
+  // rather than check-then-create. Two concurrent invites for the same
+  // user previously could both pass the existence check and double-insert.
+  let member;
+  try {
+    member = await prisma.projectMember.create({
+      data: { projectId, userId: invitee.id, role },
+      include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } },
+    });
+  } catch (err) {
+    if (err && typeof err === 'object' && (err as { code?: string }).code === 'P2002') {
+      throw new ApiError(409, 'User is already a member of this project');
+    }
+    throw err;
   }
-
-  const member = await prisma.projectMember.create({
-    data: { projectId, userId: invitee.id, role },
-    include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } },
-  });
 
   const project = await prisma.project.findFirst({
     where: { id: projectId, deletedAt: null },
@@ -103,7 +110,11 @@ export async function getMembers(projectId: string, requesterId: string) {
 
   return prisma.projectMember.findMany({
     where: { projectId },
-    include: {
+    select: {
+      projectId: true,
+      userId: true,
+      role: true,
+      joinedAt: true,
       user: { select: { id: true, name: true, email: true, avatarUrl: true } },
     },
     orderBy: { joinedAt: 'asc' },
@@ -134,17 +145,25 @@ export async function joinViaShareLink(token: string, userId: string) {
     throw new ApiError(410, 'Share link has expired');
   }
 
-  const existing = await prisma.projectMember.findUnique({
-    where: { projectId_userId: { projectId: link.projectId, userId } },
+  // Reject links that point at a deleted/archived project up-front instead
+  // of returning a null project to the caller. 410 conveys "the resource
+  // this link references is gone" more clearly than 404.
+  const project = await prisma.project.findFirst({
+    where: { id: link.projectId, deletedAt: null },
   });
-  if (existing) {
-    // Already a member — just return the project
-    return prisma.project.findFirst({ where: { id: link.projectId, deletedAt: null } });
+  if (!project) throw new ApiError(410, 'The project this link references is no longer available');
+
+  // Race-safe insert via unique constraint catch instead of check-then-create.
+  try {
+    await prisma.projectMember.create({
+      data: { projectId: link.projectId, userId, role: link.permission },
+    });
+  } catch (err) {
+    // P2002 = already a member; idempotent join, just return the project.
+    if (!err || typeof err !== 'object' || (err as { code?: string }).code !== 'P2002') {
+      throw err;
+    }
   }
 
-  await prisma.projectMember.create({
-    data: { projectId: link.projectId, userId, role: link.permission },
-  });
-
-  return prisma.project.findFirst({ where: { id: link.projectId, deletedAt: null } });
+  return project;
 }

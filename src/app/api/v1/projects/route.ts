@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/lib/auth';
 import { errorResponse } from '@/lib/errors';
 import { createProjectSchema } from '@/lib/validation';
 import { createProject, listProjects } from '@/services/project-service';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
-import { checkRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
+import { enforceRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,14 +30,14 @@ export async function POST(request: NextRequest) {
     }
     const userId = (session.user as { id: string }).id;
 
-    // Rate limit: 20 projects per hour per user
-    const rl = await checkRateLimit(`rate:create-project:${userId}`, 20, 3600);
-    if (!rl.allowed) {
-      return NextResponse.json(
-        { error: 'Too many projects created. Please try again later.' },
-        { status: 429, headers: rateLimitHeaders(20, rl) },
-      );
-    }
+    // 20 projects per hour per user. Goes through the shared helper so the
+    // 429 response matches the wrapped envelope every other route uses.
+    const limited = await enforceRateLimit(
+      `rate:create-project:${userId}`,
+      { limit: 20, windowSeconds: 3600 },
+      'Too many projects created. Please try again later.',
+    );
+    if (limited) return limited;
 
     const body = await request.json();
     const data = createProjectSchema.parse(body);

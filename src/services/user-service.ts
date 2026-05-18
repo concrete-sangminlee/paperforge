@@ -18,7 +18,20 @@ export async function createUser(email: string, name: string, password: string) 
 const DUMMY_HASH = '$2a$12$LJ3m4ys3Lg2JFMg.Vy1GNe8dOJGCqW2Yqz8Hb7MxFZLkXQdKLWy6';
 
 export async function verifyCredentials(email: string, password: string) {
-  const user = await prisma.user.findUnique({ where: { email } });
+  // Explicit select: omit large/unused columns and ensure we don't accidentally
+  // start serializing the password hash elsewhere if this return ever widens.
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      passwordHash: true,
+      lockedUntil: true,
+      failedLoginAttempts: true,
+    },
+  });
 
   // Always perform bcrypt compare to prevent timing-based user enumeration
   if (!user || !user.passwordHash) {

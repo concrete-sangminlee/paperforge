@@ -1,7 +1,12 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { errorResponse } from '@/lib/errors';
-import { listTemplates, submitTemplate } from '@/services/template-service';
+import {
+  listTemplates,
+  submitTemplate,
+  TEMPLATE_LIST_DEFAULT_LIMIT,
+  TEMPLATE_LIST_MAX_LIMIT,
+} from '@/services/template-service';
 import { z } from 'zod';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
 
@@ -19,8 +24,22 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category') ?? undefined;
     const search = searchParams.get('search') ?? undefined;
-    const templates = await listTemplates(category, search);
-    return apiSuccess(templates);
+    const rawLimit = Number(searchParams.get('limit')) || TEMPLATE_LIST_DEFAULT_LIMIT;
+    const rawOffset = Number(searchParams.get('offset')) || 0;
+    const { items, total, limit, offset } = await listTemplates(
+      category,
+      search,
+      Math.min(rawLimit, TEMPLATE_LIST_MAX_LIMIT),
+      rawOffset,
+    );
+    // Keep the array shape clients already depend on (data: Template[]) but
+    // surface pagination through standard headers so a future infinite-scroll
+    // UI has access to it without breaking existing consumers.
+    const res = NextResponse.json({ success: true, data: items });
+    res.headers.set('X-Total-Count', String(total));
+    res.headers.set('X-Page-Limit', String(limit));
+    res.headers.set('X-Page-Offset', String(offset));
+    return res;
   } catch (error) {
     return errorResponse(error);
   }

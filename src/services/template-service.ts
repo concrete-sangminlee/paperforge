@@ -5,25 +5,53 @@ import { createFile } from '@/services/file-service';
 
 const TEMPLATE_CATEGORIES = ['journal', 'thesis', 'presentation', 'letter', 'cv'] as const;
 
-export async function listTemplates(category?: string, search?: string) {
-  return prisma.template.findMany({
-    where: {
-      isApproved: true,
-      ...(category && category !== 'all' ? { category } : {}),
-      ...(search
-        ? {
-            OR: [
-              { name: { contains: search, mode: 'insensitive' } },
-              { description: { contains: search, mode: 'insensitive' } },
-            ],
-          }
-        : {}),
-    },
-    include: {
-      author: { select: { id: true, name: true } },
-    },
-    orderBy: { downloadCount: 'desc' },
-  });
+/** Cap how many templates we will ever return in one call. The gallery
+ *  paginates, but a misbehaving client should not be able to ask for the
+ *  whole table in a single request. */
+export const TEMPLATE_LIST_MAX_LIMIT = 100;
+export const TEMPLATE_LIST_DEFAULT_LIMIT = 50;
+
+export async function listTemplates(
+  category?: string,
+  search?: string,
+  limit: number = TEMPLATE_LIST_DEFAULT_LIMIT,
+  offset: number = 0,
+) {
+  const safeLimit = Math.min(Math.max(1, Math.floor(limit)), TEMPLATE_LIST_MAX_LIMIT);
+  const safeOffset = Math.max(0, Math.floor(offset));
+  const where = {
+    isApproved: true,
+    ...(category && category !== 'all' ? { category } : {}),
+    ...(search
+      ? {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' as const } },
+            { description: { contains: search, mode: 'insensitive' as const } },
+          ],
+        }
+      : {}),
+  };
+  const [items, total] = await Promise.all([
+    prisma.template.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        category: true,
+        downloadCount: true,
+        thumbnailUrl: true,
+        isApproved: true,
+        createdAt: true,
+        author: { select: { id: true, name: true } },
+      },
+      orderBy: { downloadCount: 'desc' },
+      take: safeLimit,
+      skip: safeOffset,
+    }),
+    prisma.template.count({ where }),
+  ]);
+  return { items, total, limit: safeLimit, offset: safeOffset };
 }
 
 export async function getTemplate(id: string) {

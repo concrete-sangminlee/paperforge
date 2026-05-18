@@ -6,56 +6,70 @@ export const dynamic = 'force-dynamic';
 type CheckStatus = { status: 'ok' | 'error' | 'skipped'; latency?: number; message?: string };
 
 export async function GET() {
-  const checks: Record<string, CheckStatus> = {};
   let overallStatus: 'ok' | 'degraded' | 'down' = 'ok';
 
-  // Check database (required service — only this can degrade the overall status)
-  try {
-    const start = Date.now();
-    const { prisma } = await import('@/lib/prisma');
-    await prisma.$queryRaw`SELECT 1`;
-    checks.database = { status: 'ok', latency: Date.now() - start };
-  } catch {
-    checks.database = { status: 'error', message: 'Database unreachable' };
-    overallStatus = 'degraded';
+  // Fan-out the three independent subchecks. Previously these awaited
+  // sequentially, padding healthz latency by Redis + MinIO timeouts on a
+  // bad day. With Promise.all the response is bounded by the slowest
+  // single check rather than their sum.
+  const redisConfigured = !!(process.env.REDIS_URL || process.env.REDIS_HOST);
+  const minioEndpoint = process.env.MINIO_ENDPOINT || '';
+  const minioConfigured = !!minioEndpoint && minioEndpoint !== 'localhost';
+
+  async function checkDatabase(): Promise<CheckStatus> {
+    try {
+      const start = Date.now();
+      const { prisma } = await import('@/lib/prisma');
+      await prisma.$queryRaw`SELECT 1`;
+      return { status: 'ok', latency: Date.now() - start };
+    } catch {
+      return { status: 'error', message: 'Database unreachable' };
+    }
   }
 
-  // Check Redis (optional — app works with in-memory fallback)
-  const redisConfigured = !!(process.env.REDIS_URL || process.env.REDIS_HOST);
-  if (redisConfigured) {
+  async function checkRedis(): Promise<CheckStatus> {
+    if (!redisConfigured) return { status: 'skipped', message: 'Redis not configured' };
     try {
       const start = Date.now();
       const mod = await import('@/lib/redis');
       if (!mod.redis) throw new Error('Redis not configured');
       await mod.redis.ping();
-      checks.redis = { status: 'ok', latency: Date.now() - start };
+      return { status: 'ok', latency: Date.now() - start };
     } catch {
-      checks.redis = { status: 'skipped', message: 'Redis unavailable (using in-memory fallback)' };
+      return { status: 'skipped', message: 'Redis unavailable (using in-memory fallback)' };
     }
-  } else {
-    checks.redis = { status: 'skipped', message: 'Redis not configured' };
   }
-  checks.rateLimit = {
-    status: 'ok',
-    message: checks.redis.status === 'ok' ? 'Using Redis' : 'Using in-memory fallback',
-  };
 
-  // Check MinIO (optional — app stores content in DB as fallback)
-  const minioEndpoint = process.env.MINIO_ENDPOINT || '';
-  const minioConfigured = !!minioEndpoint && minioEndpoint !== 'localhost';
-  if (minioConfigured) {
+  async function checkStorage(): Promise<CheckStatus> {
+    if (!minioConfigured) return { status: 'skipped', message: 'External storage not configured' };
     try {
       const start = Date.now();
       const mod = await import('@/lib/minio');
       if (!mod.minioClient) throw new Error('MinIO not configured');
       await mod.minioClient.listBuckets();
-      checks.storage = { status: 'ok', latency: Date.now() - start };
+      return { status: 'ok', latency: Date.now() - start };
     } catch {
-      checks.storage = { status: 'skipped', message: 'Storage unavailable (using DB fallback)' };
+      return { status: 'skipped', message: 'Storage unavailable (using DB fallback)' };
     }
-  } else {
-    checks.storage = { status: 'skipped', message: 'External storage not configured' };
   }
+
+  const [database, redis, storage] = await Promise.all([
+    checkDatabase(),
+    checkRedis(),
+    checkStorage(),
+  ]);
+
+  const checks: Record<string, CheckStatus> = {
+    database,
+    redis,
+    rateLimit: {
+      status: 'ok',
+      message: redis.status === 'ok' ? 'Using Redis' : 'Using in-memory fallback',
+    },
+    storage,
+  };
+
+  if (database.status === 'error') overallStatus = 'degraded';
 
   // Only mark as down if the database (the only required service) is unreachable
   if (checks.database.status === 'error') {
