@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { env } from '@/lib/env';
 import packageJson from '../../../../package.json';
 
 export const dynamic = 'force-dynamic';
@@ -12,9 +13,10 @@ export async function GET() {
   // sequentially, padding healthz latency by Redis + MinIO timeouts on a
   // bad day. With Promise.all the response is bounded by the slowest
   // single check rather than their sum.
-  const redisConfigured = !!(process.env.REDIS_URL || process.env.REDIS_HOST);
-  const minioEndpoint = process.env.MINIO_ENDPOINT || '';
+  const redisConfigured = !!(env.REDIS_URL || env.REDIS_HOST);
+  const minioEndpoint = env.MINIO_ENDPOINT || '';
   const minioConfigured = !!minioEndpoint && minioEndpoint !== 'localhost';
+  const storageRequired = !env.MINIO_ALLOW_FALLBACK;
 
   async function checkDatabase(): Promise<CheckStatus> {
     try {
@@ -41,7 +43,11 @@ export async function GET() {
   }
 
   async function checkStorage(): Promise<CheckStatus> {
-    if (!minioConfigured) return { status: 'skipped', message: 'External storage not configured' };
+    if (!minioConfigured) {
+      return storageRequired
+        ? { status: 'error', message: 'External storage is required but not configured' }
+        : { status: 'skipped', message: 'External storage not configured' };
+    }
     try {
       const start = Date.now();
       const mod = await import('@/lib/minio');
@@ -74,6 +80,9 @@ export async function GET() {
   // Only mark as down if the database (the only required service) is unreachable
   if (checks.database.status === 'error') {
     overallStatus = 'down';
+  }
+  if (checks.storage.status === 'error') {
+    overallStatus = overallStatus === 'down' ? 'down' : 'degraded';
   }
 
   // Public response: only expose status, no latencies or infrastructure details
