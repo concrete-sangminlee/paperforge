@@ -1,3 +1,5 @@
+import { env } from './env';
+
 const DEFAULT_APP_BASE_URL = 'https://projectlatexcompiler.vercel.app';
 
 function normalizeBaseUrl(value: string | undefined): string | null {
@@ -19,10 +21,10 @@ function normalizeBaseUrl(value: string | undefined): string | null {
 
 export function getAppBaseUrl(): string {
   return (
-    normalizeBaseUrl(process.env.NEXT_PUBLIC_APP_URL) ??
-    normalizeBaseUrl(process.env.NEXTAUTH_URL) ??
-    normalizeBaseUrl(process.env.VERCEL_PROJECT_PRODUCTION_URL) ??
-    normalizeBaseUrl(process.env.VERCEL_URL) ??
+    normalizeBaseUrl(env.NEXT_PUBLIC_APP_URL) ??
+    normalizeBaseUrl(env.NEXTAUTH_URL) ??
+    normalizeBaseUrl(env.VERCEL_PROJECT_PRODUCTION_URL) ??
+    normalizeBaseUrl(env.VERCEL_URL) ??
     DEFAULT_APP_BASE_URL
   );
 }

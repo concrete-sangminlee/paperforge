@@ -88,7 +88,7 @@ export async function GET() {
   // Public response: only expose status, no latencies or infrastructure details
   const publicHealth = {
     status: overallStatus,
-    version: process.env.NEXT_PUBLIC_APP_VERSION || packageJson.version,
+    version: env.NEXT_PUBLIC_APP_VERSION || packageJson.version,
     timestamp: new Date().toISOString(),
     checks: Object.fromEntries(
       Object.entries(checks).map(([k, v]) => [k, { status: v.status }])

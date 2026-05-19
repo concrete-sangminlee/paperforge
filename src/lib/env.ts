@@ -82,7 +82,7 @@ export const env = {
   REDIS_HOST: optional('REDIS_HOST'),
   REDIS_PORT: String(parsePositiveInteger('REDIS_PORT', 6379)),
   REDIS_PASSWORD: optional('REDIS_PASSWORD'),
-  RATE_LIMIT_STRICT: optional('RATE_LIMIT_STRICT', 'false'),
+  RATE_LIMIT_STRICT: parseBoolean('RATE_LIMIT_STRICT', false),
 
   // MinIO
   MINIO_ENDPOINT: optional('MINIO_ENDPOINT', 'localhost'),
@@ -101,6 +101,13 @@ export const env = {
   SMTP_FROM: optional('SMTP_FROM', 'PaperForge <noreply@paperforge.dev>'),
   SMTP_SECURE: parseBoolean('SMTP_SECURE', false),
 
+  // External services
+  ANTHROPIC_API_KEY: optional('ANTHROPIC_API_KEY'),
+
+  // Local runtime paths
+  LOCAL_STORAGE_PATH: optional('LOCAL_STORAGE_PATH'),
+  GIT_REPOS_PATH: optional('GIT_REPOS_PATH', '/tmp/paperforge-repos'),
+
   // OAuth
   AUTH_GOOGLE_ID: optional('AUTH_GOOGLE_ID'),
   AUTH_GOOGLE_SECRET: optional('AUTH_GOOGLE_SECRET'),
@@ -114,6 +121,9 @@ export const env = {
   // Public
   NEXT_PUBLIC_APP_URL: optional('NEXT_PUBLIC_APP_URL'),
   NEXT_PUBLIC_WS_URL: optional('NEXT_PUBLIC_WS_URL', 'ws://localhost:4001'),
+  NEXT_PUBLIC_APP_VERSION: optional('NEXT_PUBLIC_APP_VERSION'),
+  VERCEL_PROJECT_PRODUCTION_URL: optional('VERCEL_PROJECT_PRODUCTION_URL'),
+  VERCEL_URL: optional('VERCEL_URL'),
 
   // Runtime
   NODE_ENV: optional('NODE_ENV', 'development'),

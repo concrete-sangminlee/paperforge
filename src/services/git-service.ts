@@ -5,8 +5,9 @@ import path from 'path';
 import { prisma } from '@/lib/prisma';
 import { decrypt, encrypt } from '@/lib/encryption';
 import { ApiError } from '@/lib/errors';
+import { env } from '@/lib/env';
 
-const REPOS_BASE = process.env.GIT_REPOS_PATH || '/tmp/paperforge-repos';
+const REPOS_BASE = env.GIT_REPOS_PATH || '/tmp/paperforge-repos';
 
 function getRepoDir(projectId: string) {
   return path.join(REPOS_BASE, projectId);

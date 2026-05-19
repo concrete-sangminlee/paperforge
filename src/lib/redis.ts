@@ -4,7 +4,7 @@ import { env } from './env';
 const globalForRedis = globalThis as unknown as { _redis?: Redis | null; _redisInit?: boolean };
 
 function createRedisClient(): Redis | null {
-  const url = process.env.REDIS_URL;
+  const url = env.REDIS_URL;
   const host = env.REDIS_HOST;
   if (!url && !host) return null;
 
@@ -26,7 +26,7 @@ function createRedisClient(): Redis | null {
       : new Redis({
         host: host || 'localhost',
         port: Number.parseInt(env.REDIS_PORT, 10) || 6379,
-        password: process.env.REDIS_PASSWORD || undefined,
+        password: env.REDIS_PASSWORD || undefined,
         ...options,
       });
     // Suppress unhandled error events to prevent build/runtime crashes

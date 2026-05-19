@@ -8,6 +8,7 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { RATE_LIMITS } from '@/lib/constants';
 import { getOAuthProviderConfig } from '@/lib/oauth-providers';
 import { prisma } from '@/lib/prisma';
+import { env } from '@/lib/env';
 
 import type { Provider } from 'next-auth/providers';
 
@@ -61,7 +62,7 @@ if (oauthProviders.github) {
   );
 }
 
-const isProduction = process.env.NODE_ENV === 'production';
+const isProduction = env.isProduction;
 
 export type { AppSessionUser } from '@/lib/session';
 export { getAppUser } from '@/lib/session';

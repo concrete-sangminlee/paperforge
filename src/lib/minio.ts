@@ -16,7 +16,7 @@ function createMinioClient(): Client {
 
 export const minioClient = globalForMinio.minioClient || createMinioClient();
 
-if (process.env.NODE_ENV !== 'production') globalForMinio.minioClient = minioClient;
+if (env.isDevelopment) globalForMinio.minioClient = minioClient;
 
 /**
  * Returns the configured bucket name.

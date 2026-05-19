@@ -27,8 +27,8 @@ function parseRedisDb(pathname: string | undefined, fallback: number): number | 
 }
 
 function getRedisConnectionOptions() {
-  if (process.env.REDIS_URL) {
-    const parsed = new URL(process.env.REDIS_URL);
+  if (env.REDIS_URL) {
+    const parsed = new URL(env.REDIS_URL);
     const port = parseRedisPort(parsed.port, parseRedisPort(env.REDIS_PORT, 6379));
     return {
       host: parsed.hostname,
@@ -44,13 +44,13 @@ function getRedisConnectionOptions() {
   return {
     host: env.REDIS_HOST || 'localhost',
     port: parseRedisPort(env.REDIS_PORT, 6379),
-    password: process.env.REDIS_PASSWORD || undefined,
+    password: env.REDIS_PASSWORD || undefined,
     maxRetriesPerRequest: null,
   };
 }
 
 try {
-  if (!isBuildPhase && (process.env.REDIS_URL || process.env.REDIS_HOST)) {
+  if (!isBuildPhase && (env.REDIS_URL || env.REDIS_HOST)) {
     compilationQueue = new Queue('compilation', {
       connection: getRedisConnectionOptions(),
     });

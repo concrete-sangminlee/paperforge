@@ -10,7 +10,7 @@ const transporter = nodemailer.createTransport({
   port: resolvedSmtpPort,
   secure: env.SMTP_SECURE || resolvedSmtpPort === 465,
   auth:
-    process.env.SMTP_USER && process.env.SMTP_PASS
+    env.SMTP_USER && env.SMTP_PASS
       ? {
           user: env.SMTP_USER,
           pass: env.SMTP_PASS,
@@ -30,7 +30,7 @@ export async function sendEmail(
 ): Promise<boolean> {
   try {
     await transporter.sendMail({
-      from: process.env.SMTP_FROM || 'noreply@paperforge.dev',
+      from: env.SMTP_FROM || 'noreply@paperforge.dev',
       to,
       subject,
       html,

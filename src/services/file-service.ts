@@ -9,7 +9,7 @@ import { ApiError } from '@/lib/errors';
  * Local filesystem fallback for file storage when MinIO is unavailable.
  * Used for development and single-user deployments.
  */
-const LOCAL_STORAGE = pathModule.join(process.env.LOCAL_STORAGE_PATH || (process.cwd() + '/.local-storage'));
+const LOCAL_STORAGE = pathModule.join(env.LOCAL_STORAGE_PATH || (process.cwd() + '/.local-storage'));
 
 function localPath(minioKey: string): string {
   const resolved = pathModule.resolve(LOCAL_STORAGE, minioKey);

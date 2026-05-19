@@ -1,7 +1,8 @@
 import jwt from 'jsonwebtoken';
+import { env } from './env';
 
 function getSecret(): string {
-  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+  const secret = env.AUTH_SECRET || env.NEXTAUTH_SECRET;
   if (!secret) {
     throw new Error('AUTH_SECRET or NEXTAUTH_SECRET environment variable is not set');
   }

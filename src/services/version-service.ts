@@ -3,8 +3,9 @@ import fs from 'fs';
 import path from 'path';
 import { prisma } from '@/lib/prisma';
 import { ApiError } from '@/lib/errors';
+import { env } from '@/lib/env';
 
-const REPOS_BASE = process.env.GIT_REPOS_PATH || '/tmp/paperforge-repos';
+const REPOS_BASE = env.GIT_REPOS_PATH || '/tmp/paperforge-repos';
 
 function getRepoPath(projectId: string) {
   if (!/^[a-zA-Z0-9_-]+$/.test(projectId)) {

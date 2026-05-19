@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth';
 import { errorResponse } from '@/lib/errors';
 import { apiSuccess, apiError, ApiErrors } from '@/lib/api-response';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { env } from '@/lib/env';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
       return apiError('AI request limit reached. Try again later.', 429, 'RATE_LIMITED');
     }
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const apiKey = env.ANTHROPIC_API_KEY;
     if (!apiKey) {
       return apiError('AI assistant not configured. Set ANTHROPIC_API_KEY.', 503, 'AI_UNAVAILABLE');
     }

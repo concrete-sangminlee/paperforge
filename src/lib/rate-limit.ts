@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import { redis } from './redis';
+import { env } from './env';
 
 export interface RateLimitResult {
   allowed: boolean;
@@ -101,7 +102,7 @@ export async function checkRateLimit(
   const windowMs = windowSeconds * 1000;
 
   if (!redis) {
-    if (process.env.RATE_LIMIT_STRICT === 'true') {
+    if (env.RATE_LIMIT_STRICT) {
       return { allowed: false, remaining: 0, retryAfter: windowSeconds };
     }
     return checkMemoryRateLimit(key, limit, windowMs, now);
@@ -116,7 +117,7 @@ export async function checkRateLimit(
       String(limit), String(windowMs), String(now), member,
     ) as number;
   } catch {
-    if (process.env.RATE_LIMIT_STRICT === 'true') {
+    if (env.RATE_LIMIT_STRICT) {
       return { allowed: false, remaining: 0, retryAfter: windowSeconds };
     }
     return checkMemoryRateLimit(key, limit, windowMs, now);

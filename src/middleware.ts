@@ -14,7 +14,7 @@ function normalizeOrigin(value: string): string | null {
 function getAllowedApiOrigins() {
   const explicit = env.CORS_ALLOWED_ORIGINS ?? [];
   const devOrigins =
-    process.env.NODE_ENV === 'development'
+    env.isDevelopment
       ? ['http://localhost:3000', 'http://localhost']
       : [];
   return [...new Set([...explicit, ...devOrigins].filter(Boolean))];
