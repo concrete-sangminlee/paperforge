@@ -7,9 +7,6 @@ import { getFileContent } from '@/services/file-service';
 import { env } from '@/lib/env';
 
 let compilationQueue: Queue | null = null;
-const isBuildPhase =
-  process.env.NEXT_PHASE === 'phase-production-build' ||
-  process.env.npm_lifecycle_event === 'build';
 
 function parseRedisPort(value: string | undefined, fallback: number): number {
   const parsed = Number.parseInt(value ?? '', 10);
@@ -50,7 +47,7 @@ function getRedisConnectionOptions() {
 }
 
 try {
-  if (!isBuildPhase && (env.REDIS_URL || env.REDIS_HOST)) {
+  if (!env.isBuildPhase && (env.REDIS_URL || env.REDIS_HOST)) {
     compilationQueue = new Queue('compilation', {
       connection: getRedisConnectionOptions(),
     });

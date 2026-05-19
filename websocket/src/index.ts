@@ -3,14 +3,15 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { authenticateFromCookie, hasSecret } from './auth';
 import { getProjectRole } from './authorization';
 import { handleConnection } from './yjs-server';
+import { env } from './env';
 
-const PORT = parseInt(process.env.WS_PORT || '4001', 10);
+const PORT = env.WS_PORT;
 const MAX_CONNECTIONS_PER_USER = 20;
 const MAX_MESSAGE_SIZE = 10 * 1024 * 1024; // 10MB
 const PING_INTERVAL = 30_000; // 30s
 // 30 minutes of total silence terminates the socket. Keep-alive pings reset
 // the watchdog every PING_INTERVAL, so a healthy idle tab survives.
-const IDLE_TIMEOUT_MS = parseInt(process.env.WS_IDLE_TIMEOUT_MS || `${30 * 60 * 1000}`, 10);
+const IDLE_TIMEOUT_MS = env.WS_IDLE_TIMEOUT_MS;
 
 // Track connections per user for rate limiting
 const userConnectionCount = new Map<string, number>();

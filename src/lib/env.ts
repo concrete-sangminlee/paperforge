@@ -3,11 +3,15 @@
  * Validates critical env vars at import time to fail fast on misconfiguration.
  */
 
+const isBuildPhase =
+  process.env.NEXT_PHASE === 'phase-production-build' ||
+  process.env.npm_lifecycle_event === 'build';
+
 function required(name: string): string {
   const value = process.env[name];
   if (!value) {
     // During Next.js build phase, some vars may not be available
-    if (process.env.NEXT_PHASE === 'phase-production-build') return '';
+    if (isBuildPhase) return '';
     console.warn(`[env] Missing required env var: ${name}`);
     return '';
   }
@@ -54,6 +58,9 @@ function normalizeOrigin(raw: string): string | null {
   }
 }
 
+const FALLBACK_AUTH_SECRET = optional('AUTH_SECRET');
+const NODE_ENV = optional('NODE_ENV', 'development');
+
 function parseOriginList(name: string): string[] {
   const raw = process.env[name];
   if (!raw) return [];
@@ -66,12 +73,14 @@ function parseOriginList(name: string): string[] {
 }
 
 export const env = {
+  isBuildPhase,
+
   // Database
   DATABASE_URL: required('DATABASE_URL'),
 
   // Auth
   AUTH_SECRET: optional('AUTH_SECRET'),
-  NEXTAUTH_SECRET: optional('NEXTAUTH_SECRET', process.env.AUTH_SECRET ?? ''),
+  NEXTAUTH_SECRET: optional('NEXTAUTH_SECRET', FALLBACK_AUTH_SECRET),
   NEXTAUTH_URL: optional('NEXTAUTH_URL', 'http://localhost:3000'),
 
   // Encryption
@@ -120,13 +129,13 @@ export const env = {
 
   // Public
   NEXT_PUBLIC_APP_URL: optional('NEXT_PUBLIC_APP_URL'),
-  NEXT_PUBLIC_WS_URL: optional('NEXT_PUBLIC_WS_URL', 'ws://localhost:4001'),
+  NEXT_PUBLIC_WS_URL: optional('NEXT_PUBLIC_WS_URL'),
   NEXT_PUBLIC_APP_VERSION: optional('NEXT_PUBLIC_APP_VERSION'),
   VERCEL_PROJECT_PRODUCTION_URL: optional('VERCEL_PROJECT_PRODUCTION_URL'),
   VERCEL_URL: optional('VERCEL_URL'),
 
   // Runtime
-  NODE_ENV: optional('NODE_ENV', 'development'),
+  NODE_ENV,
   CORS_ALLOWED_ORIGINS: Array.from(
     new Set(
       [
@@ -139,6 +148,6 @@ export const env = {
         .filter(Boolean),
     ),
   ),
-  isProduction: process.env.NODE_ENV === 'production',
-  isDevelopment: process.env.NODE_ENV !== 'production',
+  isProduction: NODE_ENV === 'production',
+  isDevelopment: NODE_ENV !== 'production',
 } as const;

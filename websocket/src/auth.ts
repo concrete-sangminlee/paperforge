@@ -1,7 +1,8 @@
 import jwt from 'jsonwebtoken';
 import { IncomingMessage } from 'http';
+import { env } from './env';
 
-const SECRET = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
+const SECRET = env.NEXTAUTH_SECRET || env.AUTH_SECRET;
 if (!SECRET) {
   // Refuse to start instead of silently rejecting every cookie — running
   // the websocket in this state means real users see opaque 401s and ops

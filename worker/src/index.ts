@@ -7,28 +7,25 @@ import * as os from 'os';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
 import { compileLatex, CompilerType } from './compiler';
+import { env } from './env';
 
 // ---------------------------------------------------------------------------
 // Prisma client for the worker process.
 // ---------------------------------------------------------------------------
-const databaseUrl = process.env.DATABASE_URL;
-if (!databaseUrl) {
-  throw new Error('DATABASE_URL is required for the compilation worker');
-}
-const prisma = new PrismaClient({ adapter: new PrismaPg(databaseUrl) });
+const prisma = new PrismaClient({ adapter: new PrismaPg(env.DATABASE_URL) });
 
 // ---------------------------------------------------------------------------
 // Redis connection (maxRetriesPerRequest must be null for BullMQ workers)
 // ---------------------------------------------------------------------------
 function createRedisConnection() {
   const options = { maxRetriesPerRequest: null };
-  if (process.env.REDIS_URL) {
-    return new Redis(process.env.REDIS_URL, options);
+  if (env.REDIS_URL) {
+    return new Redis(env.REDIS_URL, options);
   }
   return new Redis({
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6379', 10),
-    password: process.env.REDIS_PASSWORD || undefined,
+    host: env.REDIS_HOST,
+    port: env.REDIS_PORT,
+    password: env.REDIS_PASSWORD,
     ...options,
   });
 }
@@ -42,14 +39,14 @@ const publisher = createRedisConnection();
 // MinIO client
 // ---------------------------------------------------------------------------
 const minioClient = new MinioClient({
-  endPoint: process.env.MINIO_ENDPOINT || 'localhost',
-  port: parseInt(process.env.MINIO_PORT || '9000', 10),
-  useSSL: process.env.MINIO_USE_SSL === 'true',
-  accessKey: process.env.MINIO_ACCESS_KEY || '',
-  secretKey: process.env.MINIO_SECRET_KEY || '',
+  endPoint: env.MINIO_ENDPOINT,
+  port: env.MINIO_PORT,
+  useSSL: env.MINIO_USE_SSL,
+  accessKey: env.MINIO_ACCESS_KEY,
+  secretKey: env.MINIO_SECRET_KEY,
 });
 
-const BUCKET = process.env.MINIO_BUCKET || 'paperforge';
+const BUCKET = env.MINIO_BUCKET;
 
 // ---------------------------------------------------------------------------
 // Job payload type
@@ -143,8 +140,8 @@ async function publishStatus(compilationId: string, payload: object): Promise<vo
 // but a misconfigured queue could otherwise retry a poison job forever,
 // silently draining the worker. Three attempts with exponential backoff is
 // the same shape as our other queue-bound jobs.
-const WORKER_ATTEMPTS = parseInt(process.env.WORKER_MAX_ATTEMPTS || '3', 10);
-const WORKER_LOCK_DURATION_MS = parseInt(process.env.WORKER_LOCK_DURATION_MS || '180000', 10);
+const WORKER_ATTEMPTS = env.WORKER_MAX_ATTEMPTS;
+const WORKER_LOCK_DURATION_MS = env.WORKER_LOCK_DURATION_MS;
 
 const inFlight = new Set<string>();
 

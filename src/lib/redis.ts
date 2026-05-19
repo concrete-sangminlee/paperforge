@@ -9,7 +9,7 @@ function createRedisClient(): Redis | null {
   if (!url && !host) return null;
 
   // Skip during Next.js build phase
-  if (process.env.NEXT_PHASE === 'phase-production-build' || process.env.npm_lifecycle_event === 'build') return null;
+  if (env.isBuildPhase) return null;
 
   try {
   const options: RedisOptions = {
