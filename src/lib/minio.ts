@@ -22,7 +22,7 @@ if (process.env.NODE_ENV !== 'production') globalForMinio.minioClient = minioCli
  * Returns the configured bucket name.
  */
 export function getBucket(): string {
-  return process.env.MINIO_BUCKET || 'paperforge';
+  return env.MINIO_BUCKET || 'paperforge';
 }
 
 /**

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import pathModule from 'path';
 import { prisma } from '@/lib/prisma';
+import { env } from '@/lib/env';
 import { minioClient, getBucket, ensureBucket } from '@/lib/minio';
 import { ApiError } from '@/lib/errors';
 
@@ -73,14 +74,15 @@ export async function createFile(
   const buffer = Buffer.from(content, 'utf-8');
   const mimeType = detectTextMimeType(path);
 
-  // Try to upload to MinIO — fall back to local filesystem if unavailable
   try {
     await ensureBucket();
     const bucket = getBucket();
     await minioClient.putObject(bucket, minioKey, buffer);
   } catch {
-    // MinIO not available — save to local filesystem as fallback
-    await writeLocal(minioKey, buffer).catch(() => {});
+    if (!env.MINIO_ALLOW_FALLBACK) {
+      throw new ApiError(503, 'Object storage is unavailable');
+    }
+    await writeLocal(minioKey, buffer);
   }
 
   const existing = await prisma.file.findFirst({
@@ -133,7 +135,9 @@ export async function getFileContent(projectId: string, path: string): Promise<s
       }
       return Buffer.concat(chunks).toString('utf-8');
     } catch {
-      // MinIO unavailable — try fallbacks
+      if (!env.MINIO_ALLOW_FALLBACK && !file.content) {
+        throw new ApiError(503, 'Object storage is unavailable');
+      }
     }
   }
 
@@ -141,7 +145,7 @@ export async function getFileContent(projectId: string, path: string): Promise<s
   if (file.content) return file.content;
 
   // 3. Try local filesystem (dev fallback)
-  if (file.minioKey) {
+  if (file.minioKey && env.MINIO_ALLOW_FALLBACK) {
     const localBuf = await readLocal(file.minioKey);
     if (localBuf) return localBuf.toString('utf-8');
   }
@@ -195,15 +199,16 @@ export async function uploadBinaryFile(
 ) {
   const minioKey = `projects/${projectId}/files/${path}`;
 
-  // Try to upload to MinIO — skip gracefully if unavailable (e.g., Vercel)
   let minioAvailable = false;
   try {
     await ensureBucket();
     await minioClient.putObject(getBucket(), minioKey, buffer);
     minioAvailable = true;
   } catch {
-    // MinIO not available — fall back to local storage then DB
-    await writeLocal(minioKey, buffer).catch(() => {});
+    if (!env.MINIO_ALLOW_FALLBACK) {
+      throw new ApiError(503, 'Object storage is unavailable');
+    }
+    await writeLocal(minioKey, buffer);
   }
 
   // Store base64 in DB content column for small binaries when MinIO is unavailable
@@ -241,3 +246,4 @@ export async function uploadBinaryFile(
     },
   });
 }
+
