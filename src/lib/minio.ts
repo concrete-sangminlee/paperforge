@@ -1,14 +1,16 @@
 import { Client } from 'minio';
+import { env } from './env';
 
 const globalForMinio = globalThis as unknown as { minioClient: Client };
 
 function createMinioClient(): Client {
+  const minioPort = Number.parseInt(env.MINIO_PORT || '9000', 10);
   return new Client({
-    endPoint: process.env.MINIO_ENDPOINT || 'localhost',
-    port: parseInt(process.env.MINIO_PORT || '9000', 10),
-    useSSL: process.env.MINIO_USE_SSL === 'true',
-    accessKey: process.env.MINIO_ACCESS_KEY || '',
-    secretKey: process.env.MINIO_SECRET_KEY || '',
+    endPoint: env.MINIO_ENDPOINT || 'localhost',
+    port: Number.isNaN(minioPort) ? 9000 : minioPort,
+    useSSL: env.MINIO_USE_SSL === 'true',
+    accessKey: env.MINIO_ACCESS_KEY || '',
+    secretKey: env.MINIO_SECRET_KEY || '',
   });
 }
 

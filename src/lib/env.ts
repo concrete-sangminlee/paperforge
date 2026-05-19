@@ -18,6 +18,53 @@ function optional(name: string, fallback = ''): string {
   return process.env[name] ?? fallback;
 }
 
+function parsePositiveInteger(
+  name: string,
+  fallback: number,
+  bounds: { min: number; max: number } = { min: 1, max: 65535 },
+): number {
+  const raw = process.env[name];
+  const parsed = Number.parseInt(raw ?? '', 10);
+  if (raw !== undefined && (Number.isNaN(parsed) || !Number.isInteger(parsed))) {
+    console.warn(`[env] Invalid integer for ${name}: ${raw} (using ${fallback})`);
+    return fallback;
+  }
+  if (raw !== undefined && (parsed < bounds.min || parsed > bounds.max)) {
+    console.warn(`[env] Out-of-range value for ${name}: ${raw} (using ${fallback})`);
+    return fallback;
+  }
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function parseBoolean(name: string, fallback = false): boolean {
+  const raw = process.env[name];
+  if (raw === undefined) return fallback;
+  if (/^(1|true|yes|on)$/i.test(raw.trim())) return true;
+  if (/^(0|false|no|off)$/i.test(raw.trim())) return false;
+  console.warn(`[env] Invalid boolean for ${name}: ${raw} (using ${fallback})`);
+  return fallback;
+}
+
+function normalizeOrigin(raw: string): string | null {
+  try {
+    const normalized = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+    return new URL(normalized).origin;
+  } catch {
+    return null;
+  }
+}
+
+function parseOriginList(name: string): string[] {
+  const raw = process.env[name];
+  if (!raw) return [];
+  return raw
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .map((entry) => normalizeOrigin(entry))
+    .filter((entry): entry is string => typeof entry === 'string');
+}
+
 export const env = {
   // Database
   DATABASE_URL: required('DATABASE_URL'),
@@ -33,24 +80,26 @@ export const env = {
   // Redis
   REDIS_URL: optional('REDIS_URL'),
   REDIS_HOST: optional('REDIS_HOST'),
-  REDIS_PORT: optional('REDIS_PORT', '6379'),
+  REDIS_PORT: String(parsePositiveInteger('REDIS_PORT', 6379)),
   REDIS_PASSWORD: optional('REDIS_PASSWORD'),
   RATE_LIMIT_STRICT: optional('RATE_LIMIT_STRICT', 'false'),
 
   // MinIO
   MINIO_ENDPOINT: optional('MINIO_ENDPOINT', 'localhost'),
-  MINIO_PORT: optional('MINIO_PORT', '9000'),
+  MINIO_PORT: String(parsePositiveInteger('MINIO_PORT', 9000)),
   MINIO_ACCESS_KEY: optional('MINIO_ACCESS_KEY'),
   MINIO_SECRET_KEY: optional('MINIO_SECRET_KEY'),
   MINIO_BUCKET: optional('MINIO_BUCKET', 'paperforge'),
   MINIO_USE_SSL: optional('MINIO_USE_SSL', 'false'),
+  MINIO_ALLOW_FALLBACK: parseBoolean('MINIO_ALLOW_FALLBACK', true),
 
   // Email
   SMTP_HOST: optional('SMTP_HOST', 'localhost'),
-  SMTP_PORT: optional('SMTP_PORT', '587'),
+  SMTP_PORT: String(parsePositiveInteger('SMTP_PORT', 587)),
   SMTP_USER: optional('SMTP_USER'),
   SMTP_PASS: optional('SMTP_PASS'),
   SMTP_FROM: optional('SMTP_FROM', 'PaperForge <noreply@paperforge.dev>'),
+  SMTP_SECURE: parseBoolean('SMTP_SECURE', false),
 
   // OAuth
   AUTH_GOOGLE_ID: optional('AUTH_GOOGLE_ID'),
@@ -68,6 +117,18 @@ export const env = {
 
   // Runtime
   NODE_ENV: optional('NODE_ENV', 'development'),
+  CORS_ALLOWED_ORIGINS: Array.from(
+    new Set(
+      [
+        parseOriginList('CORS_ALLOWED_ORIGINS'),
+        parseOriginList('NEXT_PUBLIC_APP_URL'),
+        parseOriginList('NEXTAUTH_URL'),
+        parseOriginList('VERCEL_URL'),
+      ]
+        .flat()
+        .filter(Boolean),
+    ),
+  ),
   isProduction: process.env.NODE_ENV === 'production',
   isDevelopment: process.env.NODE_ENV !== 'production',
 } as const;

@@ -4,29 +4,46 @@ import { ApiError } from '@/lib/errors';
 import { isValidFilePath } from '@/lib/constants';
 import { minioClient, getBucket, ensureBucket } from '@/lib/minio';
 import { getFileContent } from '@/services/file-service';
+import { env } from '@/lib/env';
 
 let compilationQueue: Queue | null = null;
 const isBuildPhase =
   process.env.NEXT_PHASE === 'phase-production-build' ||
   process.env.npm_lifecycle_event === 'build';
 
+function parseRedisPort(value: string | undefined, fallback: number): number {
+  const parsed = Number.parseInt(value ?? '', 10);
+  if (Number.isNaN(parsed) || !Number.isInteger(parsed) || parsed <= 0 || parsed > 65535) {
+    return fallback;
+  }
+  return parsed;
+}
+
+function parseRedisDb(pathname: string | undefined, fallback: number): number | undefined {
+  if (!pathname || pathname === '/') return fallback ? 0 : undefined;
+  const db = Number.parseInt(pathname.slice(1), 10);
+  if (Number.isNaN(db) || db < 0 || db > 15) return fallback ? 0 : undefined;
+  return db;
+}
+
 function getRedisConnectionOptions() {
   if (process.env.REDIS_URL) {
     const parsed = new URL(process.env.REDIS_URL);
+    const port = parseRedisPort(parsed.port, parseRedisPort(env.REDIS_PORT, 6379));
     return {
       host: parsed.hostname,
-      port: parseInt(parsed.port || '6379', 10),
+      port,
       username: parsed.username ? decodeURIComponent(parsed.username) : undefined,
       password: parsed.password ? decodeURIComponent(parsed.password) : undefined,
-      db: parsed.pathname.length > 1 ? parseInt(parsed.pathname.slice(1), 10) : undefined,
+      db: parseRedisDb(parsed.pathname, 0),
       tls: parsed.protocol === 'rediss:' ? {} : undefined,
       maxRetriesPerRequest: null,
     };
   }
 
   return {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6379', 10),
+    host: env.REDIS_HOST || 'localhost',
+    port: parseRedisPort(env.REDIS_PORT, 6379),
     password: process.env.REDIS_PASSWORD || undefined,
     maxRetriesPerRequest: null,
   };

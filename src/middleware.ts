@@ -1,30 +1,75 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { env } from '@/lib/env';
+
+function normalizeOrigin(value: string): string | null {
+  try {
+    const withScheme = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+    return new URL(withScheme).origin;
+  } catch {
+    return null;
+  }
+}
+
+function getAllowedApiOrigins() {
+  const explicit = env.CORS_ALLOWED_ORIGINS ?? [];
+  const devOrigins =
+    process.env.NODE_ENV === 'development'
+      ? ['http://localhost:3000', 'http://localhost']
+      : [];
+  return [...new Set([...explicit, ...devOrigins].filter(Boolean))];
+}
+
+function isOriginAllowed(origin: string | null, requestOrigin: string): boolean {
+  if (!origin) return true;
+  const normalized = normalizeOrigin(origin);
+  if (!normalized) return false;
+  if (normalized === requestOrigin) return true;
+  return getAllowedApiOrigins().includes(normalized);
+}
 
 export function middleware(request: NextRequest) {
   const response = NextResponse.next();
   const { pathname } = request.nextUrl;
+  const isApiRoute = pathname.startsWith('/api/');
+  const origin = request.headers.get('origin');
+  const isStateChange = request.method !== 'GET' && request.method !== 'HEAD';
+
+  const requestOrigin = request.nextUrl.origin;
+  if (origin && !isOriginAllowed(origin, requestOrigin)) {
+    if (isApiRoute) {
+      const body = JSON.stringify({ error: 'Origin not allowed by CORS policy' });
+      return new NextResponse(body, {
+        status: 403,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    }
+  }
 
   // Add request ID for tracing
   const requestId = crypto.randomUUID();
   response.headers.set('X-Request-ID', requestId);
 
   // CORS headers for API routes
-  if (pathname.startsWith('/api/')) {
-    const origin = request.headers.get('origin');
-    const allowedOrigins = [
-      process.env.NEXTAUTH_URL,
-      ...(process.env.NODE_ENV === 'development'
-        ? ['http://localhost:3000', 'http://localhost']
-        : []),
-    ].filter(Boolean);
+  if (isApiRoute) {
+    const allowedOrigins = getAllowedApiOrigins();
 
-    if (origin && allowedOrigins.includes(origin)) {
-      response.headers.set('Access-Control-Allow-Origin', origin);
+    if (origin) {
+      const normalized = normalizeOrigin(origin);
+      if (normalized && (normalized === requestOrigin || allowedOrigins.includes(normalized))) {
+        response.headers.set('Access-Control-Allow-Origin', normalized);
+        response.headers.set('Vary', 'Origin');
+      }
     }
 
     response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    response.headers.set(
+      'Access-Control-Allow-Headers',
+      'Content-Type, Authorization, X-Requested-With, X-Request-ID, X-CSRF-Token',
+    );
+    response.headers.set('Access-Control-Allow-Credentials', 'true');
     response.headers.set('Access-Control-Max-Age', '86400');
 
     // Handle preflight
@@ -32,9 +77,9 @@ export function middleware(request: NextRequest) {
       return new NextResponse(null, { status: 204, headers: response.headers });
     }
 
-    // CSRF protection: reject cross-origin state-changing requests
-    // Sec-Fetch-Site is sent by all modern browsers and cannot be spoofed
-    if (request.method !== 'GET' && request.method !== 'HEAD') {
+    if (isStateChange) {
+      // CSRF protection: reject cross-origin state-changing requests
+      // Sec-Fetch-Site is sent by all modern browsers and cannot be spoofed
       const secFetchSite = request.headers.get('sec-fetch-site');
       // Allow: same-origin, none (direct navigation), and missing header (older browsers/curl)
       if (secFetchSite && secFetchSite !== 'same-origin' && secFetchSite !== 'none') {
@@ -56,7 +101,9 @@ export function middleware(request: NextRequest) {
       request.cookies.get('__Secure-next-auth.session-token')?.value;
 
     if (!sessionToken) {
-      return NextResponse.redirect(new URL('/login', request.url));
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('callbackUrl', request.nextUrl.pathname + request.nextUrl.search);
+      return NextResponse.redirect(loginUrl);
     }
   }
 

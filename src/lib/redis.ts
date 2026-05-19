@@ -1,17 +1,18 @@
 import Redis, { type RedisOptions } from 'ioredis';
+import { env } from './env';
 
 const globalForRedis = globalThis as unknown as { _redis?: Redis | null; _redisInit?: boolean };
 
 function createRedisClient(): Redis | null {
   const url = process.env.REDIS_URL;
-  const host = process.env.REDIS_HOST;
+  const host = env.REDIS_HOST;
   if (!url && !host) return null;
 
   // Skip during Next.js build phase
   if (process.env.NEXT_PHASE === 'phase-production-build' || process.env.npm_lifecycle_event === 'build') return null;
 
   try {
-    const options: RedisOptions = {
+  const options: RedisOptions = {
       maxRetriesPerRequest: 3,
       lazyConnect: true,
       enableOfflineQueue: false,
@@ -24,7 +25,7 @@ function createRedisClient(): Redis | null {
       ? new Redis(url, options)
       : new Redis({
         host: host || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379', 10),
+        port: Number.parseInt(env.REDIS_PORT, 10) || 6379,
         password: process.env.REDIS_PASSWORD || undefined,
         ...options,
       });
