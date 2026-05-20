@@ -5,15 +5,24 @@ import { join } from 'path';
 describe('CI/CD & GitHub config', () => {
   it('CI workflow has lint job', () => {
     const c = readFileSync(join(process.cwd(), '.github/workflows/ci.yml'), 'utf-8');
-    expect(c).toContain('next lint');
+    expect(c).toContain('npm run lint');
   });
   it('CI workflow has test job', () => {
     const c = readFileSync(join(process.cwd(), '.github/workflows/ci.yml'), 'utf-8');
-    expect(c).toContain('vitest run');
+    expect(c).toContain('npm test');
   });
   it('CI workflow has build job', () => {
     const c = readFileSync(join(process.cwd(), '.github/workflows/ci.yml'), 'utf-8');
     expect(c).toContain('npm run build');
+  });
+  it('CI workflow validates Prisma schemas', () => {
+    const c = readFileSync(join(process.cwd(), '.github/workflows/ci.yml'), 'utf-8');
+    expect(c).toContain('npx prisma validate');
+  });
+  it('CI workflow builds runtime packages', () => {
+    const c = readFileSync(join(process.cwd(), '.github/workflows/ci.yml'), 'utf-8');
+    expect(c).toContain('working-directory: worker');
+    expect(c).toContain('working-directory: websocket');
   });
   it('Dependabot configured for npm', () => {
     const c = readFileSync(join(process.cwd(), '.github/dependabot.yml'), 'utf-8');
