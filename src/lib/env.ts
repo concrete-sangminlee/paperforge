@@ -99,7 +99,7 @@ export const env = {
   MINIO_ACCESS_KEY: optional('MINIO_ACCESS_KEY'),
   MINIO_SECRET_KEY: optional('MINIO_SECRET_KEY'),
   MINIO_BUCKET: optional('MINIO_BUCKET', 'paperforge'),
-  MINIO_USE_SSL: optional('MINIO_USE_SSL', 'false'),
+  MINIO_USE_SSL: parseBoolean('MINIO_USE_SSL', false),
   MINIO_ALLOW_FALLBACK: parseBoolean('MINIO_ALLOW_FALLBACK', true),
 
   // Email

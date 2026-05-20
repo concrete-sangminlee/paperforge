@@ -23,5 +23,5 @@ describe('Redis client', () => {
   it('has redis export', () => { expect(r).toContain('redis'); });
   it('has lazyConnect', () => { expect(r).toContain('lazyConnect'); });
   it('has error suppression', () => { expect(r).toContain("on('error'"); });
-  it('has build phase skip', () => { expect(r).toContain('NEXT_PHASE'); });
+  it('has build phase skip', () => { expect(r).toContain('isBuildPhase'); });
 });

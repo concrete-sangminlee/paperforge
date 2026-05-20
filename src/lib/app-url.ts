@@ -1,5 +1,3 @@
-import { env } from './env';
-
 const DEFAULT_APP_BASE_URL = 'https://projectlatexcompiler.vercel.app';
 
 function normalizeBaseUrl(value: string | undefined): string | null {
@@ -20,11 +18,14 @@ function normalizeBaseUrl(value: string | undefined): string | null {
 }
 
 export function getAppBaseUrl(): string {
+  // Read process.env directly: the central env module captures values at module
+  // load time, which breaks the fallback chain when NEXTAUTH_URL's default kicks
+  // in or when callers mutate env at runtime (tests).
   return (
-    normalizeBaseUrl(env.NEXT_PUBLIC_APP_URL) ??
-    normalizeBaseUrl(env.NEXTAUTH_URL) ??
-    normalizeBaseUrl(env.VERCEL_PROJECT_PRODUCTION_URL) ??
-    normalizeBaseUrl(env.VERCEL_URL) ??
+    normalizeBaseUrl(process.env.NEXT_PUBLIC_APP_URL) ??
+    normalizeBaseUrl(process.env.NEXTAUTH_URL) ??
+    normalizeBaseUrl(process.env.VERCEL_PROJECT_PRODUCTION_URL) ??
+    normalizeBaseUrl(process.env.VERCEL_URL) ??
     DEFAULT_APP_BASE_URL
   );
 }

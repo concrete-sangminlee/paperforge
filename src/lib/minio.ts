@@ -8,7 +8,7 @@ function createMinioClient(): Client {
   return new Client({
     endPoint: env.MINIO_ENDPOINT || 'localhost',
     port: Number.isNaN(minioPort) ? 9000 : minioPort,
-    useSSL: env.MINIO_USE_SSL === 'true',
+    useSSL: env.MINIO_USE_SSL,
     accessKey: env.MINIO_ACCESS_KEY || '',
     secretKey: env.MINIO_SECRET_KEY || '',
   });
