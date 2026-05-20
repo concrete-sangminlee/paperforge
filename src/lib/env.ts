@@ -81,7 +81,7 @@ export const env = {
   // Auth
   AUTH_SECRET: optional('AUTH_SECRET'),
   NEXTAUTH_SECRET: optional('NEXTAUTH_SECRET', FALLBACK_AUTH_SECRET),
-  NEXTAUTH_URL: optional('NEXTAUTH_URL', 'http://localhost:3000'),
+  NEXTAUTH_URL: optional('NEXTAUTH_URL'),
 
   // Encryption
   ENCRYPTION_KEY: required('ENCRYPTION_KEY'),

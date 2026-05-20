@@ -17,7 +17,7 @@ import { latexCompletionSource } from '@/lib/latex-completions';
 import { getLanguageForFile } from '@/lib/latex-language';
 import { latexLinter } from '@/lib/latex-linter';
 import { latexFoldService } from '@/lib/latex-fold';
-import { env } from '@/lib/env';
+import { clientEnv } from '@/lib/client-env';
 
 interface LaTeXEditorProps {
   initialContent: string;
@@ -33,7 +33,7 @@ interface LaTeXEditorProps {
 const themeCompartment = new Compartment();
 const wrapCompartment = new Compartment();
 
-const WS_BASE = env.NEXT_PUBLIC_WS_URL || '';
+const WS_BASE = clientEnv.NEXT_PUBLIC_WS_URL || '';
 
 /** Wrap the current selection with prefix/suffix, or insert at cursor if no selection. */
 function wrapSelection(view: EditorView, prefix: string, suffix: string): boolean {

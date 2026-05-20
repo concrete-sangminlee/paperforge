@@ -34,7 +34,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import type { WebsocketProvider } from 'y-websocket';
 import { useOnlineStatus } from '@/hooks/use-online-status';
-import { env } from '@/lib/env';
+import { clientEnv } from '@/lib/client-env';
 
 interface FileEntry {
   id: string;
@@ -389,7 +389,7 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
           You are offline. Changes will sync when your internet connection is restored.
         </div>
       )}
-      {isOnline && !wsConnected && env.NEXT_PUBLIC_WS_URL && (
+      {isOnline && !wsConnected && clientEnv.NEXT_PUBLIC_WS_URL && (
         <div className="flex items-center gap-2 bg-amber-500/10 border-b border-amber-500/20 px-4 py-1.5 text-xs text-amber-600">
           <WifiOff className="size-3.5" />
           Connection lost. Changes will sync when reconnected.
