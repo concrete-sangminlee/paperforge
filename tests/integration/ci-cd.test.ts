@@ -15,9 +15,13 @@ describe('CI/CD & GitHub config', () => {
     const c = readFileSync(join(process.cwd(), '.github/workflows/ci.yml'), 'utf-8');
     expect(c).toContain('npm run build');
   });
-  it('CI workflow validates Prisma schemas', () => {
+  it('CI workflow validates Prisma schemas for every package with one', () => {
     const c = readFileSync(join(process.cwd(), '.github/workflows/ci.yml'), 'utf-8');
-    expect(c).toContain('npx prisma validate');
+    const validateCount = (c.match(/npx prisma validate/g) ?? []).length;
+    // root + worker + websocket all carry their own prisma/schema.prisma
+    expect(validateCount).toBeGreaterThanOrEqual(3);
+    expect(c).toContain('working-directory: worker');
+    expect(c).toContain('working-directory: websocket');
   });
   it('CI workflow builds runtime packages', () => {
     const c = readFileSync(join(process.cwd(), '.github/workflows/ci.yml'), 'utf-8');

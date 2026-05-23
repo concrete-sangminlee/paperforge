@@ -69,6 +69,15 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: worker/package-lock.json
+      - run: npm ci
+        working-directory: worker
+      - run: npx prisma validate
+        working-directory: worker
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
           cache-dependency-path: websocket/package-lock.json
       - run: npm ci
         working-directory: websocket
