@@ -28,6 +28,23 @@ describe('CI/CD & GitHub config', () => {
     expect(c).toContain('working-directory: worker');
     expect(c).toContain('working-directory: websocket');
   });
+  it('runtime Prisma schemas use the current generated client', () => {
+    const schemaPaths = [
+      'prisma/schema.prisma',
+      'worker/prisma/schema.prisma',
+      'websocket/prisma/schema.prisma',
+    ];
+    for (const schemaPath of schemaPaths) {
+      const schema = readFileSync(join(process.cwd(), schemaPath), 'utf-8');
+      expect(schema).toMatch(/provider\s*=\s*"prisma-client"/);
+    }
+  });
+  it('runtime package builds generate Prisma clients before TypeScript', () => {
+    const workerPackage = readFileSync(join(process.cwd(), 'worker/package.json'), 'utf-8');
+    const websocketPackage = readFileSync(join(process.cwd(), 'websocket/package.json'), 'utf-8');
+    expect(workerPackage).toContain('"build": "prisma generate && tsc"');
+    expect(websocketPackage).toContain('"build": "prisma generate && tsc"');
+  });
   it('Dependabot configured for npm', () => {
     const c = readFileSync(join(process.cwd(), '.github/dependabot.yml'), 'utf-8');
     expect(c).toContain('npm');
