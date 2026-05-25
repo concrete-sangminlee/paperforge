@@ -24,8 +24,15 @@ const profileSelect = {
   storageUsedBytes: true,
   storageQuotaBytes: true,
   role: true,
+  passwordHash: true,
   createdAt: true,
 } as const;
+
+function serializeProfile<T extends { passwordHash: string | null }>(user: T | null) {
+  if (!user) return null;
+  const { passwordHash, ...profile } = user;
+  return { ...profile, hasPassword: !!passwordHash };
+}
 
 export async function GET() {
   try {
@@ -38,7 +45,7 @@ export async function GET() {
       select: profileSelect,
     });
 
-    return apiSuccess(user);
+    return apiSuccess(serializeProfile(user));
   } catch (error) {
     return errorResponse(error);
   }
@@ -62,7 +69,7 @@ export async function PATCH(request: NextRequest) {
       select: profileSelect,
     });
 
-    return apiSuccess(updated);
+    return apiSuccess(serializeProfile(updated));
   } catch (error) {
     return errorResponse(error);
   }

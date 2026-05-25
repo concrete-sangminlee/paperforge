@@ -12,6 +12,11 @@ describe('settings page features', () => {
   it('has appearance tab', () => { expect(st).toContain('Appearance'); });
   it('has password change', () => { expect(st).toContain('password'); });
   it('has danger zone', () => { expect(st).toContain('Delete'); });
+  it('sends server-side delete confirmation and current password', () => {
+    expect(st).toContain('deleteCurrentPassword');
+    expect(st).toContain('confirmation: deleteConfirmText');
+    expect(st).toContain('currentPassword: deleteCurrentPassword');
+  });
   it('has theme selector', () => { expect(st).toContain('setTheme'); });
   it('has font size setting', () => { expect(st).toContain('fontSize'); });
   it('has toast feedback', () => { expect(st).toContain('toast'); });

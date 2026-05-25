@@ -24,6 +24,19 @@ describe('DELETE /api/v1/user/account contract', () => {
     expect(route).toContain('RATE_LIMITS.ACCOUNT_DELETE');
   });
 
+  it('requires server-side DELETE confirmation from the request body', () => {
+    expect(route).toContain('deleteAccountSchema');
+    expect(route).toContain("confirmation: z.literal('DELETE')");
+    expect(route).toMatch(/request\.json\(\)/);
+  });
+
+  it('requires current password re-authentication for password accounts', () => {
+    expect(route).toContain('bcrypt.compare');
+    expect(route).toContain('passwordHash');
+    expect(route).toContain('Current password is required');
+    expect(route).toContain('Current password is incorrect');
+  });
+
   it('runs every deletion inside a single $transaction with a raised timeout', () => {
     expect(route).toContain('prisma.$transaction');
     expect(route).toMatch(/timeout:\s*30_?000/);

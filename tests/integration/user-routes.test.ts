@@ -8,6 +8,11 @@ describe('user profile route', () => {
   it('has PATCH', () => { expect(p).toContain('PATCH'); });
   it('uses apiSuccess', () => { expect(p).toContain('apiSuccess'); });
   it('uses ApiErrors', () => { expect(p).toContain('ApiErrors'); });
+  it('exposes hasPassword without returning passwordHash', () => {
+    expect(p).toContain('passwordHash: true');
+    expect(p).toContain('hasPassword');
+    expect(p).toMatch(/const\s+\{\s*passwordHash,\s*\.\.\.profile\s*\}/);
+  });
 });
 
 describe('user settings route', () => {

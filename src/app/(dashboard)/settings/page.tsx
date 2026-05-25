@@ -75,6 +75,7 @@ interface UserProfile {
   storageUsedBytes: number | string;
   storageQuotaBytes: number | string;
   role: string;
+  hasPassword: boolean;
 }
 
 
@@ -204,6 +205,7 @@ export default function SettingsPage() {
 
   // ---- Delete account state ----
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleteCurrentPassword, setDeleteCurrentPassword] = useState('');
   const [deleting, setDeleting] = useState(false);
 
   // Hydrate form from profile
@@ -478,19 +480,28 @@ export default function SettingsPage() {
       const res = await fetch('/api/v1/user/account', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          confirmation: deleteConfirmText,
+          ...(profile?.hasPassword ? { currentPassword: deleteCurrentPassword } : {}),
+        }),
       });
       if (res.ok) {
         window.location.href = '/login';
       } else {
         const data = await res.json().catch(() => ({}));
-        toast.error((data as { error?: string }).error || 'Failed to delete account. Please try again.');
+        const error = (data as { error?: { message?: string } | string }).error;
+        toast.error(
+          typeof error === 'string'
+            ? error
+            : error?.message ?? 'Failed to delete account. Please try again.',
+        );
       }
     } catch {
       toast.error('Network error. Please check your connection and try again.');
     } finally {
       setDeleting(false);
     }
-  }, []);
+  }, [deleteConfirmText, deleteCurrentPassword, profile?.hasPassword]);
 
   const initials = useMemo(
     () => getInitials(profile?.name ?? 'U'),
@@ -868,7 +879,12 @@ export default function SettingsPage() {
                       This action cannot be undone.
                     </p>
                   </div>
-                  <Dialog onOpenChange={(open) => { if (!open) setDeleteConfirmText(''); }}>
+                  <Dialog onOpenChange={(open) => {
+                    if (!open) {
+                      setDeleteConfirmText('');
+                      setDeleteCurrentPassword('');
+                    }
+                  }}>
                     <DialogTrigger
                       render={
                         <Button variant="destructive" size="sm">
@@ -887,6 +903,20 @@ export default function SettingsPage() {
                         </DialogDescription>
                       </DialogHeader>
                       <div className="grid gap-2 py-2">
+                        {profile?.hasPassword && (
+                          <div className="grid gap-2">
+                            <Label htmlFor="delete-current-password" className="text-sm">
+                              Current password
+                            </Label>
+                            <PasswordInput
+                              id="delete-current-password"
+                              value={deleteCurrentPassword}
+                              onChange={setDeleteCurrentPassword}
+                              placeholder="Enter your current password"
+                              autoComplete="current-password"
+                            />
+                          </div>
+                        )}
                         <Label htmlFor="delete-confirm" className="text-sm">
                           Type <span className="font-mono font-semibold">DELETE</span> to
                           confirm
@@ -908,7 +938,11 @@ export default function SettingsPage() {
                         <Button
                           variant="destructive"
                           size="sm"
-                          disabled={deleteConfirmText !== 'DELETE' || deleting}
+                          disabled={
+                            deleteConfirmText !== 'DELETE' ||
+                            deleting ||
+                            (profile?.hasPassword && !deleteCurrentPassword)
+                          }
                           onClick={deleteAccount}
                         >
                           {deleting ? (

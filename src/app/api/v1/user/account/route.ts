@@ -1,30 +1,36 @@
+import { z } from 'zod';
+import bcrypt from 'bcryptjs';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { errorResponse } from '@/lib/errors';
+import { ApiError, errorResponse } from '@/lib/errors';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
 import { enforceRateLimit } from '@/lib/rate-limit';
 import { RATE_LIMITS } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
 
+const deleteAccountSchema = z.object({
+  confirmation: z.literal('DELETE'),
+  currentPassword: z.string().optional(),
+});
+
 /**
  * DELETE /api/v1/user/account
  * Permanently destroys the user record and everything they own.
  *
  * Known gaps tracked for follow-up:
- *   - No server-side re-authentication (no password / OAuth re-confirm).
- *     A stolen session can wipe an account; UI's "type DELETE" prompt is
- *     only client-side friction.
  *   - Projects owned by the user are hard-deleted, taking every collaborator's
  *     work with them. There is no transfer-ownership flow yet, so the choice
  *     is "block deletion when shared" (UX cliff) vs "warn + proceed" (current).
  *     Revisit once an ownership-transfer endpoint exists.
  */
-export async function DELETE() {
+export async function DELETE(request: Request) {
   try {
     const session = await auth();
     if (!session?.user) return ApiErrors.unauthorized();
     const userId = (session.user as { id: string }).id;
+    const body = await request.json().catch(() => ({}));
+    const { currentPassword } = deleteAccountSchema.parse(body);
 
     const limited = await enforceRateLimit(
       `rate:delete-account:${userId}`,
@@ -32,6 +38,22 @@ export async function DELETE() {
       'Account deletion has been requested too many times. Please contact support if you are stuck.',
     );
     if (limited) return limited;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { passwordHash: true },
+    });
+    if (!user) return ApiErrors.unauthorized();
+
+    if (user.passwordHash) {
+      if (!currentPassword) {
+        throw new ApiError(400, 'Current password is required to delete this account');
+      }
+      const validPassword = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!validPassword) {
+        throw new ApiError(400, 'Current password is incorrect');
+      }
+    }
 
     // Wrap every deletion in a single transaction so a mid-way failure (timeout,
     // FK conflict, dropped connection) cannot strand the account half-deleted —
