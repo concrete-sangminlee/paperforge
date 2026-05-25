@@ -6,6 +6,60 @@ import { minioClient, getBucket, ensureBucket } from '@/lib/minio';
 import { getFileContent } from '@/services/file-service';
 import { env } from '@/lib/env';
 
+// Cap the bytes we will ever buffer from the upstream LaTeX API. A misbehaving
+// or hostile peer could otherwise send an unbounded body and OOM the serverless
+// instance during arrayBuffer() / text().
+const MAX_COMPILE_RESPONSE_BYTES = 50 * 1024 * 1024; // 50 MB
+const MAX_COMPILE_ERROR_BYTES = 1 * 1024 * 1024; // 1 MB
+
+/**
+ * Read up to `maxBytes` from a fetch Response body without ever holding the
+ * full payload in memory. Returns null if the cap is exceeded (caller should
+ * treat as a failure) — never a partial buffer.
+ */
+async function readBoundedBody(res: Response, maxBytes: number): Promise<Buffer | null> {
+  // content-length is a hint — short-circuit obviously-too-big responses
+  // before opening the stream so honest peers fail fast.
+  const declared = Number(res.headers.get('content-length') || 0);
+  if (Number.isFinite(declared) && declared > maxBytes) {
+    try { await res.body?.cancel(); } catch { /* ignore */ }
+    return null;
+  }
+
+  if (!res.body) {
+    // No body — return empty buffer rather than null so callers can distinguish
+    // "too big" (null) from "empty" (zero-length buffer).
+    return Buffer.alloc(0);
+  }
+
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+    total += value.length;
+    if (total > maxBytes) {
+      try { await reader.cancel(); } catch { /* ignore */ }
+      return null;
+    }
+    chunks.push(value);
+  }
+  // Copy into a fresh ArrayBuffer-backed Buffer. Allocating the ArrayBuffer
+  // explicitly (not via `new Uint8Array(n).buffer`) keeps the return type as
+  // Buffer<ArrayBuffer>, which is what Prisma's Bytes column accepts.
+  const ab = new ArrayBuffer(total);
+  const view = new Uint8Array(ab);
+  let offset = 0;
+  for (const chunk of chunks) {
+    view.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return Buffer.from(ab);
+}
+
 let compilationQueue: Queue | null = null;
 
 function parseRedisPort(value: string | undefined, fallback: number): number {
@@ -134,8 +188,20 @@ async function compileViaAPI(
     const durationMs = Date.now() - startTime;
 
     if (response.ok && response.headers.get('content-type')?.includes('application/pdf')) {
-      // Success — got PDF back
-      const pdfBuffer = Buffer.from(await response.arrayBuffer());
+      // Success — got PDF back. Stream with a size cap so a hostile or buggy
+      // upstream cannot OOM the instance via an unbounded response body.
+      const pdfBuffer = await readBoundedBody(response, MAX_COMPILE_RESPONSE_BYTES);
+      if (!pdfBuffer) {
+        await prisma.compilation.update({
+          where: { id: compilationId },
+          data: {
+            status: 'failed',
+            log: `Compilation output exceeded the ${MAX_COMPILE_RESPONSE_BYTES / 1024 / 1024}MB size limit.`,
+            durationMs: Date.now() - startTime,
+          },
+        });
+        return;
+      }
       const pdfMinioKey = `compilations/${compilationId}/output.pdf`;
 
       // Try to store in MinIO; fall back to DB storage
@@ -155,12 +221,19 @@ async function compileViaAPI(
           log: `Compilation successful (${(durationMs / 1000).toFixed(1)}s via LaTeX API)`,
           durationMs,
           pdfMinioKey: minioOk ? pdfMinioKey : null,
-          pdfData: minioOk ? null : pdfBuffer,
+          // Prisma's Bytes column wants Uint8Array<ArrayBuffer> strictly,
+          // but the bundled Node Buffer types model `.buffer` as the broader
+          // ArrayBufferLike. The bytes are equivalent — narrow the type.
+          pdfData: minioOk ? null : (pdfBuffer as unknown as Uint8Array<ArrayBuffer>),
         },
       });
     } else {
-      // Error — got error response
-      const errorText = await response.text().catch(() => 'Unknown compilation error');
+      // Error — got error response. Bounded read so an oversize error body
+      // (e.g. HTML 502 from an intermediary) cannot blow up memory either.
+      const errorBuf = await readBoundedBody(response, MAX_COMPILE_ERROR_BYTES).catch(() => null);
+      const errorText = errorBuf
+        ? errorBuf.toString('utf-8')
+        : 'Compilation error response exceeded size limit.';
       await prisma.compilation.update({
         where: { id: compilationId },
         data: {
