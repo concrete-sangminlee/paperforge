@@ -2,7 +2,7 @@ import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import Google from 'next-auth/providers/google';
 import GitHub from 'next-auth/providers/github';
-import { verifyCredentials } from '@/services/user-service';
+import { upsertOAuthUser, verifyCredentials } from '@/services/user-service';
 import { loginSchema } from '@/lib/validation';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { RATE_LIMITS } from '@/lib/constants';
@@ -10,7 +10,44 @@ import { getOAuthProviderConfig } from '@/lib/oauth-providers';
 import { prisma } from '@/lib/prisma';
 import { env } from '@/lib/env';
 
+import type { Account, Profile, User } from 'next-auth';
 import type { Provider } from 'next-auth/providers';
+
+function stringValue(value: unknown): string | null {
+  if (typeof value === 'number') return String(value);
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed || null;
+}
+
+function profileValue(profile: Profile | undefined, key: string): string | null {
+  return stringValue(profile?.[key]);
+}
+
+function isProviderAccount(account: Account | null | undefined): account is Account {
+  return Boolean(account && account.type !== 'credentials');
+}
+
+function oauthEmail(user: User, profile?: Profile) {
+  return stringValue(user.email) ?? stringValue(profile?.email);
+}
+
+function oauthName(user: User, profile?: Profile) {
+  return stringValue(user.name) ?? stringValue(profile?.name) ?? profileValue(profile, 'login');
+}
+
+function oauthImage(user: User, profile?: Profile) {
+  return stringValue(user.image) ?? stringValue(profile?.picture) ?? profileValue(profile, 'avatar_url');
+}
+
+function oauthProviderAccountId(account: Account, user: User, profile?: Profile) {
+  return (
+    stringValue(account.providerAccountId) ??
+    stringValue(user.id) ??
+    stringValue(profile?.sub) ??
+    stringValue(profile?.id)
+  );
+}
 
 const providers: Provider[] = [
   Credentials({
@@ -89,8 +126,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: '/login',
   },
   callbacks: {
-    async jwt({ token, user, trigger }) {
-      if (user) {
+    async signIn({ account, profile, user }) {
+      if (!isProviderAccount(account)) return true;
+      return Boolean(oauthEmail(user, profile) && oauthProviderAccountId(account, user, profile));
+    },
+    async jwt({ token, user, trigger, account, profile }) {
+      if (user && account && isProviderAccount(account)) {
+        const appUser = await upsertOAuthUser({
+          provider: account.provider,
+          providerAccountId: oauthProviderAccountId(account, user, profile) ?? '',
+          email: oauthEmail(user, profile),
+          name: oauthName(user, profile),
+          image: oauthImage(user, profile),
+          accessToken: stringValue(account.access_token),
+          refreshToken: stringValue(account.refresh_token),
+          expiresAt: typeof account.expires_at === 'number' ? account.expires_at : null,
+        });
+
+        token.id = appUser.id;
+        token.role = appUser.role;
+        token.email = appUser.email;
+        token.name = appUser.name;
+        token.picture = appUser.avatarUrl ?? null;
+      } else if (user) {
         token.id = user.id;
         token.role = (user as { role?: string }).role ?? 'user';
       }

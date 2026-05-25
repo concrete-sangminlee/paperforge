@@ -16,6 +16,28 @@ describe('auth security configuration', () => {
     expect(oauthModule).toContain('GITHUB_CLIENT_ID');
   });
 
+  it('persists OAuth logins as first-class app users', () => {
+    const authModule = readFileSync(join(process.cwd(), 'src/lib/auth.ts'), 'utf-8');
+    const userService = readFileSync(join(process.cwd(), 'src/services/user-service.ts'), 'utf-8');
+
+    expect(authModule).toContain('upsertOAuthUser');
+    expect(authModule).toContain('account.provider');
+    expect(authModule).toContain('providerAccountId');
+    expect(authModule).toContain('token.id = appUser.id');
+    expect(userService).toContain('tx.oAuthAccount.create');
+    expect(userService).toContain('encryptedAccessToken');
+    expect(userService).toContain('encryptedRefreshToken');
+    expect(userService).toContain('emailVerified: true');
+  });
+
+  it('rejects OAuth callbacks without a stable email and provider id', () => {
+    const authModule = readFileSync(join(process.cwd(), 'src/lib/auth.ts'), 'utf-8');
+
+    expect(authModule).toContain('async signIn');
+    expect(authModule).toContain('oauthEmail(user, profile)');
+    expect(authModule).toContain('oauthProviderAccountId(account, user, profile)');
+  });
+
   describe('login validation', () => {
     it('rejects empty email', () => {
       const result = loginSchema.safeParse({ email: '', password: 'test' });

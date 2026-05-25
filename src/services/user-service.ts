@@ -2,6 +2,43 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { ApiError } from '@/lib/errors';
 import { AUTH } from '@/lib/constants';
+import { encrypt } from '@/lib/encryption';
+
+const userSessionSelect = {
+  id: true,
+  email: true,
+  name: true,
+  role: true,
+  avatarUrl: true,
+} as const;
+
+function normalizeEmail(email: string | null | undefined) {
+  const normalized = email?.trim().toLowerCase();
+  return normalized || null;
+}
+
+function sanitizeDisplayName(name: string | null | undefined, email: string) {
+  const normalized = name?.trim();
+  return normalized || email.split('@')[0] || 'User';
+}
+
+function oauthTokenData(input: {
+  accessToken?: string | null;
+  refreshToken?: string | null;
+  expiresAt?: number | null;
+}) {
+  const data: {
+    encryptedAccessToken?: string;
+    encryptedRefreshToken?: string;
+    expiresAt?: Date;
+  } = {};
+
+  if (input.accessToken) data.encryptedAccessToken = encrypt(input.accessToken);
+  if (input.refreshToken) data.encryptedRefreshToken = encrypt(input.refreshToken);
+  if (input.expiresAt) data.expiresAt = new Date(input.expiresAt * 1000);
+
+  return data;
+}
 
 export async function createUser(email: string, name: string, password: string) {
   const existing = await prisma.user.findUnique({ where: { email } });
@@ -62,4 +99,89 @@ export async function verifyCredentials(email: string, password: string) {
   }
 
   return { id: user.id, email: user.email, name: user.name, role: user.role };
+}
+
+export interface OAuthUserInput {
+  provider: string;
+  providerAccountId: string;
+  email?: string | null;
+  name?: string | null;
+  image?: string | null;
+  accessToken?: string | null;
+  refreshToken?: string | null;
+  expiresAt?: number | null;
+}
+
+export async function upsertOAuthUser(input: OAuthUserInput) {
+  const provider = input.provider.trim().toLowerCase();
+  const providerAccountId = input.providerAccountId.trim();
+  const email = normalizeEmail(input.email);
+
+  if (!provider || !providerAccountId) {
+    throw new ApiError(400, 'OAuth provider did not return an account identifier');
+  }
+  if (!email) {
+    throw new ApiError(400, 'OAuth provider did not return an email address');
+  }
+
+  const name = sanitizeDisplayName(input.name, email);
+  const avatarUrl = input.image?.trim() || null;
+  const tokenData = oauthTokenData(input);
+
+  return prisma.$transaction(async (tx) => {
+    const existingAccount = await tx.oAuthAccount.findUnique({
+      where: {
+        provider_providerAccountId: { provider, providerAccountId },
+      },
+      include: {
+        user: { select: userSessionSelect },
+      },
+    });
+
+    if (existingAccount) {
+      if (Object.keys(tokenData).length > 0) {
+        await tx.oAuthAccount.update({
+          where: { id: existingAccount.id },
+          data: tokenData,
+        });
+      }
+
+      if (avatarUrl && existingAccount.user.avatarUrl !== avatarUrl) {
+        return tx.user.update({
+          where: { id: existingAccount.userId },
+          data: { avatarUrl },
+          select: userSessionSelect,
+        });
+      }
+
+      return existingAccount.user;
+    }
+
+    const user = await tx.user.upsert({
+      where: { email },
+      update: {
+        emailVerified: true,
+        ...(avatarUrl ? { avatarUrl } : {}),
+      },
+      create: {
+        email,
+        name,
+        passwordHash: null,
+        avatarUrl,
+        emailVerified: true,
+      },
+      select: userSessionSelect,
+    });
+
+    await tx.oAuthAccount.create({
+      data: {
+        userId: user.id,
+        provider,
+        providerAccountId,
+        ...tokenData,
+      },
+    });
+
+    return user;
+  });
 }
