@@ -48,7 +48,7 @@ export async function POST(request: Request) {
 
     await prisma.user.update({
       where: { id: userId },
-      data: { passwordHash },
+      data: { passwordHash, tokenVersion: { increment: 1 } },
     });
 
     // Audit log for security tracking

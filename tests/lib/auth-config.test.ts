@@ -38,6 +38,22 @@ describe('auth security configuration', () => {
     expect(authModule).toContain('oauthProviderAccountId(account, user, profile)');
   });
 
+  it('invalidates JWT sessions within 5 minutes of a password change', () => {
+    const authModule = readFileSync(join(process.cwd(), 'src/lib/auth.ts'), 'utf-8');
+    const changePw = readFileSync(join(process.cwd(), 'src/app/api/v1/auth/change-password/route.ts'), 'utf-8');
+    const resetPw = readFileSync(join(process.cwd(), 'src/app/api/v1/auth/reset-password/route.ts'), 'utf-8');
+
+    // jwt callback checks tokenVersion from DB on a 5-minute cadence
+    expect(authModule).toContain('tokenVersion');
+    expect(authModule).toContain('pvCheckedAt');
+    expect(authModule).toContain('5 * 60 * 1000');
+    expect(authModule).toContain('return null');
+
+    // Both password mutation paths bump tokenVersion
+    expect(changePw).toContain('tokenVersion');
+    expect(resetPw).toContain('tokenVersion');
+  });
+
   describe('login validation', () => {
     it('rejects empty email', () => {
       const result = loginSchema.safeParse({ email: '', password: 'test' });

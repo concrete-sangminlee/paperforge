@@ -23,6 +23,7 @@ model User {
   storageQuotaBytes   BigInt    @default(2147483648) @map("storage_quota_bytes")
   failedLoginAttempts Int       @default(0) @map("failed_login_attempts")
   lockedUntil         DateTime? @map("locked_until") @db.Timestamptz()
+  tokenVersion        Int       @default(0) @map("token_version")
   createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
 

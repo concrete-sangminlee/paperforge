@@ -62,6 +62,7 @@ export async function POST(request: Request) {
         passwordHash,
         failedLoginAttempts: 0,
         lockedUntil: null,
+        tokenVersion: { increment: 1 },
       },
     });
 

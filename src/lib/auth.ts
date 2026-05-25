@@ -152,18 +152,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.id = user.id;
         token.role = (user as { role?: string }).role ?? 'user';
       }
-      // Refresh avatar on initial sign-in and when the session is explicitly updated.
-      // Avoids hammering the DB on every request while keeping the navbar avatar fresh.
-      if (token.id && (user || trigger === 'update' || token.picture === undefined)) {
+      // DB check: runs on sign-in, explicit update, first load, or when the cached
+      // token version is stale (re-checked every 5 minutes). Detects password changes
+      // so sessions are invalidated within 5 minutes of a credential rotation.
+      const now = Date.now();
+      const pvAge = (token.pvCheckedAt as number | undefined) ?? 0;
+      const versionCheckDue = (now - pvAge) > 5 * 60 * 1000;
+      if (token.id && (user || trigger === 'update' || token.picture === undefined || versionCheckDue)) {
         try {
           const u = await prisma.user.findUnique({
             where: { id: token.id as string },
-            select: { avatarUrl: true, name: true },
+            select: { avatarUrl: true, name: true, tokenVersion: true },
           });
-          token.picture = u?.avatarUrl ?? null;
-          if (u?.name) token.name = u.name;
+          if (!u) return null;
+          const storedPv = token.pv as number | undefined;
+          if (storedPv !== undefined && u.tokenVersion !== storedPv) return null;
+          token.pv = u.tokenVersion;
+          token.pvCheckedAt = now;
+          token.picture = u.avatarUrl ?? null;
+          if (u.name) token.name = u.name;
         } catch {
-          // DB unavailable — keep prior picture value
+          // DB unavailable — keep prior values; don't invalidate on transient errors
         }
       }
       return token;
