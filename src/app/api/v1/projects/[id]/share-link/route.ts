@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
 import { errorResponse } from '@/lib/errors';
-import { createShareLink } from '@/services/member-service';
+import { createShareLink, listShareLinks } from '@/services/member-service';
 import { enforceRateLimit } from '@/lib/rate-limit';
 import { RATE_LIMITS } from '@/lib/constants';
 
@@ -15,6 +15,21 @@ const createShareLinkSchema = z.object({
   permission: z.enum(['editor', 'viewer']),
   expiresAt: z.string().datetime().optional(),
 });
+
+export async function GET(_request: NextRequest, { params }: RouteParams) {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return ApiErrors.unauthorized();
+    }
+    const userId = (session.user as { id: string }).id;
+    const { id } = await params;
+    const links = await listShareLinks(id, userId);
+    return apiSuccess(links);
+  } catch (error) {
+    return errorResponse(error);
+  }
+}
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {

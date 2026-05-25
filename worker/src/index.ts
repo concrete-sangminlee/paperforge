@@ -59,6 +59,8 @@ interface CompilationJobData {
   files: Array<{ path: string; minioKey?: string | null; content?: string | null; isBinary?: boolean }>;
 }
 
+const MAX_COMPILATION_FILES = 500;
+
 // ---------------------------------------------------------------------------
 // Helper: download all project files into a temp directory, preserving paths
 // ---------------------------------------------------------------------------
@@ -157,6 +159,10 @@ const worker = new Worker<CompilationJobData>(
     const workDir = fs.mkdtempSync(path.join(os.tmpdir(), `paperforge-${compilationId}-`));
 
     try {
+      if (files.length > MAX_COMPILATION_FILES) {
+        throw new Error(`Compilation has ${files.length} files; limit is ${MAX_COMPILATION_FILES}`);
+      }
+
       // 1. Download all project files from MinIO
       await downloadProjectFiles(files, workDir);
 

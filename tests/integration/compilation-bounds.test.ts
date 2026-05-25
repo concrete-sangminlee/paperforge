@@ -6,6 +6,14 @@ const src = readFileSync(
   join(process.cwd(), 'src/services/compilation-service.ts'),
   'utf-8',
 );
+const constants = readFileSync(
+  join(process.cwd(), 'src/lib/constants.ts'),
+  'utf-8',
+);
+const worker = readFileSync(
+  join(process.cwd(), 'worker/src/index.ts'),
+  'utf-8',
+);
 
 describe('compileViaAPI — upstream response size guards', () => {
   // The serverless compile path fetches from latex.ytotech.com. The old code
@@ -38,5 +46,19 @@ describe('compileViaAPI — upstream response size guards', () => {
   it('marks the compilation failed (not partial) when the cap is hit', () => {
     expect(src).toMatch(/exceeded the .*size limit/);
     expect(src).toMatch(/status:\s*'failed'/);
+  });
+});
+
+describe('compilation input size guards', () => {
+  it('caps the number of project files accepted for one compile', () => {
+    expect(constants).toContain('MAX_COMPILATION_FILES');
+    expect(src).toContain('LIMITS.MAX_COMPILATION_FILES');
+    expect(src).toContain('COMPILATION_FILE_LIMIT');
+    expect(src).toMatch(/project\.files\.length\s*>\s*LIMITS\.MAX_COMPILATION_FILES/);
+  });
+
+  it('keeps the worker-side queue consumer under the same file-count cap', () => {
+    expect(worker).toContain('MAX_COMPILATION_FILES');
+    expect(worker).toMatch(/files\.length\s*>\s*MAX_COMPILATION_FILES/);
   });
 });

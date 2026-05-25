@@ -54,6 +54,33 @@ describe('join share link route', () => {
     expect(dialog).toContain('/join/');
     expect(dialog).not.toContain('/api/v1/join/');
   });
+
+  it('project share-link route supports owner listing', () => {
+    const route = readFileSync(
+      join(process.cwd(), 'src/app/api/v1/projects/[id]/share-link/route.ts'),
+      'utf-8',
+    );
+    expect(route).toMatch(/export\s+async\s+function\s+GET\b/);
+    expect(route).toContain('listShareLinks');
+  });
+
+  it('project share-link item route supports revocation', () => {
+    const routePath = join(process.cwd(), 'src/app/api/v1/projects/[id]/share-link/[linkId]/route.ts');
+    expect(existsSync(routePath)).toBe(true);
+    const route = readFileSync(routePath, 'utf-8');
+    expect(route).toMatch(/export\s+async\s+function\s+DELETE\b/);
+    expect(route).toContain('revokeShareLink');
+  });
+
+  it('share dialog can list, copy, and revoke existing share links', () => {
+    const dialog = readFileSync(
+      join(process.cwd(), 'src/components/dashboard/share-dialog.tsx'),
+      'utf-8',
+    );
+    expect(dialog).toContain('fetchShareLinks');
+    expect(dialog).toContain('handleRevokeLink');
+    expect(dialog).toContain('Trash2Icon');
+  });
 });
 
 describe('file operations route', () => {

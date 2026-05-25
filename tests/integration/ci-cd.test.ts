@@ -45,6 +45,25 @@ describe('CI/CD & GitHub config', () => {
     expect(workerPackage).toContain('"build": "prisma generate && tsc"');
     expect(websocketPackage).toContain('"build": "prisma generate && tsc"');
   });
+  it('CI workflow path references exist', () => {
+    const c = readFileSync(join(process.cwd(), '.github/workflows/ci.yml'), 'utf-8');
+    const pathRefs = [
+      ...Array.from(c.matchAll(/working-directory:\s*([^\s]+)/g), (m) => m[1]),
+      ...Array.from(c.matchAll(/cache-dependency-path:\s*([^\s]+)/g), (m) => m[1]),
+    ];
+    const missing = pathRefs.filter((ref) => !existsSync(join(process.cwd(), ref)));
+    expect(missing, `CI workflow references missing paths: ${missing.join(', ')}`).toEqual([]);
+  });
+  it('runtime packages stay on the same Prisma major/minor as the app', () => {
+    const app = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf-8'));
+    const worker = JSON.parse(readFileSync(join(process.cwd(), 'worker/package.json'), 'utf-8'));
+    const websocket = JSON.parse(readFileSync(join(process.cwd(), 'websocket/package.json'), 'utf-8'));
+    for (const pkg of [worker, websocket]) {
+      expect(pkg.dependencies['@prisma/client']).toBe(app.dependencies['@prisma/client']);
+      expect(pkg.devDependencies.prisma).toBe(app.devDependencies.prisma);
+      expect(pkg.dependencies['@prisma/adapter-pg']).toBe(app.dependencies['@prisma/adapter-pg']);
+    }
+  });
   it('Dependabot configured for npm', () => {
     const c = readFileSync(join(process.cwd(), '.github/dependabot.yml'), 'utf-8');
     expect(c).toContain('npm');

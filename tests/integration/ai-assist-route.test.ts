@@ -41,6 +41,14 @@ describe('POST /api/v1/ai/assist contract', () => {
     expect(route).toContain("'AI_OVERLOADED'");
   });
 
+  it('writes a privacy-preserving audit record after successful AI calls', () => {
+    expect(route).toContain('logAuditAction');
+    expect(route).toContain("'ai.assist'");
+    expect(route).toContain('promptLength');
+    expect(route).toContain('contextLength');
+    expect(route).not.toMatch(/details:\s*\{[\s\S]*prompt/);
+  });
+
   it('caps prompt and context input sizes', () => {
     expect(route).toMatch(/prompt:\s*z\.string\(\)\.min\(1\)\.max\(2000\)/);
     expect(route).toMatch(/context:\s*z\.string\(\)\.max\(5000\)/);

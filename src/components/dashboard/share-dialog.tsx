@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Share2Icon, CopyIcon, CheckIcon, UserMinusIcon, LoaderCircleIcon } from 'lucide-react';
+import { Share2Icon, CopyIcon, CheckIcon, UserMinusIcon, LoaderCircleIcon, Trash2Icon } from 'lucide-react';
 import { toast } from 'sonner';
 import { copyToClipboard } from '@/lib/clipboard';
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,14 @@ interface Member {
   };
 }
 
+interface ShareLinkRecord {
+  id: string;
+  token: string;
+  permission: string;
+  expiresAt: string | null;
+  createdAt: string;
+}
+
 interface ShareDialogProps {
   projectId: string;
   currentUserId: string;
@@ -63,11 +71,19 @@ export function ShareDialog({ projectId, currentUserRole, open: openProp, onOpen
 
   // Share link
   const [shareLink, setShareLink] = useState('');
+  const [shareLinks, setShareLinks] = useState<ShareLinkRecord[]>([]);
   const [shareLinkPermission, setShareLinkPermission] = useState<'editor' | 'viewer'>('viewer');
   const [generatingLink, setGeneratingLink] = useState(false);
+  const [loadingLinks, setLoadingLinks] = useState(false);
+  const [revokingLinkId, setRevokingLinkId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [appOrigin, setAppOrigin] = useState('');
 
   const isOwner = currentUserRole === 'owner';
+
+  useEffect(() => {
+    setAppOrigin(window.location.origin);
+  }, []);
 
   const fetchMembers = useCallback(async () => {
     setLoadingMembers(true);
@@ -85,11 +101,29 @@ export function ShareDialog({ projectId, currentUserRole, open: openProp, onOpen
     }
   }, [projectId]);
 
+  const fetchShareLinks = useCallback(async () => {
+    if (!isOwner) return;
+    setLoadingLinks(true);
+    try {
+      const res = await fetch(`/api/v1/projects/${projectId}/share-link`);
+      if (res.ok) {
+        const result = await res.json();
+        const data = (result.data ?? result) as ShareLinkRecord[];
+        setShareLinks(data);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setLoadingLinks(false);
+    }
+  }, [isOwner, projectId]);
+
   useEffect(() => {
     if (open) {
       void fetchMembers();
+      void fetchShareLinks();
     }
-  }, [open, fetchMembers]);
+  }, [open, fetchMembers, fetchShareLinks]);
 
   async function handleInvite(e?: React.FormEvent) {
     e?.preventDefault();
@@ -158,14 +192,34 @@ export function ShareDialog({ projectId, currentUserRole, open: openProp, onOpen
         body: JSON.stringify({ permission: shareLinkPermission }),
       });
       const result = await res.json();
-      if (!res.ok) throw new Error(result.error ?? 'Failed to generate link');
+      if (!res.ok) throw new Error(result.error?.message ?? result.error ?? 'Failed to generate link');
       const data = (result.data ?? result) as { token?: string };
-      const appUrl = window.location.origin;
-      setShareLink(`${appUrl}/join/${encodeURIComponent(data.token ?? '')}`);
-    } catch {
-      // ignore
+      const origin = appOrigin || window.location.origin;
+      setShareLink(`${origin}/join/${encodeURIComponent(data.token ?? '')}`);
+      await fetchShareLinks();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to generate link');
     } finally {
       setGeneratingLink(false);
+    }
+  }
+
+  async function handleRevokeLink(linkId: string) {
+    setRevokingLinkId(linkId);
+    try {
+      const res = await fetch(`/api/v1/projects/${projectId}/share-link/${linkId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const result = await res.json().catch(() => ({}));
+        throw new Error(result.error?.message ?? result.error ?? 'Failed to revoke link');
+      }
+      toast.success('Share link revoked');
+      await fetchShareLinks();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to revoke link');
+    } finally {
+      setRevokingLinkId(null);
     }
   }
 
@@ -173,6 +227,11 @@ export function ShareDialog({ projectId, currentUserRole, open: openProp, onOpen
     if (!shareLink) return;
     const ok = await copyToClipboard(shareLink, 'Link copied');
     if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000); }
+  }
+
+  async function handleCopyExistingLink(token: string) {
+    const origin = appOrigin || window.location.origin;
+    await copyToClipboard(`${origin}/join/${encodeURIComponent(token)}`, 'Link copied');
   }
 
   return (
@@ -339,6 +398,55 @@ export function ShareDialog({ projectId, currentUserRole, open: openProp, onOpen
                   </Button>
                 </div>
               )}
+
+              <div className="mt-3">
+                <p className="mb-2 text-xs font-medium uppercase tracking-normal text-muted-foreground">Active links</p>
+                {loadingLinks ? (
+                  <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
+                    <LoaderCircleIcon className="size-4 animate-spin" />
+                    Loading
+                  </div>
+                ) : shareLinks.length > 0 ? (
+                  <ul className="space-y-2">
+                    {shareLinks.map((link) => {
+                      const expires = link.expiresAt ? new Date(link.expiresAt).toLocaleDateString() : 'No expiry';
+                      return (
+                        <li key={link.id} className="flex items-center gap-2 rounded-md border px-2 py-2">
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-xs font-medium capitalize">{link.permission} link</p>
+                            <p className="truncate text-[11px] text-muted-foreground">{expires}</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-7 shrink-0"
+                            onClick={() => void handleCopyExistingLink(link.token)}
+                            aria-label="Copy share link"
+                          >
+                            <CopyIcon className="size-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-7 shrink-0 text-destructive hover:text-destructive"
+                            onClick={() => void handleRevokeLink(link.id)}
+                            disabled={revokingLinkId === link.id}
+                            aria-label="Revoke share link"
+                          >
+                            {revokingLinkId === link.id ? (
+                              <LoaderCircleIcon className="size-3.5 animate-spin" />
+                            ) : (
+                              <Trash2Icon className="size-3.5" />
+                            )}
+                          </Button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <p className="text-xs text-muted-foreground">No active links</p>
+                )}
+              </div>
             </div>
           </>
         )}

@@ -6,6 +6,7 @@ import { apiSuccess, apiError, ApiErrors } from '@/lib/api-response';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { env } from '@/lib/env';
 import { RATE_LIMITS } from '@/lib/constants';
+import { logAuditAction } from '@/services/audit-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,6 +88,14 @@ export async function POST(request: NextRequest) {
 
     const data = await res.json();
     const text = data.content?.[0]?.text ?? '';
+
+    logAuditAction(userId, 'ai.assist', 'user', userId, {
+      mode,
+      model: 'claude-haiku-4-5-20251001',
+      promptLength: prompt.length,
+      contextLength: context?.length ?? 0,
+      resultLength: text.length,
+    }).catch((err) => console.error('[ai-assist] audit log failed:', err));
 
     return apiSuccess({ result: text, mode });
   } catch (error) {

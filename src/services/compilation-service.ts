@@ -1,7 +1,7 @@
 import { Queue } from 'bullmq';
 import { prisma } from '@/lib/prisma';
 import { ApiError } from '@/lib/errors';
-import { isValidFilePath } from '@/lib/constants';
+import { LIMITS, isValidFilePath } from '@/lib/constants';
 import { minioClient, getBucket, ensureBucket } from '@/lib/minio';
 import { getFileContent } from '@/services/file-service';
 import { env } from '@/lib/env';
@@ -266,6 +266,14 @@ export async function triggerCompilation(projectId: string, userId: string) {
 
   if (!isValidFilePath(project.mainFile)) {
     throw new ApiError(400, 'Invalid main file path');
+  }
+
+  if (project.files.length > LIMITS.MAX_COMPILATION_FILES) {
+    throw new ApiError(
+      413,
+      `Project has ${project.files.length} files; compilation is limited to ${LIMITS.MAX_COMPILATION_FILES} files.`,
+      'COMPILATION_FILE_LIMIT',
+    );
   }
 
   const compilation = await prisma.compilation.create({

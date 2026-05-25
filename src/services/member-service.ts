@@ -138,6 +138,40 @@ export async function createShareLink(
   return link;
 }
 
+export async function listShareLinks(projectId: string, requesterId: string) {
+  await assertProjectRole(projectId, requesterId, ['owner']);
+
+  return prisma.shareLink.findMany({
+    where: {
+      projectId,
+      OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+    },
+    select: {
+      id: true,
+      token: true,
+      permission: true,
+      expiresAt: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+}
+
+export async function revokeShareLink(
+  projectId: string,
+  requesterId: string,
+  linkId: string,
+) {
+  await assertProjectRole(projectId, requesterId, ['owner']);
+
+  const result = await prisma.shareLink.deleteMany({
+    where: { id: linkId, projectId },
+  });
+  if (result.count === 0) throw new ApiError(404, 'Share link not found');
+
+  return { revoked: true };
+}
+
 export async function joinViaShareLink(token: string, userId: string) {
   const link = await prisma.shareLink.findUnique({ where: { token } });
   if (!link) throw new ApiError(404, 'Share link not found');

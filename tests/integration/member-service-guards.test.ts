@@ -42,4 +42,11 @@ describe('member-service guards', () => {
     expect(memberService).toContain('joinViaShareLink');
     expect(memberService).toMatch(/P2002[^}]*\}/);
   });
+
+  it('share-link management is owner-only and can revoke links by project scope', () => {
+    expect(memberService).toContain('listShareLinks');
+    expect(memberService).toContain('revokeShareLink');
+    expect(memberService).toMatch(/assertProjectRole\(projectId,\s*requesterId,\s*\['owner'\]\)/);
+    expect(memberService).toMatch(/deleteMany\(\{\s*where:\s*\{\s*id:\s*linkId,\s*projectId\s*\}/);
+  });
 });
