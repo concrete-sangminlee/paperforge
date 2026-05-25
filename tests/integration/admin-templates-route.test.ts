@@ -81,6 +81,19 @@ describe('join share link route', () => {
     expect(dialog).toContain('handleRevokeLink');
     expect(dialog).toContain('Trash2Icon');
   });
+
+  it('docs/api advertises every share-link verb the routes implement', () => {
+    const docs = readFileSync(
+      join(process.cwd(), 'src/app/docs/api/page.tsx'),
+      'utf-8',
+    );
+    // List, create, revoke — all must be discoverable on the API reference
+    // page so external integrators don't reverse-engineer the contract from
+    // tracebacks.
+    expect(docs).toMatch(/method:\s*'GET'.*share-link'/);
+    expect(docs).toMatch(/method:\s*'POST'.*share-link'/);
+    expect(docs).toMatch(/method:\s*'DELETE'.*share-link\/:linkId/);
+  });
 });
 
 describe('file operations route', () => {

@@ -59,7 +59,9 @@ const GROUPS: { name: string; endpoints: Endpoint[] }[] = [
     endpoints: [
       { method: 'GET', path: '/api/v1/projects/:id/members', description: 'List members', auth: true },
       { method: 'POST', path: '/api/v1/projects/:id/members', description: 'Invite member', auth: true },
+      { method: 'GET', path: '/api/v1/projects/:id/share-link', description: 'List active share links (owner only)', auth: true },
       { method: 'POST', path: '/api/v1/projects/:id/share-link', description: 'Create share link', auth: true },
+      { method: 'DELETE', path: '/api/v1/projects/:id/share-link/:linkId', description: 'Revoke share link (owner only)', auth: true },
       { method: 'POST', path: '/api/v1/join/:token', description: 'Join via link', auth: true },
     ],
   },
