@@ -6,6 +6,7 @@ import {
   updateProjectSchema,
   changePasswordSchema,
   filePathSchema,
+  gitRemoteUrlSchema,
   BLOCKED_EXTENSIONS,
   MAX_FILE_SIZE,
 } from '@/lib/validation';
@@ -162,6 +163,38 @@ describe('filePathSchema', () => {
   it('accepts valid paths', () => {
     const result = filePathSchema.safeParse('images/figure1.png');
     expect(result.success).toBe(true);
+  });
+});
+
+describe('gitRemoteUrlSchema', () => {
+  it.each([
+    ['https://github.com/user/repo.git'],
+    ['https://gitlab.com/user/repo'],
+    ['http://gitlab.internal.example/team/repo.git'],
+  ])('accepts http(s) git remote: %s', (url) => {
+    expect(gitRemoteUrlSchema.safeParse(url).success).toBe(true);
+  });
+
+  it.each([
+    ['file:///etc/passwd'],
+    ['git://github.com/user/repo.git'],
+    ['ssh://git@github.com/user/repo.git'],
+    ['javascript:alert(1)'],
+    ['data:text/plain,hello'],
+    ['ftp://example.com/repo'],
+  ])('rejects non-http(s) scheme: %s', (url) => {
+    const result = gitRemoteUrlSchema.safeParse(url);
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects malformed URLs', () => {
+    expect(gitRemoteUrlSchema.safeParse('not a url').success).toBe(false);
+    expect(gitRemoteUrlSchema.safeParse('').success).toBe(false);
+  });
+
+  it('rejects URLs longer than 2048 chars', () => {
+    const url = 'https://example.com/' + 'a'.repeat(2100);
+    expect(gitRemoteUrlSchema.safeParse(url).success).toBe(false);
   });
 });
 

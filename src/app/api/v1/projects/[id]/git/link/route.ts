@@ -5,13 +5,14 @@ import { apiSuccess, ApiErrors } from '@/lib/api-response';
 import { errorResponse } from '@/lib/errors';
 import { assertProjectRole } from '@/services/project-service';
 import { linkGitRemote } from '@/services/git-service';
+import { gitRemoteUrlSchema } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
 const linkSchema = z.object({
-  remoteUrl: z.string().url(),
+  remoteUrl: gitRemoteUrlSchema,
 });
 
 export async function POST(request: NextRequest, { params }: RouteParams) {

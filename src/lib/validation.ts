@@ -61,6 +61,23 @@ export const inviteMemberSchema = z.object({
   role: z.enum(['editor', 'viewer']),
 });
 
+// isomorphic-git's HTTP transport only speaks http(s). Rejecting other schemes
+// up front prevents file:// from reaching the local FS, blocks legacy git://,
+// and stops javascript:/data: URIs from being persisted as a project remote.
+const HTTP_GIT_SCHEMES = new Set(['http:', 'https:']);
+
+export const gitRemoteUrlSchema = z
+  .string()
+  .url('Invalid URL')
+  .max(2048, 'URL too long')
+  .refine((raw) => {
+    try {
+      return HTTP_GIT_SCHEMES.has(new URL(raw).protocol);
+    } catch {
+      return false;
+    }
+  }, 'Git remote URL must use http:// or https://');
+
 export const filePathSchema = z.string()
   .min(1, 'File path required')
   .max(1024, 'Path too long')
