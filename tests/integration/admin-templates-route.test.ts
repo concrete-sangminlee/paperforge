@@ -29,6 +29,31 @@ describe('join share link route', () => {
   it('uses apiSuccess', () => { expect(j).toContain('apiSuccess'); });
   it('uses ApiErrors', () => { expect(j).toContain('ApiErrors'); });
   it('calls joinViaShareLink', () => { expect(j).toContain('joinViaShareLink'); });
+
+  // CSRF guard: the join action must not be triggerable as a side-effect of
+  // a cross-origin GET (e.g. <img src="…/join/TOKEN">). It changed from GET
+  // to POST and the user-facing /join/[token] page wraps it with an explicit
+  // click. These tests fail if either side regresses.
+  it('exports POST and not GET (CSRF guard)', () => {
+    expect(j).toMatch(/export\s+async\s+function\s+POST\b/);
+    expect(j).not.toMatch(/export\s+async\s+function\s+GET\b/);
+  });
+
+  it('has a /join/[token] confirmation page that POSTs', () => {
+    const pagePath = join(process.cwd(), 'src/app/join/[token]/page.tsx');
+    const page = readFileSync(pagePath, 'utf-8');
+    expect(page).toMatch(/method:\s*['"]POST['"]/);
+    expect(page).toContain('/api/v1/join/');
+  });
+
+  it('share dialog points at the /join page, not the raw API URL', () => {
+    const dialog = readFileSync(
+      join(process.cwd(), 'src/components/dashboard/share-dialog.tsx'),
+      'utf-8',
+    );
+    expect(dialog).toContain('/join/');
+    expect(dialog).not.toContain('/api/v1/join/');
+  });
 });
 
 describe('file operations route', () => {

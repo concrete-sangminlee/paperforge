@@ -161,7 +161,7 @@ export function ShareDialog({ projectId, currentUserRole, open: openProp, onOpen
       if (!res.ok) throw new Error(result.error ?? 'Failed to generate link');
       const data = (result.data ?? result) as { token?: string };
       const appUrl = window.location.origin;
-      setShareLink(`${appUrl}/api/v1/join/${data.token}`);
+      setShareLink(`${appUrl}/join/${encodeURIComponent(data.token ?? '')}`);
     } catch {
       // ignore
     } finally {

@@ -60,7 +60,7 @@ const GROUPS: { name: string; endpoints: Endpoint[] }[] = [
       { method: 'GET', path: '/api/v1/projects/:id/members', description: 'List members', auth: true },
       { method: 'POST', path: '/api/v1/projects/:id/members', description: 'Invite member', auth: true },
       { method: 'POST', path: '/api/v1/projects/:id/share-link', description: 'Create share link', auth: true },
-      { method: 'GET', path: '/api/v1/join/:token', description: 'Join via link', auth: true },
+      { method: 'POST', path: '/api/v1/join/:token', description: 'Join via link', auth: true },
     ],
   },
   {

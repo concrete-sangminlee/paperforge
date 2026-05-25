@@ -8,7 +8,14 @@ export const dynamic = 'force-dynamic';
 
 type RouteParams = { params: Promise<{ token: string }> };
 
-export async function GET(_request: NextRequest, { params }: RouteParams) {
+/**
+ * POST /api/v1/join/[token]
+ * Adds the authenticated user to the project the share link points at.
+ * POST (not GET) so that the join action is not triggerable as a side-effect
+ * of cross-origin `<img>`/`<script>` loads pointed at a leaked token URL.
+ * The user-facing `/join/[token]` page wraps this with a confirmation step.
+ */
+export async function POST(_request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session?.user) return ApiErrors.unauthorized();
