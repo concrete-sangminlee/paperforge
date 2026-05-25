@@ -5,6 +5,7 @@ import { errorResponse } from '@/lib/errors';
 import { apiSuccess, apiError, ApiErrors } from '@/lib/api-response';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { env } from '@/lib/env';
+import { RATE_LIMITS } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,9 +25,14 @@ export async function POST(request: NextRequest) {
     if (!session?.user) return ApiErrors.unauthorized();
     const userId = (session.user as { id: string }).id;
 
-    // Rate limit: 20 AI requests per hour per user
-    const rateLimit = await checkRateLimit(`rate:ai:${userId}`, 20, 3600);
-    if (!rateLimit.allowed) {
+    // Per-user cap — cheap, blocks the noisy individual first so the
+    // global slot is preserved for everyone else.
+    const userLimit = await checkRateLimit(
+      `rate:ai:user:${userId}`,
+      RATE_LIMITS.AI_USER.limit,
+      RATE_LIMITS.AI_USER.windowSeconds,
+    );
+    if (!userLimit.allowed) {
       return apiError('AI request limit reached. Try again later.', 429, 'RATE_LIMITED');
     }
 
@@ -37,6 +43,22 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { prompt, context, mode } = assistSchema.parse(body);
+
+    // Deployment-wide cap, checked just before the paid fetch so the
+    // global counter increments only for requests that would otherwise
+    // bill Anthropic.
+    const globalLimit = await checkRateLimit(
+      'rate:ai:global',
+      RATE_LIMITS.AI_GLOBAL.limit,
+      RATE_LIMITS.AI_GLOBAL.windowSeconds,
+    );
+    if (!globalLimit.allowed) {
+      return apiError(
+        'AI assistant is temporarily unavailable due to high demand. Try again later.',
+        503,
+        'AI_OVERLOADED',
+      );
+    }
 
     const systemPrompt = getSystemPrompt(mode);
     const userMessage = context

@@ -1,0 +1,54 @@
+import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+const route = readFileSync(
+  join(process.cwd(), 'src/app/api/v1/ai/assist/route.ts'),
+  'utf-8',
+);
+
+describe('POST /api/v1/ai/assist contract', () => {
+  it('requires an authenticated session before doing anything else', () => {
+    expect(route).toMatch(/await\s+auth\(\)/);
+    expect(route).toContain('ApiErrors.unauthorized');
+  });
+
+  it('enforces both the per-user and the global rate limit constants', () => {
+    expect(route).toContain('RATE_LIMITS.AI_USER');
+    expect(route).toContain('RATE_LIMITS.AI_GLOBAL');
+    expect(route).toContain("'rate:ai:global'");
+    expect(route).toMatch(/`rate:ai:user:\$\{userId\}`/);
+  });
+
+  it('checks the global cap only after schema validation so blocked requests never bill', () => {
+    // Per-user check must come before the global check so an individual abuser
+    // is rejected without consuming a global slot. The global check must come
+    // after assistSchema.parse so malformed requests can't drain the budget.
+    const userIdx = route.search(/'rate:ai:user:|`rate:ai:user:/);
+    const parseIdx = route.indexOf('assistSchema.parse');
+    const globalIdx = route.indexOf("'rate:ai:global'");
+    const fetchIdx = route.indexOf("fetch('https://api.anthropic.com");
+    expect(userIdx).toBeGreaterThan(-1);
+    expect(parseIdx).toBeGreaterThan(-1);
+    expect(globalIdx).toBeGreaterThan(-1);
+    expect(fetchIdx).toBeGreaterThan(-1);
+    expect(userIdx).toBeLessThan(parseIdx);
+    expect(parseIdx).toBeLessThan(globalIdx);
+    expect(globalIdx).toBeLessThan(fetchIdx);
+  });
+
+  it('returns AI_OVERLOADED when the global cap is hit', () => {
+    expect(route).toContain("'AI_OVERLOADED'");
+  });
+
+  it('caps prompt and context input sizes', () => {
+    expect(route).toMatch(/prompt:\s*z\.string\(\)\.min\(1\)\.max\(2000\)/);
+    expect(route).toMatch(/context:\s*z\.string\(\)\.max\(5000\)/);
+  });
+
+  it('bounds the outbound Anthropic call (model, max_tokens, timeout)', () => {
+    expect(route).toMatch(/model:\s*'claude-/);
+    expect(route).toMatch(/max_tokens:\s*\d+/);
+    expect(route).toMatch(/AbortSignal\.timeout\(\d+\)/);
+  });
+});

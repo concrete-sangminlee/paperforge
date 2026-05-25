@@ -17,6 +17,10 @@ export const RATE_LIMITS = {
   FILE_UPLOAD:    { limit: 30, windowSeconds: 60 },    // 30 binary uploads per min per user
   IMPORT:         { limit: 5,  windowSeconds: 3600 },  // 5 zip/url imports per hour per user
   ACCOUNT_DELETE: { limit: 3,  windowSeconds: 86400 }, // 3 account-deletion attempts per day per user
+  AI_USER:        { limit: 20, windowSeconds: 3600 },  // 20 AI assist calls per hour per user
+  // Global cap across all users — protects deployment from runaway Anthropic spend
+  // during viral moments / abuse. Tune per deployment budget.
+  AI_GLOBAL:      { limit: 1000, windowSeconds: 3600 },
 } as const;
 
 // ── Authentication ───────────────────────────────────────
