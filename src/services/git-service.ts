@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import { decrypt, encrypt } from '@/lib/encryption';
 import { ApiError } from '@/lib/errors';
 import { env } from '@/lib/env';
+import { assertPublicGitRemote } from '@/lib/git-remote-guard';
 
 const REPOS_BASE = env.GIT_REPOS_PATH || '/tmp/paperforge-repos';
 
@@ -14,6 +15,7 @@ function getRepoDir(projectId: string) {
 }
 
 export async function linkGitRemote(projectId: string, remoteUrl: string) {
+  await assertPublicGitRemote(remoteUrl);
   await prisma.project.update({
     where: { id: projectId },
     data: { gitRepoPath: remoteUrl },
@@ -32,6 +34,10 @@ export async function linkGitRemote(projectId: string, remoteUrl: string) {
 export async function pushToRemote(projectId: string, userId: string) {
   const project = await prisma.project.findFirst({ where: { id: projectId, deletedAt: null } });
   if (!project?.gitRepoPath) throw new ApiError(400, 'No remote repository linked');
+
+  // Re-validate at fetch time: DNS rebinding could have flipped the stored URL
+  // from a public host to a private IP since linkGitRemote ran.
+  await assertPublicGitRemote(project.gitRepoPath);
 
   const credential = await prisma.gitCredential.findFirst({ where: { userId } });
 
@@ -57,6 +63,10 @@ export async function pushToRemote(projectId: string, userId: string) {
 export async function pullFromRemote(projectId: string, userId: string) {
   const project = await prisma.project.findFirst({ where: { id: projectId, deletedAt: null } });
   if (!project?.gitRepoPath) throw new ApiError(400, 'No remote repository linked');
+
+  // Re-validate at fetch time: DNS rebinding could have flipped the stored URL
+  // from a public host to a private IP since linkGitRemote ran.
+  await assertPublicGitRemote(project.gitRepoPath);
 
   const dir = getRepoDir(projectId);
 
