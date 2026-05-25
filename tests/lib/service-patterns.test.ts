@@ -42,6 +42,40 @@ describe('git-service safety', () => {
 describe('version-service safety', () => {
   const src = read('src/services/version-service.ts');
   it('creates git commits', () => { expect(src).toContain('git.commit'); });
-  it('supports version restore', () => { expect(src).toContain('checkout'); });
   it('has author attribution', () => { expect(src).toContain('PaperForge'); });
+
+  // Regression: snapshots used to write '' for every text file so versions
+  // captured no actual content and restore was a silent no-op.
+  it('captures real file bytes in snapshots (not empty placeholders)', () => {
+    expect(src).not.toMatch(/writeFile\([^,]+,\s*['"]['"]\s*\)/);
+    expect(src).toContain('readFileBytes');
+  });
+
+  // Restore must read blobs from the git tree and sync them back to the DB,
+  // wrapped in a transaction so a half-applied restore can't strand the project
+  // in a mixed state.
+  it('rebuilds DB rows from the snapshot tree inside a transaction', () => {
+    expect(src).toContain('git.readTree');
+    expect(src).toContain('git.readBlob');
+    expect(src).toContain('prisma.$transaction');
+  });
+
+  // Old (pre-fix) snapshots contain no bytes; restoring from them would wipe
+  // every current file. Reject with EMPTY_SNAPSHOT instead.
+  it('refuses to restore snapshots with zero content', () => {
+    expect(src).toContain("'EMPTY_SNAPSHOT'");
+  });
+
+  // Files present now but absent from the snapshot must disappear so restore
+  // produces the exact file set the user expects.
+  it('soft-deletes files not present in the snapshot', () => {
+    expect(src).toMatch(/path:\s*\{\s*notIn:/);
+    expect(src).toContain('deletedAt: new Date()');
+  });
+
+  // getFileContent reads MinIO before DB content, so a restore that only
+  // updates DB rows would show stale bytes on MinIO-backed deployments.
+  it('overwrites MinIO objects after restoring DB content', () => {
+    expect(src).toContain('minioClient.putObject');
+  });
 });

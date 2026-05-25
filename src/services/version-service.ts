@@ -4,6 +4,7 @@ import path from 'path';
 import { prisma } from '@/lib/prisma';
 import { ApiError } from '@/lib/errors';
 import { env } from '@/lib/env';
+import { minioClient, getBucket } from '@/lib/minio';
 
 const REPOS_BASE = env.GIT_REPOS_PATH || '/tmp/paperforge-repos';
 
@@ -21,6 +22,40 @@ export async function initProjectRepo(projectId: string) {
   return dir;
 }
 
+type StoredFile = {
+  id: string;
+  path: string;
+  isBinary: boolean;
+  content: string | null;
+  minioKey: string | null;
+};
+
+/**
+ * Resolve the bytes for a project file, preferring the DB content column and
+ * falling back to MinIO. Binary files store content base64-encoded so the same
+ * column can serve both kinds.
+ */
+async function readFileBytes(file: StoredFile): Promise<Buffer | null> {
+  if (file.content) {
+    return file.isBinary
+      ? Buffer.from(file.content, 'base64')
+      : Buffer.from(file.content, 'utf-8');
+  }
+  if (file.minioKey) {
+    try {
+      const stream = await minioClient.getObject(getBucket(), file.minioKey);
+      const chunks: Buffer[] = [];
+      for await (const chunk of stream as AsyncIterable<Buffer>) {
+        chunks.push(chunk);
+      }
+      return Buffer.concat(chunks);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 export async function commitProjectFiles(
   projectId: string,
   _userId: string,
@@ -35,25 +70,34 @@ export async function commitProjectFiles(
     await initProjectRepo(projectId);
   }
 
-  // Get all non-deleted files from DB and stage them
   const files = await prisma.file.findMany({
     where: { projectId, deletedAt: null },
+    select: { id: true, path: true, isBinary: true, content: true, minioKey: true },
   });
 
-  for (const file of files) {
-    const filePath = path.join(dir, file.path);
-    const resolved = path.resolve(filePath);
+  const repoBase = path.resolve(dir) + path.sep;
 
-    // Prevent directory traversal — resolved path must stay inside repo dir
-    if (!resolved.startsWith(path.resolve(dir) + path.sep)) {
+  for (const file of files) {
+    const resolved = path.resolve(path.join(dir, file.path));
+
+    // Prevent directory traversal — resolved path must stay inside repo dir.
+    // isValidFilePath already runs at the route boundary; this is defense in
+    // depth in case a legacy / imported file slipped through.
+    if (!resolved.startsWith(repoBase)) {
       console.error(`[version-service] Path traversal blocked: ${file.path}`);
       continue;
     }
 
-    await fs.promises.mkdir(path.dirname(resolved), { recursive: true });
-    if (!file.isBinary) {
-      await fs.promises.writeFile(resolved, '');
+    const bytes = await readFileBytes(file);
+    if (bytes === null) {
+      // Snapshot would otherwise have written empty bytes for this path,
+      // silently corrupting the version. Skipping keeps the version honest.
+      console.warn(`[version-service] Skipping file with unreadable content: ${file.path}`);
+      continue;
     }
+
+    await fs.promises.mkdir(path.dirname(resolved), { recursive: true });
+    await fs.promises.writeFile(resolved, bytes);
     await git.add({ fs, dir, filepath: file.path });
   }
 
@@ -112,6 +156,34 @@ export async function getVersionDiff(projectId: string, versionId: string) {
   };
 }
 
+type SnapshotEntry = { path: string; bytes: Buffer };
+
+/** Walk the git tree at `treeOid` and collect every blob path + bytes. */
+async function collectTreeBlobs(
+  dir: string,
+  treeOid: string,
+  prefix: string,
+  out: SnapshotEntry[],
+): Promise<void> {
+  const tree = await git.readTree({ fs, dir, oid: treeOid });
+  for (const entry of tree.tree) {
+    const fullPath = prefix ? `${prefix}/${entry.path}` : entry.path;
+    if (entry.type === 'tree') {
+      await collectTreeBlobs(dir, entry.oid, fullPath, out);
+    } else if (entry.type === 'blob') {
+      const blob = await git.readBlob({ fs, dir, oid: entry.oid });
+      out.push({ path: fullPath, bytes: Buffer.from(blob.blob) });
+    }
+  }
+}
+
+/**
+ * Restore the project to the file set captured in `versionId`. Walks the git
+ * tree, upserts every blob back into the DB, and soft-deletes any files that
+ * exist now but were not in that snapshot. Refuses to restore from a snapshot
+ * whose total content is empty — older versions created before this fix
+ * captured no content and applying them would silently wipe the project.
+ */
 export async function restoreVersion(projectId: string, versionId: string) {
   const version = await prisma.version.findUnique({ where: { id: versionId } });
   if (!version) throw new ApiError(404, 'Version not found');
@@ -119,7 +191,98 @@ export async function restoreVersion(projectId: string, versionId: string) {
 
   const dir = getRepoPath(projectId);
 
-  await git.checkout({ fs, dir, ref: version.gitHash, force: true });
+  const commit = await git.readCommit({ fs, dir, oid: version.gitHash });
+  const entries: SnapshotEntry[] = [];
+  await collectTreeBlobs(dir, commit.commit.tree, '', entries);
+
+  const totalBytes = entries.reduce((sum, e) => sum + e.bytes.length, 0);
+  if (entries.length === 0 || totalBytes === 0) {
+    throw new ApiError(
+      409,
+      'This snapshot has no recoverable content (likely created before version capture was fixed) and cannot be restored.',
+      'EMPTY_SNAPSHOT',
+    );
+  }
+
+  const restoredPaths = entries.map((e) => e.path);
+  const minioWrites: Array<{ key: string; bytes: Buffer }> = [];
+
+  await prisma.$transaction(async (tx) => {
+    for (const entry of entries) {
+      const isBinary = looksBinary(entry.bytes);
+      const content = isBinary
+        ? entry.bytes.toString('base64')
+        : entry.bytes.toString('utf-8');
+
+      const existing = await tx.file.findFirst({
+        where: { projectId, path: entry.path },
+        select: { id: true, minioKey: true },
+      });
+
+      if (existing) {
+        await tx.file.update({
+          where: { id: existing.id },
+          data: {
+            content,
+            isBinary,
+            sizeBytes: BigInt(entry.bytes.length),
+            deletedAt: null,
+          },
+        });
+        // Schedule MinIO overwrite so getFileContent (which prefers MinIO)
+        // does not serve the pre-restore bytes on MinIO-backed deployments.
+        if (existing.minioKey) {
+          minioWrites.push({ key: existing.minioKey, bytes: entry.bytes });
+        }
+      } else {
+        await tx.file.create({
+          data: {
+            projectId,
+            path: entry.path,
+            content,
+            isBinary,
+            sizeBytes: BigInt(entry.bytes.length),
+          },
+        });
+      }
+    }
+
+    // Anything that exists now but wasn't captured in the snapshot disappears.
+    await tx.file.updateMany({
+      where: {
+        projectId,
+        deletedAt: null,
+        path: { notIn: restoredPaths },
+      },
+      data: { deletedAt: new Date() },
+    });
+  });
+
+  // Best-effort MinIO sync — DB content is authoritative either way, but
+  // pushing the restored bytes prevents stale MinIO objects from masking the
+  // restore through getFileContent's MinIO-first read path.
+  if (minioWrites.length > 0) {
+    const bucket = getBucket();
+    for (const write of minioWrites) {
+      try {
+        await minioClient.putObject(bucket, write.key, write.bytes);
+      } catch {
+        // Swallow: read path falls back to DB content when MinIO read fails.
+      }
+    }
+  }
 
   return version;
+}
+
+/**
+ * Heuristic: presence of a NUL byte in the first 8KB marks the blob as
+ * binary. Mirrors how git itself classifies files for diff purposes.
+ */
+function looksBinary(bytes: Buffer): boolean {
+  const sample = bytes.subarray(0, Math.min(bytes.length, 8192));
+  for (let i = 0; i < sample.length; i++) {
+    if (sample[i] === 0) return true;
+  }
+  return false;
 }
