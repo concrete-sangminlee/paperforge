@@ -32,6 +32,12 @@ describe('auth routes have rate limiting', () => {
     expect(c).toContain('sameSite');
   });
 
+  it('change-password audit log snapshots actor email before later account deletion', () => {
+    const c = readFileSync(join(process.cwd(), 'src/app/api/v1/auth/change-password/route.ts'), 'utf-8');
+    expect(c).toContain('email: true');
+    expect(c).toContain('actorEmail: user.email');
+  });
+
   it('compile route has rate limiting', () => {
     const c = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/compile/route.ts'), 'utf-8');
     expect(c).toContain('checkRateLimit');

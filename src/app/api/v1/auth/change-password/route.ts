@@ -28,7 +28,7 @@ export async function POST(request: Request) {
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { passwordHash: true },
+      select: { passwordHash: true, email: true },
     });
 
     if (!user?.passwordHash) {
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     // Audit log for security tracking
     try {
       await prisma.auditLog.create({
-        data: { adminId: userId, action: 'change_password', targetType: 'user', targetId: userId },
+        data: { adminId: userId, actorEmail: user.email, action: 'change_password', targetType: 'user', targetId: userId },
       });
     } catch {
       // Non-critical — don't fail the password change if audit log fails

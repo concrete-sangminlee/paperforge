@@ -1,5 +1,18 @@
 import { prisma } from '@/lib/prisma';
 
+async function resolveActorEmail(adminId: string, actorEmail?: string) {
+  if (actorEmail !== undefined) return actorEmail;
+  try {
+    const actor = await prisma.user.findUnique({
+      where: { id: adminId },
+      select: { email: true },
+    });
+    return actor?.email;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function logAuditAction(
   adminId: string,
   action: string,
@@ -8,10 +21,12 @@ export async function logAuditAction(
   details?: Record<string, unknown>,
   actorEmail?: string,
 ) {
+  const resolvedActorEmail = await resolveActorEmail(adminId, actorEmail);
+
   return prisma.auditLog.create({
     data: {
       adminId,
-      actorEmail: actorEmail ?? undefined,
+      actorEmail: resolvedActorEmail ?? undefined,
       action,
       targetType,
       targetId,

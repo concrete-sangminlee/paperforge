@@ -14,6 +14,11 @@ describe('audit service', () => {
   const a = readFileSync(join(process.cwd(), 'src/services/audit-service.ts'), 'utf-8');
   it('has logAudit', () => { expect(a).toContain('logAudit'); });
   it('uses prisma', () => { expect(a).toContain('prisma'); });
+  it('snapshots actor email when writing audit logs', () => {
+    expect(a).toContain('resolveActorEmail');
+    expect(a).toContain('prisma.user.findUnique');
+    expect(a).toContain('actorEmail: resolvedActorEmail');
+  });
 });
 
 describe('user service', () => {
