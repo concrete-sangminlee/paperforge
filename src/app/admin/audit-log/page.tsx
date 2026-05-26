@@ -23,7 +23,8 @@ interface AuditEntry {
   targetId: string;
   details?: Record<string, unknown> | null;
   createdAt: string;
-  admin: { id: string; name: string; email: string };
+  actorEmail?: string | null;
+  admin: { id: string; name: string; email: string } | null;
 }
 
 const ACTION_COLORS: Record<string, string> = {
@@ -72,8 +73,12 @@ export default function AdminAuditLogPage() {
                 </TableCell>
                 <TableCell>
                   <div>
-                    <p className="text-sm font-medium">{entry.admin.name}</p>
-                    <p className="text-xs text-muted-foreground">{entry.admin.email}</p>
+                    <p className="text-sm font-medium">
+                      {entry.admin?.name ?? 'Deleted user'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {entry.admin?.email ?? entry.actorEmail ?? '—'}
+                    </p>
                   </div>
                 </TableCell>
                 <TableCell>

@@ -6,10 +6,12 @@ export async function logAuditAction(
   targetType: string,
   targetId: string,
   details?: Record<string, unknown>,
+  actorEmail?: string,
 ) {
   return prisma.auditLog.create({
     data: {
       adminId,
+      actorEmail: actorEmail ?? undefined,
       action,
       targetType,
       targetId,
@@ -25,7 +27,14 @@ export async function getAuditLog(page = 1, limit = 50) {
       skip,
       take: limit,
       orderBy: { createdAt: 'desc' },
-      include: {
+      select: {
+        id: true,
+        action: true,
+        targetType: true,
+        targetId: true,
+        details: true,
+        createdAt: true,
+        actorEmail: true,
         admin: { select: { id: true, name: true, email: true } },
       },
     }),

@@ -64,11 +64,23 @@ describe('DELETE /api/v1/user/account contract', () => {
       'tx.gitCredential.deleteMany',
       'tx.projectMember.deleteMany',
       'tx.template.deleteMany',
-      'tx.auditLog.deleteMany',
     ]) {
       const idx = route.indexOf(earlier);
       expect(idx, `${earlier} should run before tx.user.delete`).toBeGreaterThan(-1);
       expect(idx).toBeLessThan(userDeleteIdx);
     }
+  });
+
+  it('preserves audit logs on deletion and records the event with email snapshot', () => {
+    // Audit logs must NOT be deleted — they survive user deletion via ON DELETE SET NULL.
+    expect(route).not.toContain('tx.auditLog.deleteMany');
+    // The deletion event must be logged inside the transaction, before user.delete,
+    // with actorEmail captured so the record is traceable after the FK is nulled.
+    const userDeleteIdx = route.indexOf('tx.user.delete');
+    const auditCreateIdx = route.indexOf('tx.auditLog.create');
+    expect(auditCreateIdx).toBeGreaterThan(-1);
+    expect(auditCreateIdx).toBeLessThan(userDeleteIdx);
+    expect(route).toContain('delete_account');
+    expect(route).toContain('actorEmail');
   });
 });

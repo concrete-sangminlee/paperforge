@@ -41,7 +41,7 @@ export async function DELETE(request: Request) {
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { passwordHash: true },
+      select: { passwordHash: true, email: true },
     });
     if (!user) return ApiErrors.unauthorized();
 
@@ -61,6 +61,12 @@ export async function DELETE(request: Request) {
     // because heavy users can own thousands of files / compilations.
     await prisma.$transaction(
       async (tx) => {
+        // Log deletion first. When the user row is removed below, ON DELETE SET NULL
+        // nulls out adminId on this entry while actorEmail preserves traceability.
+        await tx.auditLog.create({
+          data: { adminId: userId, actorEmail: user.email, action: 'delete_account', targetType: 'user', targetId: userId },
+        });
+
         await tx.gitCredential.deleteMany({ where: { userId } });
         await tx.projectMember.deleteMany({ where: { userId } });
 
@@ -78,7 +84,6 @@ export async function DELETE(request: Request) {
         }
 
         await tx.template.deleteMany({ where: { authorId: userId } });
-        await tx.auditLog.deleteMany({ where: { adminId: userId } });
         await tx.user.delete({ where: { id: userId } });
       },
       { timeout: 30_000 },
