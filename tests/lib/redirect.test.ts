@@ -38,6 +38,21 @@ describe('sanitizeCallbackUrl', () => {
       expect(sanitizeCallbackUrl('/%2F%2Fevil.com')).toBe('/projects');
     });
 
+    it('rejects double-encoded protocol-relative URL', () => {
+      expect(sanitizeCallbackUrl('/%252F%252Fevil.com')).toBe('/projects');
+    });
+
+    it('rejects backslash protocol-relative variants', () => {
+      expect(sanitizeCallbackUrl('/\\\\evil.com')).toBe('/projects');
+      expect(sanitizeCallbackUrl('/%5C%5Cevil.com')).toBe('/projects');
+      expect(sanitizeCallbackUrl('/%2F%5Cevil.com')).toBe('/projects');
+    });
+
+    it('rejects control characters', () => {
+      expect(sanitizeCallbackUrl('/projects%0Ahttps://evil.com')).toBe('/projects');
+      expect(sanitizeCallbackUrl('/projects\nnext')).toBe('/projects');
+    });
+
     it('rejects javascript: scheme', () => {
       expect(sanitizeCallbackUrl('javascript:void(0)')).toBe('/projects');
     });
