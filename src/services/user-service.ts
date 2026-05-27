@@ -78,6 +78,7 @@ export async function verifyCredentials(email: string, password: string) {
   }
 
   if (user.lockedUntil && user.lockedUntil > new Date()) {
+    logAuditAction(user.id, 'login.blocked', 'user', user.id, undefined, user.email).catch(() => {});
     throw new ApiError(423, 'Account temporarily locked. Try again later or reset password.');
   }
 

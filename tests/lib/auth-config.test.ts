@@ -61,11 +61,12 @@ describe('auth security configuration', () => {
     // Credential logins: success and failed password are both logged
     expect(userService).toContain("'login'");
     expect(userService).toContain("'login.failed'");
+    expect(userService).toContain("'login.blocked'");
     // OAuth logins are logged after upsertOAuthUser
     expect(authModule).toContain("'oauth.login'");
     // Both paths use fire-and-forget to avoid blocking the auth flow
-    expect(userService).toMatch(/logAuditAction.*\.catch\(\(\)\s*=>\s*\{\}\)/s);
-    expect(authModule).toMatch(/logAuditAction.*\.catch\(\(\)\s*=>\s*\{\}\)/s);
+    expect(userService).toMatch(/logAuditAction[\s\S]*\.catch\(\(\)\s*=>\s*\{\}\)/);
+    expect(authModule).toMatch(/logAuditAction[\s\S]*\.catch\(\(\)\s*=>\s*\{\}\)/);
   });
 
   describe('login validation', () => {
