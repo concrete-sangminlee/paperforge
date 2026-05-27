@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { sanitizeCallbackUrl } from "@/lib/redirect";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,8 @@ import {
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = sanitizeCallbackUrl(searchParams.get('callbackUrl'));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -72,7 +75,7 @@ export function LoginForm() {
           password: " ",
         });
       } else {
-        router.push("/projects");
+        router.push(callbackUrl);
       }
     } catch {
       setError("An unexpected error occurred. Please try again.");

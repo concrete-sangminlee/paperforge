@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { RegisterForm } from "@/components/auth/register-form";
 import { OAuthButtons } from "@/components/auth/oauth-buttons";
 
@@ -8,7 +9,9 @@ export default function RegisterPage() {
   return (
     <div className="flex flex-col gap-6">
       <RegisterForm />
-      <OAuthButtons />
+      <Suspense>
+        <OAuthButtons />
+      </Suspense>
     </div>
   );
 }

@@ -2,12 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
+import { sanitizeCallbackUrl } from "@/lib/redirect";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 type ProviderId = "google" | "github";
 
 export function OAuthButtons() {
+  const searchParams = useSearchParams();
+  const callbackUrl = sanitizeCallbackUrl(searchParams.get('callbackUrl'));
   const [providers, setProviders] = useState<ProviderId[] | null>(null);
 
   useEffect(() => {
@@ -39,7 +43,7 @@ export function OAuthButtons() {
         <Button
           variant="outline"
           className="w-full"
-          onClick={() => signIn("google", { callbackUrl: "/projects" })}
+          onClick={() => signIn("google", { callbackUrl })}
         >
           <svg
             className="mr-2 size-4"
@@ -71,7 +75,7 @@ export function OAuthButtons() {
         <Button
           variant="outline"
           className="w-full"
-          onClick={() => signIn("github", { callbackUrl: "/projects" })}
+          onClick={() => signIn("github", { callbackUrl })}
         >
           <svg
             className="mr-2 size-4"

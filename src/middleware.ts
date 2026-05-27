@@ -94,8 +94,13 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Block access to admin pages for non-authenticated users (basic check)
-  if (pathname.startsWith('/admin')) {
+  // Block access to authenticated-only pages for non-authenticated users (cookie presence check)
+  const requiresAuth =
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/projects') ||
+    pathname.startsWith('/editor');
+
+  if (requiresAuth) {
     const sessionToken =
       request.cookies.get('next-auth.session-token')?.value ||
       request.cookies.get('__Secure-next-auth.session-token')?.value;
