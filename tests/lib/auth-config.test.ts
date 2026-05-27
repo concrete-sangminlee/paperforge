@@ -54,6 +54,20 @@ describe('auth security configuration', () => {
     expect(resetPw).toContain('tokenVersion');
   });
 
+  it('audit-logs credential and OAuth login events', () => {
+    const userService = readFileSync(join(process.cwd(), 'src/services/user-service.ts'), 'utf-8');
+    const authModule = readFileSync(join(process.cwd(), 'src/lib/auth.ts'), 'utf-8');
+
+    // Credential logins: success and failed password are both logged
+    expect(userService).toContain("'login'");
+    expect(userService).toContain("'login.failed'");
+    // OAuth logins are logged after upsertOAuthUser
+    expect(authModule).toContain("'oauth.login'");
+    // Both paths use fire-and-forget to avoid blocking the auth flow
+    expect(userService).toMatch(/logAuditAction.*\.catch\(\(\)\s*=>\s*\{\}\)/s);
+    expect(authModule).toMatch(/logAuditAction.*\.catch\(\(\)\s*=>\s*\{\}\)/s);
+  });
+
   describe('login validation', () => {
     it('rejects empty email', () => {
       const result = loginSchema.safeParse({ email: '', password: 'test' });

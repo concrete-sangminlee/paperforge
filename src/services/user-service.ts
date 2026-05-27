@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { ApiError } from '@/lib/errors';
 import { AUTH } from '@/lib/constants';
 import { encrypt } from '@/lib/encryption';
+import { logAuditAction } from '@/services/audit-service';
 
 const userSessionSelect = {
   id: true,
@@ -88,6 +89,7 @@ export async function verifyCredentials(email: string, password: string) {
       update.lockedUntil = new Date(Date.now() + AUTH.LOCKOUT_DURATION_MS);
     }
     await prisma.user.update({ where: { id: user.id }, data: update });
+    logAuditAction(user.id, 'login.failed', 'user', user.id, undefined, user.email).catch(() => {});
     return null;
   }
 
@@ -98,6 +100,7 @@ export async function verifyCredentials(email: string, password: string) {
     });
   }
 
+  logAuditAction(user.id, 'login', 'user', user.id, undefined, user.email).catch(() => {});
   return { id: user.id, email: user.email, name: user.name, role: user.role };
 }
 

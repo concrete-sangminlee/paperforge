@@ -3,6 +3,7 @@ import Credentials from 'next-auth/providers/credentials';
 import Google from 'next-auth/providers/google';
 import GitHub from 'next-auth/providers/github';
 import { upsertOAuthUser, verifyCredentials } from '@/services/user-service';
+import { logAuditAction } from '@/services/audit-service';
 import { loginSchema } from '@/lib/validation';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { RATE_LIMITS } from '@/lib/constants';
@@ -148,6 +149,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.email = appUser.email;
         token.name = appUser.name;
         token.picture = appUser.avatarUrl ?? null;
+        logAuditAction(appUser.id, 'oauth.login', 'user', appUser.id, { provider: account.provider }, appUser.email).catch(() => {});
       } else if (user) {
         token.id = user.id;
         token.role = (user as { role?: string }).role ?? 'user';
