@@ -8,6 +8,11 @@ describe('middleware + security', () => {
   const rl = readFileSync(join(process.cwd(), 'src/lib/rate-limit.ts'), 'utf-8');
 
   it('middleware adds X-Request-ID', () => { expect(mw).toContain('X-Request-ID'); });
+  it('middleware sets X-Content-Type-Options: nosniff', () => { expect(mw).toContain('X-Content-Type-Options'); expect(mw).toContain('nosniff'); });
+  it('middleware sets X-Frame-Options: DENY', () => { expect(mw).toContain('X-Frame-Options'); expect(mw).toContain('DENY'); });
+  it('middleware sets Referrer-Policy', () => { expect(mw).toContain('Referrer-Policy'); });
+  it('middleware sets HSTS in production', () => { expect(mw).toContain('Strict-Transport-Security'); expect(mw).toContain('max-age='); });
+  it('middleware sets Permissions-Policy', () => { expect(mw).toContain('Permissions-Policy'); });
   it('middleware handles CORS', () => { expect(mw).toContain('Access-Control-Allow-Origin'); });
   it('middleware protects /admin', () => { expect(mw).toContain('/admin'); });
   it('middleware allows current Auth.js callback basePath', () => { expect(mw).toContain('/api/v1/auth/'); });

@@ -78,6 +78,13 @@ describe('admin routes rate limiting', () => {
     expect(p).toContain('ADMIN_MUTATE');
   });
 
+  it('template PATCH mutations share the admin-mutate rate limit bucket', () => {
+    const t = readFileSync(join(process.cwd(), 'src/app/api/v1/admin/templates/[id]/route.ts'), 'utf-8');
+    expect(t).toContain('enforceRateLimit');
+    expect(t).toContain('rate:admin-mutate:');
+    expect(t).toContain('ADMIN_MUTATE');
+  });
+
   it('ADMIN_LIST and ADMIN_MUTATE constants are defined', () => {
     const c = readFileSync(join(process.cwd(), 'src/lib/constants.ts'), 'utf-8');
     expect(c).toContain('ADMIN_LIST');

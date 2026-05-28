@@ -52,6 +52,15 @@ export function middleware(request: NextRequest) {
   const requestId = crypto.randomUUID();
   response.headers.set('X-Request-ID', requestId);
 
+  // Security headers applied to every response
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  if (!env.isDevelopment) {
+    response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+  }
+
   // CORS headers for API routes
   if (isApiRoute) {
     const allowedOrigins = getAllowedApiOrigins();
