@@ -5,7 +5,7 @@ import { createSignedToken } from '@/lib/jwt-utils';
 import { sendEmail } from '@/lib/email';
 import { errorResponse } from '@/lib/errors';
 import { emailTemplate, buttonHtml, escapeHtml } from '@/lib/email-templates';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { RATE_LIMITS } from '@/lib/constants';
 import { getAppBaseUrl } from '@/lib/app-url';
@@ -16,16 +16,24 @@ const forgotPasswordSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    // Rate limit: 5 per 15 minutes per IP
     const headersList = await headers();
-    const ip = headersList.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
-    const rateLimit = await checkRateLimit(`rate:forgot-pw:${ip}`, RATE_LIMITS.FORGOT_PASSWORD.limit, RATE_LIMITS.FORGOT_PASSWORD.windowSeconds);
-    if (!rateLimit.allowed) {
+
+    // Per-IP rate limit: 5 per 15 minutes
+    const ip = getClientIp(headersList as unknown as Headers);
+    const ipRateLimit = await checkRateLimit(`rate:forgot-pw:${ip}`, RATE_LIMITS.FORGOT_PASSWORD.limit, RATE_LIMITS.FORGOT_PASSWORD.windowSeconds);
+    if (!ipRateLimit.allowed) {
       return apiError('Too many attempts. Please try again later.', 429, 'RATE_LIMITED');
     }
 
     const reqBody = await request.json();
     const { email } = forgotPasswordSchema.parse(reqBody);
+
+    // Per-email rate limit: 3 per hour — silently drop to prevent inbox bombing
+    // without leaking whether the address is registered (same response as no-op).
+    const emailRateLimit = await checkRateLimit(`rate:forgot-pw-email:${email.toLowerCase()}`, RATE_LIMITS.FORGOT_PASSWORD_EMAIL.limit, RATE_LIMITS.FORGOT_PASSWORD_EMAIL.windowSeconds);
+    if (!emailRateLimit.allowed) {
+      return apiSuccess({ message: 'If an account with that email exists, a reset link has been sent.' });
+    }
 
     // Always return 200 to prevent email enumeration.
     // Fire-and-forget to normalize response timing — prevents a timing

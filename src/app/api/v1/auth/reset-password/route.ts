@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import { verifySignedToken } from '@/lib/jwt-utils';
 import { prisma } from '@/lib/prisma';
 import { errorResponse, ApiError } from '@/lib/errors';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { RATE_LIMITS } from '@/lib/constants';
 
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   try {
     // Rate limit: 5 per 15 minutes per IP
     const headersList = await headers();
-    const ip = headersList.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
+    const ip = getClientIp(headersList as unknown as Headers);
     const rateLimit = await checkRateLimit(`rate:reset-pw:${ip}`, RATE_LIMITS.RESET_PASSWORD.limit, RATE_LIMITS.RESET_PASSWORD.windowSeconds);
     if (!rateLimit.allowed) {
       return apiError('Too many attempts. Please try again later.', 429, 'RATE_LIMITED');

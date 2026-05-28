@@ -3,6 +3,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { loginSchema, registerSchema } from '@/lib/validation';
 import { checkRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
+import { RATE_LIMITS } from '@/lib/constants';
 
 describe('auth security configuration', () => {
   it('supports Auth.js OAuth env names and legacy aliases', () => {
@@ -113,6 +114,65 @@ describe('auth security configuration', () => {
         email: 'a@b.com', name: 'x'.repeat(256), password: 'ValidPass1',
       });
       expect(result.success).toBe(false);
+    });
+  });
+
+  describe('forgot-password anti-bombing rate limit', () => {
+    it('defines a per-email rate limit constant', () => {
+      expect(RATE_LIMITS.FORGOT_PASSWORD_EMAIL).toBeDefined();
+      expect(RATE_LIMITS.FORGOT_PASSWORD_EMAIL.limit).toBeGreaterThanOrEqual(1);
+      expect(RATE_LIMITS.FORGOT_PASSWORD_EMAIL.windowSeconds).toBeGreaterThan(
+        RATE_LIMITS.FORGOT_PASSWORD.windowSeconds,
+      );
+    });
+
+    it('per-email limit is tighter than per-IP limit', () => {
+      expect(RATE_LIMITS.FORGOT_PASSWORD_EMAIL.limit).toBeLessThanOrEqual(
+        RATE_LIMITS.FORGOT_PASSWORD.limit,
+      );
+    });
+
+    it('forgot-password route applies per-email rate limit', () => {
+      const route = readFileSync(
+        join(process.cwd(), 'src/app/api/v1/auth/forgot-password/route.ts'),
+        'utf-8',
+      );
+      expect(route).toContain('rate:forgot-pw-email:');
+      expect(route).toContain('FORGOT_PASSWORD_EMAIL');
+    });
+
+    it('forgot-password email rate-limit response is indistinguishable from no-op', () => {
+      const route = readFileSync(
+        join(process.cwd(), 'src/app/api/v1/auth/forgot-password/route.ts'),
+        'utf-8',
+      );
+      // Must return apiSuccess (not apiError/429) when email bucket is exhausted
+      // to prevent account-existence enumeration via rate-limit response codes.
+      const afterEmailCheck = route.slice(route.indexOf('emailRateLimit'));
+      expect(afterEmailCheck).toContain('apiSuccess');
+      expect(afterEmailCheck.indexOf('apiSuccess')).toBeLessThan(
+        afterEmailCheck.indexOf('apiError') === -1
+          ? Infinity
+          : afterEmailCheck.indexOf('apiError'),
+      );
+    });
+
+    it('auth routes use getClientIp for consistent IP extraction', () => {
+      const forgotPw = readFileSync(
+        join(process.cwd(), 'src/app/api/v1/auth/forgot-password/route.ts'),
+        'utf-8',
+      );
+      const resetPw = readFileSync(
+        join(process.cwd(), 'src/app/api/v1/auth/reset-password/route.ts'),
+        'utf-8',
+      );
+      const register = readFileSync(
+        join(process.cwd(), 'src/app/api/v1/auth/register/route.ts'),
+        'utf-8',
+      );
+      expect(forgotPw).toContain('getClientIp');
+      expect(resetPw).toContain('getClientIp');
+      expect(register).toContain('getClientIp');
     });
   });
 

@@ -5,7 +5,7 @@ import { createSignedToken } from '@/lib/jwt-utils';
 import { sendEmail } from '@/lib/email';
 import { errorResponse } from '@/lib/errors';
 import { emailTemplate, buttonHtml, escapeHtml } from '@/lib/email-templates';
-import { checkRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
+import { checkRateLimit, rateLimitHeaders, getClientIp } from '@/lib/rate-limit';
 import { apiSuccess, apiError } from '@/lib/api-response';
 import { RATE_LIMITS } from '@/lib/constants';
 import { getAppBaseUrl } from '@/lib/app-url';
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   try {
     // Rate limit: 5 registrations per 15 minutes per IP
     const headersList = await headers();
-    const ip = headersList.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
+    const ip = getClientIp(headersList as unknown as Headers);
     const rateLimit = await checkRateLimit(`rate:register:${ip}`, RATE_LIMITS.REGISTER.limit, RATE_LIMITS.REGISTER.windowSeconds);
     if (!rateLimit.allowed) {
       return apiError('Too many registration attempts. Please try again later.', 429, 'RATE_LIMITED', {

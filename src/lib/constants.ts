@@ -7,7 +7,8 @@
 export const RATE_LIMITS = {
   LOGIN:          { limit: 10, windowSeconds: 300 },   // 10 per 5 min per email
   REGISTER:       { limit: 5,  windowSeconds: 900 },   // 5 per 15 min per IP
-  FORGOT_PASSWORD:{ limit: 5,  windowSeconds: 900 },   // 5 per 15 min per IP
+  FORGOT_PASSWORD:       { limit: 5, windowSeconds: 900 },    // 5 per 15 min per IP
+  FORGOT_PASSWORD_EMAIL: { limit: 3, windowSeconds: 3600 },   // 3 per hour per email (anti-bombing)
   RESET_PASSWORD: { limit: 5,  windowSeconds: 900 },   // 5 per 15 min per IP
   COMPILATION:    { limit: 10, windowSeconds: 60 },    // 10 per min per user per project
   EXPORT:         { limit: 10, windowSeconds: 3600 },  // 10 per hour per user
