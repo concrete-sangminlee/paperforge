@@ -4,13 +4,14 @@ import { errorResponse } from '@/lib/errors';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
+import { safeString } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
 
 const patchProfileSchema = z.object({
-  name: z.string().min(1).max(255).optional(),
-  institution: z.string().max(255).optional().nullable(),
-  bio: z.string().max(1000).optional().nullable(),
+  name: safeString.min(1).max(255).optional(),
+  institution: safeString.max(255).optional().nullable(),
+  bio: safeString.max(1000).optional().nullable(),
 });
 
 const profileSelect = {

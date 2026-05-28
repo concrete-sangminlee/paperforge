@@ -3,6 +3,8 @@ import { auth } from '@/lib/auth';
 import { errorResponse } from '@/lib/errors';
 import { prisma } from '@/lib/prisma';
 import { apiSuccess, apiError, ApiErrors } from '@/lib/api-response';
+import { enforceRateLimit } from '@/lib/rate-limit';
+import { RATE_LIMITS } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,6 +36,12 @@ export async function POST(request: NextRequest) {
     const session = await auth();
     if (!session?.user) return ApiErrors.unauthorized();
     const userId = (session.user as { id: string }).id;
+
+    const limited = await enforceRateLimit(
+      `rate:avatar:${userId}`,
+      RATE_LIMITS.AVATAR_UPLOAD,
+    );
+    if (limited) return limited;
 
     const formData = await request.formData();
     const uploaded = formData.get('avatar');

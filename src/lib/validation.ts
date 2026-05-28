@@ -1,8 +1,9 @@
 import { z } from 'zod';
 import { ApiError } from './errors';
 
-// Common validation patterns
-const safeString = z.string().refine(
+// Common validation patterns — blocks HTML tags, javascript: URIs, and inline event handlers.
+// Export so it can be reused in route-level schemas without duplicating the regex.
+export const safeString = z.string().refine(
   (v) => !/<[a-z/!]/i.test(v) && !/javascript:/i.test(v) && !/on\w+\s*=/i.test(v),
   'Contains invalid characters — HTML tags are not allowed'
 );
