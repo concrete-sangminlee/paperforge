@@ -5,7 +5,7 @@ import GitHub from 'next-auth/providers/github';
 import { upsertOAuthUser, verifyCredentials } from '@/services/user-service';
 import { logAuditAction } from '@/services/audit-service';
 import { loginSchema } from '@/lib/validation';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { RATE_LIMITS } from '@/lib/constants';
 import { getOAuthProviderConfig } from '@/lib/oauth-providers';
 import { prisma } from '@/lib/prisma';
@@ -56,9 +56,18 @@ const providers: Provider[] = [
       email: { label: 'Email', type: 'email' },
       password: { label: 'Password', type: 'password' },
     },
-    async authorize(credentials) {
+    async authorize(credentials, request) {
       const parsed = loginSchema.safeParse(credentials);
       if (!parsed.success) return null;
+
+      // Broad spray limit: blocks one IP from trying many different emails.
+      const ip = getClientIp(request.headers);
+      const ipRateLimit = await checkRateLimit(
+        `rate:login-ip:${ip}`,
+        RATE_LIMITS.LOGIN_IP.limit,
+        RATE_LIMITS.LOGIN_IP.windowSeconds,
+      );
+      if (!ipRateLimit.allowed) return null;
 
       // Rate limit login attempts: 10 per 5 minutes per email
       const rateLimitKey = `rate:login:${parsed.data.email.toLowerCase()}`;

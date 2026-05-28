@@ -6,6 +6,7 @@
 // ── Rate Limiting ────────────────────────────────────────
 export const RATE_LIMITS = {
   LOGIN:          { limit: 10, windowSeconds: 300 },   // 10 per 5 min per email
+  LOGIN_IP:       { limit: 50, windowSeconds: 300 },   // 50 credential attempts per 5 min per IP
   REGISTER:       { limit: 5,  windowSeconds: 900 },   // 5 per 15 min per IP
   FORGOT_PASSWORD:       { limit: 5, windowSeconds: 900 },    // 5 per 15 min per IP
   FORGOT_PASSWORD_EMAIL: { limit: 3, windowSeconds: 3600 },   // 3 per hour per email (anti-bombing)

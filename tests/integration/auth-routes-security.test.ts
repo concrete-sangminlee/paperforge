@@ -24,6 +24,7 @@ describe('auth routes have rate limiting', () => {
     const c = readFileSync(join(process.cwd(), 'src/lib/auth.ts'), 'utf-8');
     expect(c).toContain('checkRateLimit');
     expect(c).toContain('rate:login');
+    expect(c).toContain('rate:login-ip');
   });
 
   it('auth.ts has cookie hardening', () => {

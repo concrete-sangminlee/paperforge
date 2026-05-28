@@ -70,6 +70,18 @@ describe('auth security configuration', () => {
     expect(authModule).toMatch(/logAuditAction[\s\S]*\.catch\(\(\)\s*=>\s*\{\}\)/);
   });
 
+  it('rate-limits credential login by IP and email', () => {
+    const authModule = readFileSync(join(process.cwd(), 'src/lib/auth.ts'), 'utf-8');
+
+    expect(RATE_LIMITS.LOGIN_IP).toBeDefined();
+    expect(RATE_LIMITS.LOGIN_IP.limit).toBeGreaterThan(RATE_LIMITS.LOGIN.limit);
+    expect(authModule).toContain('getClientIp');
+    expect(authModule).toContain('request.headers');
+    expect(authModule).toContain('rate:login-ip:');
+    expect(authModule).toContain('RATE_LIMITS.LOGIN_IP');
+    expect(authModule.indexOf('rate:login-ip:')).toBeLessThan(authModule.indexOf('rate:login:'));
+  });
+
   describe('login validation', () => {
     it('rejects empty email', () => {
       const result = loginSchema.safeParse({ email: '', password: 'test' });
