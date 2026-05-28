@@ -4,6 +4,8 @@ import { errorResponse, ApiError } from '@/lib/errors';
 import { ApiErrors, apiSuccess } from '@/lib/api-response';
 import { prisma } from '@/lib/prisma';
 import { logAuditAction } from '@/services/audit-service';
+import { enforceRateLimit } from '@/lib/rate-limit';
+import { RATE_LIMITS } from '@/lib/constants';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
@@ -25,6 +27,9 @@ export async function PATCH(
     }
     const adminId = (session.user as { id: string }).id;
     const { id } = await params;
+
+    const limited = await enforceRateLimit(`rate:admin-mutate:${adminId}`, RATE_LIMITS.ADMIN_MUTATE);
+    if (limited) return limited;
 
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) throw new ApiError(404, 'User not found');

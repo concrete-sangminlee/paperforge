@@ -17,6 +17,8 @@ export const RATE_LIMITS = {
   SETTINGS_UPDATE:        { limit: 30, windowSeconds: 60 },    // 30 per min per user (frequent editor prefs)
   GIT_CREDENTIAL_ADD:     { limit: 10, windowSeconds: 3600 },  // 10 additions per hour per user
   GIT_CREDENTIAL_DELETE:  { limit: 10, windowSeconds: 3600 },  // 10 deletions per hour per user
+  ADMIN_LIST:    { limit: 60, windowSeconds: 60 },    // 60 list/search requests per min per admin
+  ADMIN_MUTATE:  { limit: 20, windowSeconds: 60 },    // 20 user mutations per min per admin
   COMPILATION:    { limit: 10, windowSeconds: 60 },    // 10 per min per user per project
   EXPORT:         { limit: 10, windowSeconds: 3600 },  // 10 per hour per user
   RENDER:         { limit: 60, windowSeconds: 60 },    // 60 KaTeX renders per min per IP (public)

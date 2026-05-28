@@ -63,6 +63,28 @@ describe('admin user PATCH — session invalidation', () => {
   });
 });
 
+describe('admin routes rate limiting', () => {
+  it('user list is rate-limited per admin', () => {
+    const u = readFileSync(join(process.cwd(), 'src/app/api/v1/admin/users/route.ts'), 'utf-8');
+    expect(u).toContain('enforceRateLimit');
+    expect(u).toContain('rate:admin-list:');
+    expect(u).toContain('ADMIN_LIST');
+  });
+
+  it('user PATCH mutations are rate-limited per admin', () => {
+    const p = readFileSync(join(process.cwd(), 'src/app/api/v1/admin/users/[id]/route.ts'), 'utf-8');
+    expect(p).toContain('enforceRateLimit');
+    expect(p).toContain('rate:admin-mutate:');
+    expect(p).toContain('ADMIN_MUTATE');
+  });
+
+  it('ADMIN_LIST and ADMIN_MUTATE constants are defined', () => {
+    const c = readFileSync(join(process.cwd(), 'src/lib/constants.ts'), 'utf-8');
+    expect(c).toContain('ADMIN_LIST');
+    expect(c).toContain('ADMIN_MUTATE');
+  });
+});
+
 describe('admin workers route', () => {
   const w = readFileSync(join(process.cwd(), 'src/app/api/v1/admin/workers/route.ts'), 'utf-8');
   it('uses ApiErrors', () => { expect(w).toContain('ApiErrors'); });
