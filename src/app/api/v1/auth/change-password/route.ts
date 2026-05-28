@@ -4,6 +4,8 @@ import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { errorResponse, ApiError } from '@/lib/errors';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
+import { enforceRateLimit } from '@/lib/rate-limit';
+import { RATE_LIMITS } from '@/lib/constants';
 import { logAuditAction } from '@/services/audit-service';
 
 export const dynamic = 'force-dynamic';
@@ -23,6 +25,9 @@ export async function POST(request: Request) {
     const session = await auth();
     if (!session?.user) return ApiErrors.unauthorized();
     const userId = (session.user as { id: string }).id;
+
+    const limited = await enforceRateLimit(`rate:change-pw:${userId}`, RATE_LIMITS.CHANGE_PASSWORD);
+    if (limited) return limited;
 
     const body = await request.json();
     const { currentPassword, newPassword } = changePasswordSchema.parse(body);

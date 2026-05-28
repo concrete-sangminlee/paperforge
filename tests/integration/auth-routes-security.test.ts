@@ -42,6 +42,38 @@ describe('auth routes have rate limiting', () => {
     expect(c).toContain('user.email');
   });
 
+  it('verify-email route has IP rate limiting', () => {
+    const c = readFileSync(join(process.cwd(), 'src/app/api/v1/auth/verify-email/[token]/route.ts'), 'utf-8');
+    expect(c).toContain('checkRateLimit');
+    expect(c).toContain('rate:verify-email:');
+    expect(c).toContain('VERIFY_EMAIL');
+  });
+
+  it('verify-email route emits audit event on success', () => {
+    const c = readFileSync(join(process.cwd(), 'src/app/api/v1/auth/verify-email/[token]/route.ts'), 'utf-8');
+    expect(c).toContain('logAuditAction');
+    expect(c).toContain('email_verified');
+  });
+
+  it('change-password route has per-user rate limiting', () => {
+    const c = readFileSync(join(process.cwd(), 'src/app/api/v1/auth/change-password/route.ts'), 'utf-8');
+    expect(c).toContain('enforceRateLimit');
+    expect(c).toContain('rate:change-pw:');
+    expect(c).toContain('CHANGE_PASSWORD');
+  });
+
+  it('register route emits audit event for new accounts', () => {
+    const c = readFileSync(join(process.cwd(), 'src/app/api/v1/auth/register/route.ts'), 'utf-8');
+    expect(c).toContain('logAuditAction');
+    expect(c).toContain('user.register');
+  });
+
+  it('VERIFY_EMAIL and CHANGE_PASSWORD rate-limit constants are defined', () => {
+    const c = readFileSync(join(process.cwd(), 'src/lib/constants.ts'), 'utf-8');
+    expect(c).toContain('VERIFY_EMAIL');
+    expect(c).toContain('CHANGE_PASSWORD');
+  });
+
   it('compile route has rate limiting', () => {
     const c = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/compile/route.ts'), 'utf-8');
     expect(c).toContain('checkRateLimit');

@@ -8,6 +8,7 @@ import { emailTemplate, buttonHtml, escapeHtml } from '@/lib/email-templates';
 import { checkRateLimit, rateLimitHeaders, getClientIp } from '@/lib/rate-limit';
 import { apiSuccess, apiError } from '@/lib/api-response';
 import { RATE_LIMITS } from '@/lib/constants';
+import { logAuditAction } from '@/services/audit-service';
 import { getAppBaseUrl } from '@/lib/app-url';
 
 export async function POST(request: Request) {
@@ -34,6 +35,8 @@ export async function POST(request: Request) {
       // Return same shape to prevent email enumeration
       return apiSuccess(genericResponse, 201);
     }
+
+    logAuditAction(user.id, 'user.register', 'user', user.id, undefined, email).catch(() => {});
 
     const token = createSignedToken(
       { sub: user.id, purpose: 'email-verify' },

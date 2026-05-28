@@ -10,7 +10,9 @@ export const RATE_LIMITS = {
   REGISTER:       { limit: 5,  windowSeconds: 900 },   // 5 per 15 min per IP
   FORGOT_PASSWORD:       { limit: 5, windowSeconds: 900 },    // 5 per 15 min per IP
   FORGOT_PASSWORD_EMAIL: { limit: 3, windowSeconds: 3600 },   // 3 per hour per email (anti-bombing)
-  RESET_PASSWORD: { limit: 5,  windowSeconds: 900 },   // 5 per 15 min per IP
+  RESET_PASSWORD:  { limit: 5,  windowSeconds: 900 },   // 5 per 15 min per IP
+  VERIFY_EMAIL:    { limit: 10, windowSeconds: 900 },   // 10 per 15 min per IP (token replay prevention)
+  CHANGE_PASSWORD: { limit: 5,  windowSeconds: 900 },   // 5 per 15 min per authenticated user
   COMPILATION:    { limit: 10, windowSeconds: 60 },    // 10 per min per user per project
   EXPORT:         { limit: 10, windowSeconds: 3600 },  // 10 per hour per user
   RENDER:         { limit: 60, windowSeconds: 60 },    // 60 KaTeX renders per min per IP (public)
