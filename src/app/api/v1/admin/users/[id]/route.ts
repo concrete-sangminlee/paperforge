@@ -37,12 +37,17 @@ export async function PATCH(
 
     if (data.role !== undefined) {
       updateData.role = data.role;
+      // Bump tokenVersion so the target user's JWT is invalidated within the
+      // next 5-minute check window, forcing re-login with the new role.
+      updateData.tokenVersion = { increment: 1 };
       auditDetails.role = { from: user.role, to: data.role };
     }
 
     if (data.suspend !== undefined) {
       if (data.suspend) {
         updateData.lockedUntil = new Date('2099-01-01T00:00:00Z');
+        // Invalidate active sessions so the suspension takes effect within 5 min.
+        updateData.tokenVersion = { increment: 1 };
         auditDetails.action = 'suspend';
       } else {
         updateData.lockedUntil = null;

@@ -20,6 +20,49 @@ describe('admin users route', () => {
   it('user detail exists', () => { expect(existsSync(join(process.cwd(), 'src/app/api/v1/admin/users/[id]/route.ts'))).toBe(true); });
 });
 
+describe('admin user PATCH — session invalidation', () => {
+  const patch = readFileSync(join(process.cwd(), 'src/app/api/v1/admin/users/[id]/route.ts'), 'utf-8');
+
+  it('bumps tokenVersion on role change', () => {
+    // Role changes (especially admin demotion) must invalidate the target user's
+    // JWT within the next periodic-check window so they cannot retain stale
+    // elevated privileges.
+    const roleBlock = patch.slice(patch.indexOf('data.role !== undefined'));
+    const nextBlock = patch.indexOf('data.suspend', patch.indexOf('data.role !== undefined'));
+    const roleSection = patch.slice(patch.indexOf('data.role !== undefined'), nextBlock);
+    expect(roleSection).toContain('tokenVersion');
+    expect(roleSection).toContain('increment');
+  });
+
+  it('bumps tokenVersion on suspension', () => {
+    // Suspension sets lockedUntil but the JWT check does not read lockedUntil.
+    // Only tokenVersion invalidation ensures the session is revoked within
+    // the 5-minute check window.
+    const suspendBlock = patch.slice(patch.indexOf("data.suspend === true") > -1
+      ? patch.indexOf("data.suspend === true")
+      : patch.indexOf('data.suspend'));
+    expect(patch).toContain('tokenVersion');
+    // The increment must appear in the suspend (true) branch, not just unsuspend
+    const afterSuspendTrue = patch.slice(patch.indexOf('lockedUntil = new Date('));
+    expect(afterSuspendTrue).toContain('tokenVersion');
+  });
+
+  it('does NOT bump tokenVersion on unsuspend', () => {
+    // Unsuspending a user restores access — no need to invalidate an
+    // already-inactive session. Only the suspend branch needs the bump.
+    const unsuspendIdx = patch.indexOf("auditDetails.action = 'unsuspend'");
+    const suspendIdx = patch.indexOf("auditDetails.action = 'suspend'");
+    // unsuspend block must appear after suspend block
+    expect(unsuspendIdx).toBeGreaterThan(suspendIdx);
+    // No tokenVersion in the unsuspend branch (between 'unsuspend' text and next closing brace)
+    const unsuspendBranch = patch.slice(
+      patch.lastIndexOf('lockedUntil = null', unsuspendIdx),
+      unsuspendIdx,
+    );
+    expect(unsuspendBranch).not.toContain('tokenVersion');
+  });
+});
+
 describe('admin workers route', () => {
   const w = readFileSync(join(process.cwd(), 'src/app/api/v1/admin/workers/route.ts'), 'utf-8');
   it('uses ApiErrors', () => { expect(w).toContain('ApiErrors'); });
