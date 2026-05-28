@@ -4,6 +4,8 @@ import { errorResponse } from '@/lib/errors';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
+import { enforceRateLimit } from '@/lib/rate-limit';
+import { RATE_LIMITS } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,6 +48,9 @@ export async function PATCH(request: NextRequest) {
     const session = await auth();
     if (!session?.user) return ApiErrors.unauthorized();
     const userId = (session.user as { id: string }).id;
+
+    const limited = await enforceRateLimit(`rate:settings-update:${userId}`, RATE_LIMITS.SETTINGS_UPDATE);
+    if (limited) return limited;
 
     const body = await request.json();
     const { settings: incoming } = patchSettingsSchema.parse(body);

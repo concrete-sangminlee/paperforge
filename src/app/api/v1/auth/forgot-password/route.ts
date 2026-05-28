@@ -8,6 +8,7 @@ import { emailTemplate, buttonHtml, escapeHtml } from '@/lib/email-templates';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { RATE_LIMITS } from '@/lib/constants';
+import { logAuditAction } from '@/services/audit-service';
 import { getAppBaseUrl } from '@/lib/app-url';
 
 const forgotPasswordSchema = z.object({
@@ -60,6 +61,8 @@ export async function POST(request: Request) {
         'Reset your PaperForge password',
         emailTemplate('Password Reset', body),
       ).catch((err) => console.error('[forgot-password] Failed to send reset email:', err));
+
+      logAuditAction(user.id, 'forgot_password', 'user', user.id, undefined, email).catch(() => {});
     }
 
     return apiSuccess({

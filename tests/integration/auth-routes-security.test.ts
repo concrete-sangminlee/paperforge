@@ -74,6 +74,34 @@ describe('auth routes have rate limiting', () => {
     expect(c).toContain('CHANGE_PASSWORD');
   });
 
+  it('forgot-password route emits audit event when user is found', () => {
+    const c = readFileSync(join(process.cwd(), 'src/app/api/v1/auth/forgot-password/route.ts'), 'utf-8');
+    expect(c).toContain('logAuditAction');
+    expect(c).toContain('forgot_password');
+    // Must be fire-and-forget so audit never breaks the auth flow
+    expect(c).toMatch(/logAuditAction[\s\S]*\.catch\(\(\)\s*=>\s*\{\}\)/);
+  });
+
+  it('profile PATCH has per-user rate limiting', () => {
+    const c = readFileSync(join(process.cwd(), 'src/app/api/v1/user/profile/route.ts'), 'utf-8');
+    expect(c).toContain('enforceRateLimit');
+    expect(c).toContain('rate:profile-update:');
+    expect(c).toContain('PROFILE_UPDATE');
+  });
+
+  it('settings PATCH has per-user rate limiting', () => {
+    const c = readFileSync(join(process.cwd(), 'src/app/api/v1/user/settings/route.ts'), 'utf-8');
+    expect(c).toContain('enforceRateLimit');
+    expect(c).toContain('rate:settings-update:');
+    expect(c).toContain('SETTINGS_UPDATE');
+  });
+
+  it('PROFILE_UPDATE and SETTINGS_UPDATE rate-limit constants are defined', () => {
+    const c = readFileSync(join(process.cwd(), 'src/lib/constants.ts'), 'utf-8');
+    expect(c).toContain('PROFILE_UPDATE');
+    expect(c).toContain('SETTINGS_UPDATE');
+  });
+
   it('compile route has rate limiting', () => {
     const c = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/compile/route.ts'), 'utf-8');
     expect(c).toContain('checkRateLimit');
