@@ -8,6 +8,7 @@ import {
   deleteProject,
 } from '@/services/project-service';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
+import { logAuditAction } from '@/services/audit-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,6 +40,9 @@ export async function PATCH(
     const body = await request.json();
     const data = updateProjectSchema.parse(body);
     const project = await updateProject(id, userId, data);
+
+    logAuditAction(userId, 'project.updated', 'project', id, { fields: Object.keys(data) }).catch(() => {});
+
     return apiSuccess(project);
   } catch (error) {
     return errorResponse(error);

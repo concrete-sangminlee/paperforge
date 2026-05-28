@@ -5,6 +5,8 @@ import { errorResponse } from '@/lib/errors';
 import { inviteMemberSchema } from '@/lib/validation';
 import { getMembers, inviteMember } from '@/services/member-service';
 import { checkRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
+import { RATE_LIMITS } from '@/lib/constants';
+import { logAuditAction } from '@/services/audit-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,18 +36,24 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const userId = (session.user as { id: string }).id;
     const { id } = await params;
 
-    // Rate limit: 20 invitations per hour per user
-    const rl = await checkRateLimit(`rate:invite:${userId}`, 20, 3600);
+    const rl = await checkRateLimit(
+      `rate:invite:${userId}`,
+      RATE_LIMITS.PROJECT_INVITE.limit,
+      RATE_LIMITS.PROJECT_INVITE.windowSeconds,
+    );
     if (!rl.allowed) {
       return NextResponse.json(
         { error: 'Too many invitations. Please try again later.' },
-        { status: 429, headers: rateLimitHeaders(20, rl) },
+        { status: 429, headers: rateLimitHeaders(RATE_LIMITS.PROJECT_INVITE.limit, rl) },
       );
     }
 
     const body = await request.json();
     const { email, role } = inviteMemberSchema.parse(body);
     const member = await inviteMember(id, userId, email, role);
+
+    logAuditAction(userId, 'member.invited', 'project', id, { email, role }).catch(() => {});
+
     return apiSuccess(member, 201);
   } catch (error) {
     return errorResponse(error);

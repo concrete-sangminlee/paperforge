@@ -15,6 +15,50 @@ describe('project CRUD routes', () => {
   it('uses updateProjectSchema', () => { expect(detail).toContain('updateProjectSchema'); });
 });
 
+describe('project mutation audit logging', () => {
+  const detail = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/route.ts'), 'utf-8');
+  const membersRoute = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/members/route.ts'), 'utf-8');
+  const memberRoute = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/members/[userId]/route.ts'), 'utf-8');
+  const restoreRoute = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/versions/[versionId]/restore/route.ts'), 'utf-8');
+
+  it('project PATCH emits audit event', () => {
+    expect(detail).toContain('logAuditAction');
+    expect(detail).toContain('project.updated');
+  });
+
+  it('member PATCH emits audit event with role change', () => {
+    expect(memberRoute).toContain('logAuditAction');
+    expect(memberRoute).toContain('member.role_changed');
+  });
+
+  it('member invite emits audit event and uses centralized rate limit', () => {
+    expect(membersRoute).toContain('logAuditAction');
+    expect(membersRoute).toContain('member.invited');
+    expect(membersRoute).toContain('PROJECT_INVITE');
+  });
+
+  it('member DELETE emits audit event', () => {
+    expect(memberRoute).toContain('member.removed');
+  });
+
+  it('member operations are rate-limited', () => {
+    expect(memberRoute).toContain('enforceRateLimit');
+    expect(memberRoute).toContain('rate:member-op:');
+    expect(memberRoute).toContain('PROJECT_MEMBER_OP');
+  });
+
+  it('version restore emits audit event', () => {
+    expect(restoreRoute).toContain('logAuditAction');
+    expect(restoreRoute).toContain('version.restored');
+  });
+
+  it('version restore is rate-limited', () => {
+    expect(restoreRoute).toContain('enforceRateLimit');
+    expect(restoreRoute).toContain('rate:version-restore:');
+    expect(restoreRoute).toContain('VERSION_RESTORE');
+  });
+});
+
 describe('project service', () => {
   const s = readFileSync(join(process.cwd(), 'src/services/project-service.ts'), 'utf-8');
   it('has listProjects', () => { expect(s).toContain('listProjects'); });
