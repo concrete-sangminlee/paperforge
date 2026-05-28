@@ -55,6 +55,26 @@ describe('auth security configuration', () => {
     expect(resetPw).toContain('tokenVersion');
   });
 
+  it('audit-logs password mutation paths with fire-and-forget pattern', () => {
+    const changePw = readFileSync(join(process.cwd(), 'src/app/api/v1/auth/change-password/route.ts'), 'utf-8');
+    const resetPw = readFileSync(join(process.cwd(), 'src/app/api/v1/auth/reset-password/route.ts'), 'utf-8');
+
+    // Both routes must emit an audit event via logAuditAction
+    expect(changePw).toContain('logAuditAction');
+    expect(changePw).toContain("'change_password'");
+    expect(resetPw).toContain('logAuditAction');
+    expect(resetPw).toContain("'reset_password'");
+
+    // Must be fire-and-forget so a log failure never breaks the auth flow
+    expect(changePw).toMatch(/logAuditAction[\s\S]*\.catch\(\(\)\s*=>\s*\{\}\)/);
+    expect(resetPw).toMatch(/logAuditAction[\s\S]*\.catch\(\(\)\s*=>\s*\{\}\)/);
+
+    // reset-password must not use direct prisma.auditLog.create (inconsistent bypass)
+    expect(resetPw).not.toContain('prisma.auditLog.create');
+    // change-password must not either (refactored to logAuditAction)
+    expect(changePw).not.toContain('prisma.auditLog.create');
+  });
+
   it('audit-logs credential and OAuth login events', () => {
     const userService = readFileSync(join(process.cwd(), 'src/services/user-service.ts'), 'utf-8');
     const authModule = readFileSync(join(process.cwd(), 'src/lib/auth.ts'), 'utf-8');

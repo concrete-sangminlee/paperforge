@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { errorResponse, ApiError } from '@/lib/errors';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
+import { logAuditAction } from '@/services/audit-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,14 +52,7 @@ export async function POST(request: Request) {
       data: { passwordHash, tokenVersion: { increment: 1 } },
     });
 
-    // Audit log for security tracking
-    try {
-      await prisma.auditLog.create({
-        data: { adminId: userId, actorEmail: user.email, action: 'change_password', targetType: 'user', targetId: userId },
-      });
-    } catch {
-      // Non-critical — don't fail the password change if audit log fails
-    }
+    logAuditAction(userId, 'change_password', 'user', userId, undefined, user.email).catch(() => {});
 
     return apiSuccess({ message: 'Password changed successfully.' });
   } catch (error) {

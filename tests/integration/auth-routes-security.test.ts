@@ -35,8 +35,11 @@ describe('auth routes have rate limiting', () => {
 
   it('change-password audit log snapshots actor email before later account deletion', () => {
     const c = readFileSync(join(process.cwd(), 'src/app/api/v1/auth/change-password/route.ts'), 'utf-8');
+    // email is fetched before the update so it's available even if the account is later deleted
     expect(c).toContain('email: true');
-    expect(c).toContain('actorEmail: user.email');
+    // logAuditAction receives user.email as the actor identifier
+    expect(c).toContain('logAuditAction');
+    expect(c).toContain('user.email');
   });
 
   it('compile route has rate limiting', () => {

@@ -7,6 +7,7 @@ import { errorResponse, ApiError } from '@/lib/errors';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { RATE_LIMITS } from '@/lib/constants';
+import { logAuditAction } from '@/services/audit-service';
 
 const resetPasswordSchema = z.object({
   token: z.string().min(1),
@@ -45,7 +46,7 @@ export async function POST(request: Request) {
     // Single-use check: if password was changed after token was issued, reject
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { updatedAt: true },
+      select: { updatedAt: true, email: true },
     });
     if (!user) throw new ApiError(404, 'User not found');
     const iat = typeof payload.iat === 'number' ? payload.iat : 0;
@@ -65,6 +66,8 @@ export async function POST(request: Request) {
         tokenVersion: { increment: 1 },
       },
     });
+
+    logAuditAction(userId, 'reset_password', 'user', userId, undefined, user.email).catch(() => {});
 
     return apiSuccess({
       message: 'Password has been reset successfully.',
