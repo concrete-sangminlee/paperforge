@@ -8,6 +8,8 @@ import {
 } from '@/services/git-service';
 import { apiSuccess, apiError, ApiErrors } from '@/lib/api-response';
 import { checkRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
+import { RATE_LIMITS } from '@/lib/constants';
+import { logAuditAction } from '@/services/audit-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,17 +38,23 @@ export async function POST(request: NextRequest) {
     if (!session?.user) return ApiErrors.unauthorized();
     const userId = (session.user as { id: string }).id;
 
-    // Rate limit: 10 credential additions per hour per user
-    const rl = await checkRateLimit(`rate:git-cred:${userId}`, 10, 3600);
+    const rl = await checkRateLimit(
+      `rate:git-cred:${userId}`,
+      RATE_LIMITS.GIT_CREDENTIAL_ADD.limit,
+      RATE_LIMITS.GIT_CREDENTIAL_ADD.windowSeconds,
+    );
     if (!rl.allowed) {
       return apiError('Too many credential operations. Please try again later.', 429, 'RATE_LIMITED', {
-        ...rateLimitHeaders(10, rl),
+        ...rateLimitHeaders(RATE_LIMITS.GIT_CREDENTIAL_ADD.limit, rl),
       });
     }
 
     const body = await request.json();
     const { provider, token } = addCredentialSchema.parse(body);
     const credential = await addGitCredential(userId, provider, token);
+
+    logAuditAction(userId, 'git_credential.added', 'git_credential', credential.id, { provider }).catch(() => {});
+
     return apiSuccess(credential, 201);
   } catch (error) {
     return errorResponse(error);

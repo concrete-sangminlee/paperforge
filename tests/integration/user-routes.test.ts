@@ -24,7 +24,24 @@ describe('user settings route', () => {
 
 describe('user git-credentials route', () => {
   const g = readFileSync(join(process.cwd(), 'src/app/api/v1/user/git-credentials/route.ts'), 'utf-8');
+  const d = readFileSync(join(process.cwd(), 'src/app/api/v1/user/git-credentials/[credentialId]/route.ts'), 'utf-8');
   it('has GET', () => { expect(g).toContain('GET'); });
   it('has POST', () => { expect(g).toContain('POST'); });
   it('delete route exists', () => { expect(existsSync(join(process.cwd(), 'src/app/api/v1/user/git-credentials/[credentialId]/route.ts'))).toBe(true); });
+
+  it('POST audit-logs credential addition', () => {
+    expect(g).toContain('logAuditAction');
+    expect(g).toContain('git_credential.added');
+  });
+
+  it('DELETE rate-limits per user', () => {
+    expect(d).toContain('enforceRateLimit');
+    expect(d).toContain('rate:git-cred-del:');
+    expect(d).toContain('GIT_CREDENTIAL_DELETE');
+  });
+
+  it('DELETE audit-logs credential removal', () => {
+    expect(d).toContain('logAuditAction');
+    expect(d).toContain('git_credential.deleted');
+  });
 });
