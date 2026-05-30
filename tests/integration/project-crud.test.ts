@@ -59,6 +59,33 @@ describe('project mutation audit logging', () => {
   });
 });
 
+describe('project creation and sharing audit trail', () => {
+  it('project POST emits project.created audit event', () => {
+    const c = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/route.ts'), 'utf-8');
+    expect(c).toContain('logAuditAction');
+    expect(c).toContain('project.created');
+  });
+
+  it('share-link POST emits share_link.created audit event', () => {
+    const c = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/share-link/route.ts'), 'utf-8');
+    expect(c).toContain('logAuditAction');
+    expect(c).toContain('share_link.created');
+  });
+
+  it('git push emits git.pushed audit event', () => {
+    const c = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/git/push/route.ts'), 'utf-8');
+    expect(c).toContain('logAuditAction');
+    expect(c).toContain('git.pushed');
+  });
+
+  it('join/[token] has rate limiting and emits member.joined_via_link', () => {
+    const c = readFileSync(join(process.cwd(), 'src/app/api/v1/join/[token]/route.ts'), 'utf-8');
+    expect(c).toContain('enforceRateLimit');
+    expect(c).toContain('logAuditAction');
+    expect(c).toContain('member.joined_via_link');
+  });
+});
+
 describe('remaining route security hardening', () => {
   it('git/link POST has rate limiting and audit log', () => {
     const c = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/git/link/route.ts'), 'utf-8');

@@ -5,6 +5,7 @@ import { createProjectSchema } from '@/lib/validation';
 import { createProject, listProjects } from '@/services/project-service';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
 import { enforceRateLimit } from '@/lib/rate-limit';
+import { logAuditAction } from '@/services/audit-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,6 +43,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const data = createProjectSchema.parse(body);
     const project = await createProject(userId, data);
+
+    logAuditAction(userId, 'project.created', 'project', project.id, { name: data.name }).catch(() => {});
+
     return apiSuccess(project, 201);
   } catch (error) {
     return errorResponse(error);

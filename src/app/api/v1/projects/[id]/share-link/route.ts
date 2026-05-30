@@ -6,6 +6,7 @@ import { errorResponse } from '@/lib/errors';
 import { createShareLink, listShareLinks } from '@/services/member-service';
 import { enforceRateLimit } from '@/lib/rate-limit';
 import { RATE_LIMITS } from '@/lib/constants';
+import { logAuditAction } from '@/services/audit-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,6 +56,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       permission,
       expiresAt ? new Date(expiresAt) : undefined,
     );
+
+    logAuditAction(userId, 'share_link.created', 'project', id, { permission, linkId: link.id }).catch(() => {});
+
     return apiSuccess(link, 201);
   } catch (error) {
     return errorResponse(error);
