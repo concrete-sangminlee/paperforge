@@ -8,6 +8,7 @@ import { apiSuccess, apiError, ApiErrors } from '@/lib/api-response';
 import { isValidFilePath, RATE_LIMITS } from '@/lib/constants';
 import { parseZipTextEntries, ZIP_IMPORT_LIMITS } from '@/lib/zip-import';
 import { enforceRateLimit } from '@/lib/rate-limit';
+import { logAuditAction } from '@/services/audit-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -162,6 +163,8 @@ async function importFromZipBuffer(userId: string, projectName: string, buffer: 
       // Skip files that fail.
     }
   }
+
+  logAuditAction(userId, 'project.imported_url', 'project', project.id, { projectName, importedCount }).catch(() => {});
 
   return apiSuccess({ project, importedFiles: importedCount }, 201);
 }

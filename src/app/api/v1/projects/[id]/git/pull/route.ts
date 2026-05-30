@@ -6,6 +6,7 @@ import { assertProjectRole } from '@/services/project-service';
 import { pullFromRemote } from '@/services/git-service';
 import { enforceRateLimit } from '@/lib/rate-limit';
 import { RATE_LIMITS } from '@/lib/constants';
+import { logAuditAction } from '@/services/audit-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,6 +31,9 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
     if (limited) return limited;
 
     await pullFromRemote(id, userId);
+
+    logAuditAction(userId, 'git.pulled', 'project', id).catch(() => {});
+
     return apiSuccess({ success: true });
   } catch (error) {
     return errorResponse(error);
