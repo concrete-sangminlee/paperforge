@@ -59,6 +59,33 @@ describe('project mutation audit logging', () => {
   });
 });
 
+describe('remaining route security hardening', () => {
+  it('git/link POST has rate limiting and audit log', () => {
+    const c = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/git/link/route.ts'), 'utf-8');
+    expect(c).toContain('enforceRateLimit');
+    expect(c).toContain('GIT_OP');
+    expect(c).toContain('logAuditAction');
+    expect(c).toContain('git.linked');
+  });
+
+  it('share-link DELETE has rate limiting and audit log', () => {
+    const c = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/share-link/[linkId]/route.ts'), 'utf-8');
+    expect(c).toContain('enforceRateLimit');
+    expect(c).toContain('SHARE_LINK');
+    expect(c).toContain('logAuditAction');
+    expect(c).toContain('share_link.revoked');
+  });
+
+  it('file DELETE shares the file-write rate bucket', () => {
+    const c = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/files/[...path]/route.ts'), 'utf-8');
+    const deleteIdx = c.indexOf('async function DELETE');
+    expect(deleteIdx).toBeGreaterThan(-1);
+    const deleteSection = c.slice(deleteIdx);
+    expect(deleteSection).toContain('checkRateLimit');
+    expect(deleteSection).toContain('rate:file-write:');
+  });
+});
+
 describe('project service', () => {
   const s = readFileSync(join(process.cwd(), 'src/services/project-service.ts'), 'utf-8');
   it('has listProjects', () => { expect(s).toContain('listProjects'); });

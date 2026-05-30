@@ -12,6 +12,31 @@ describe('template routes', () => {
   it('from-template route', () => { expect(existsSync(join(process.cwd(), 'src/app/api/v1/projects/from-template/[templateId]/route.ts'))).toBe(true); });
 });
 
+describe('template route security', () => {
+  const t = readFileSync(join(process.cwd(), 'src/app/api/v1/templates/route.ts'), 'utf-8');
+  const ft = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/from-template/[templateId]/route.ts'), 'utf-8');
+
+  it('POST submit has rate limiting', () => {
+    expect(t).toContain('enforceRateLimit');
+    expect(t).toContain('TEMPLATE_SUBMIT');
+  });
+
+  it('POST submit emits audit event', () => {
+    expect(t).toContain('logAuditAction');
+    expect(t).toContain('template.submitted');
+  });
+
+  it('from-template POST shares the project-creation rate bucket', () => {
+    expect(ft).toContain('enforceRateLimit');
+    expect(ft).toContain('rate:create-project:');
+  });
+
+  it('from-template POST emits audit event', () => {
+    expect(ft).toContain('logAuditAction');
+    expect(ft).toContain('project.created_from_template');
+  });
+});
+
 describe('template service', () => {
   const s = readFileSync(join(process.cwd(), 'src/services/template-service.ts'), 'utf-8');
   it('has listTemplates', () => { expect(s).toContain('listTemplates'); });

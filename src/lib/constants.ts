@@ -26,7 +26,8 @@ export const RATE_LIMITS = {
   EXPORT:         { limit: 10, windowSeconds: 3600 },  // 10 per hour per user
   RENDER:         { limit: 60, windowSeconds: 60 },    // 60 KaTeX renders per min per IP (public)
   GIT_OP:         { limit: 10, windowSeconds: 60 },    // 10 push/pull per min per user per project
-  SHARE_LINK:     { limit: 30, windowSeconds: 3600 },  // 30 share-link creations per hour per user
+  SHARE_LINK:        { limit: 30, windowSeconds: 3600 },  // 30 share-link ops per hour per user
+  TEMPLATE_SUBMIT:   { limit: 5,  windowSeconds: 3600 },  // 5 template submissions per hour per user
   FILE_UPLOAD:    { limit: 30, windowSeconds: 60 },    // 30 binary uploads per min per user
   IMPORT:         { limit: 5,  windowSeconds: 3600 },  // 5 zip/url imports per hour per user
   ACCOUNT_DELETE: { limit: 3,  windowSeconds: 86400 }, // 3 account-deletion attempts per day per user

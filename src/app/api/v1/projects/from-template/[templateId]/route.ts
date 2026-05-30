@@ -3,6 +3,8 @@ import { auth } from '@/lib/auth';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
 import { errorResponse } from '@/lib/errors';
 import { createProjectFromTemplate } from '@/services/template-service';
+import { enforceRateLimit } from '@/lib/rate-limit';
+import { logAuditAction } from '@/services/audit-service';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
@@ -22,9 +24,20 @@ export async function POST(
     }
     const userId = (session.user as { id: string }).id;
     const { templateId } = await params;
+
+    // Share the project-creation bucket so template clones count toward the same limit
+    const limited = await enforceRateLimit(
+      `rate:create-project:${userId}`,
+      { limit: 20, windowSeconds: 3600 },
+    );
+    if (limited) return limited;
+
     const body = await request.json();
     const { projectName } = schema.parse(body);
     const project = await createProjectFromTemplate(templateId, userId, projectName);
+
+    logAuditAction(userId, 'project.created_from_template', 'project', project.id, { templateId, projectName }).catch(() => {});
+
     return apiSuccess(project, 201);
   } catch (error) {
     return errorResponse(error);

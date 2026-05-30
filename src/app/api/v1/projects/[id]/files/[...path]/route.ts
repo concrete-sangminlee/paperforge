@@ -86,6 +86,15 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     }
     const userId = (session.user as { id: string }).id;
     const { id, path } = await params;
+
+    // Share the file-write bucket so rapid delete+recreate loops also hit the limit
+    const rl = await checkRateLimit(`rate:file-write:${userId}`, 30, 60);
+    if (!rl.allowed) {
+      return apiError('Too many file operations. Please slow down.', 429, 'RATE_LIMITED', {
+        ...rateLimitHeaders(30, rl),
+      });
+    }
+
     await assertProjectRole(id, userId, ['owner', 'editor']);
 
     const filePath = path.join('/');

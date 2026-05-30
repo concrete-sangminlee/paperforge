@@ -9,6 +9,9 @@ import {
 } from '@/services/template-service';
 import { z } from 'zod';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
+import { enforceRateLimit } from '@/lib/rate-limit';
+import { RATE_LIMITS } from '@/lib/constants';
+import { logAuditAction } from '@/services/audit-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,6 +53,10 @@ export async function POST(request: NextRequest) {
     const session = await auth();
     if (!session?.user) return ApiErrors.unauthorized();
     const userId = (session.user as { id: string }).id;
+
+    const limited = await enforceRateLimit(`rate:template-submit:${userId}`, RATE_LIMITS.TEMPLATE_SUBMIT);
+    if (limited) return limited;
+
     const body = await request.json();
     const data = submitTemplateSchema.parse(body);
     const template = await submitTemplate(
@@ -59,6 +66,9 @@ export async function POST(request: NextRequest) {
       data.description,
       data.category,
     );
+
+    logAuditAction(userId, 'template.submitted', 'template', template.id, { name: data.name, category: data.category }).catch(() => {});
+
     return apiSuccess(template, 201);
   } catch (error) {
     return errorResponse(error);
