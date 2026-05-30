@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/lib/auth';
 import { apiSuccess, apiError, ApiErrors } from '@/lib/api-response';
 import { errorResponse } from '@/lib/errors';
@@ -8,8 +8,8 @@ import {
   createFile,
   deleteFile,
 } from '@/services/file-service';
-import { isValidFilePath, LIMITS } from '@/lib/constants';
-import { checkRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
+import { isValidFilePath, LIMITS, RATE_LIMITS } from '@/lib/constants';
+import { enforceRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,14 +45,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const { id, path } = await params;
     await assertProjectRole(id, userId, ['owner', 'editor']);
 
-    // Rate limit: 30 file writes per minute per user
-    const rl = await checkRateLimit(`rate:file-write:${userId}`, 30, 60);
-    if (!rl.allowed) {
-      return NextResponse.json(
-        { error: 'Too many file operations. Please slow down.' },
-        { status: 429, headers: rateLimitHeaders(30, rl) },
-      );
-    }
+    const limited = await enforceRateLimit(
+      `rate:file-write:${userId}`,
+      RATE_LIMITS.FILE_WRITE,
+      'Too many file operations. Please slow down.',
+    );
+    if (limited) return limited;
 
     const filePath = path.join('/');
     if (!isValidFilePath(filePath)) {
@@ -87,13 +85,12 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     const userId = (session.user as { id: string }).id;
     const { id, path } = await params;
 
-    // Share the file-write bucket so rapid delete+recreate loops also hit the limit
-    const rl = await checkRateLimit(`rate:file-write:${userId}`, 30, 60);
-    if (!rl.allowed) {
-      return apiError('Too many file operations. Please slow down.', 429, 'RATE_LIMITED', {
-        ...rateLimitHeaders(30, rl),
-      });
-    }
+    const limited = await enforceRateLimit(
+      `rate:file-write:${userId}`,
+      RATE_LIMITS.FILE_WRITE,
+      'Too many file operations. Please slow down.',
+    );
+    if (limited) return limited;
 
     await assertProjectRole(id, userId, ['owner', 'editor']);
 

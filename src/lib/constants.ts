@@ -19,6 +19,7 @@ export const RATE_LIMITS = {
   GIT_CREDENTIAL_DELETE:  { limit: 10, windowSeconds: 3600 },  // 10 deletions per hour per user
   ADMIN_LIST:    { limit: 60, windowSeconds: 60 },    // 60 list/search requests per min per admin
   ADMIN_MUTATE:  { limit: 20, windowSeconds: 60 },    // 20 user mutations per min per admin
+  PROJECT_CREATE:   { limit: 20, windowSeconds: 3600 }, // 20 project creations per hour per user
   PROJECT_INVITE:    { limit: 20, windowSeconds: 3600 }, // 20 member invites per hour per user
   PROJECT_MEMBER_OP: { limit: 20, windowSeconds: 60 },  // 20 member update/remove ops per min per user
   VERSION_RESTORE:   { limit: 5,  windowSeconds: 300 }, // 5 restores per 5 min per user (expensive op)
@@ -28,6 +29,7 @@ export const RATE_LIMITS = {
   GIT_OP:         { limit: 10, windowSeconds: 60 },    // 10 push/pull per min per user per project
   SHARE_LINK:        { limit: 30, windowSeconds: 3600 },  // 30 share-link ops per hour per user
   TEMPLATE_SUBMIT:   { limit: 5,  windowSeconds: 3600 },  // 5 template submissions per hour per user
+  FILE_WRITE:     { limit: 30, windowSeconds: 60 },    // 30 text file writes/deletes per min per user
   FILE_UPLOAD:    { limit: 30, windowSeconds: 60 },    // 30 binary uploads per min per user
   IMPORT:         { limit: 5,  windowSeconds: 3600 },  // 5 zip/url imports per hour per user
   ACCOUNT_DELETE: { limit: 3,  windowSeconds: 86400 }, // 3 account-deletion attempts per day per user

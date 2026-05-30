@@ -64,6 +64,7 @@ describe('project creation and sharing audit trail', () => {
     const c = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/route.ts'), 'utf-8');
     expect(c).toContain('logAuditAction');
     expect(c).toContain('project.created');
+    expect(c).toContain('PROJECT_CREATE');
   });
 
   it('share-link POST emits share_link.created audit event', () => {
@@ -99,6 +100,7 @@ describe('remaining route security hardening', () => {
     const c = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/share-link/[linkId]/route.ts'), 'utf-8');
     expect(c).toContain('enforceRateLimit');
     expect(c).toContain('SHARE_LINK');
+    expect(c).toContain('rate:share-link:${requesterId}');
     expect(c).toContain('logAuditAction');
     expect(c).toContain('share_link.revoked');
   });
@@ -108,8 +110,9 @@ describe('remaining route security hardening', () => {
     const deleteIdx = c.indexOf('async function DELETE');
     expect(deleteIdx).toBeGreaterThan(-1);
     const deleteSection = c.slice(deleteIdx);
-    expect(deleteSection).toContain('checkRateLimit');
+    expect(deleteSection).toContain('enforceRateLimit');
     expect(deleteSection).toContain('rate:file-write:');
+    expect(deleteSection).toContain('FILE_WRITE');
   });
 });
 

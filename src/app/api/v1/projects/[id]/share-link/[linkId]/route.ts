@@ -19,7 +19,7 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
     const requesterId = (session.user as { id: string }).id;
     const { id, linkId } = await params;
 
-    const limited = await enforceRateLimit(`rate:share-link:${requesterId}:${id}`, RATE_LIMITS.SHARE_LINK);
+    const limited = await enforceRateLimit(`rate:share-link:${requesterId}`, RATE_LIMITS.SHARE_LINK);
     if (limited) return limited;
 
     const result = await revokeShareLink(id, requesterId, linkId);

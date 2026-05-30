@@ -5,6 +5,7 @@ import { createProjectSchema } from '@/lib/validation';
 import { createProject, listProjects } from '@/services/project-service';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
 import { enforceRateLimit } from '@/lib/rate-limit';
+import { RATE_LIMITS } from '@/lib/constants';
 import { logAuditAction } from '@/services/audit-service';
 
 export const dynamic = 'force-dynamic';
@@ -31,11 +32,9 @@ export async function POST(request: NextRequest) {
     }
     const userId = (session.user as { id: string }).id;
 
-    // 20 projects per hour per user. Goes through the shared helper so the
-    // 429 response matches the wrapped envelope every other route uses.
     const limited = await enforceRateLimit(
       `rate:create-project:${userId}`,
-      { limit: 20, windowSeconds: 3600 },
+      RATE_LIMITS.PROJECT_CREATE,
       'Too many projects created. Please try again later.',
     );
     if (limited) return limited;

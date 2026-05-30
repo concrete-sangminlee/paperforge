@@ -29,6 +29,7 @@ describe('template route security', () => {
   it('from-template POST shares the project-creation rate bucket', () => {
     expect(ft).toContain('enforceRateLimit');
     expect(ft).toContain('rate:create-project:');
+    expect(ft).toContain('PROJECT_CREATE');
   });
 
   it('from-template POST emits audit event', () => {
