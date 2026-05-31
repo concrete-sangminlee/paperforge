@@ -4,6 +4,8 @@ import { errorResponse } from '@/lib/errors';
 import { apiError } from '@/lib/api-response';
 import { enforceRateLimit, getClientIp } from '@/lib/rate-limit';
 import { RATE_LIMITS } from '@/lib/constants';
+import { logAuditAction } from '@/services/audit-service';
+import { createHash } from 'crypto';
 
 const renderSchema = z.object({
   latex: z.string().min(1).max(5000),
@@ -34,6 +36,15 @@ export async function POST(request: NextRequest) {
       trust: false,
       strict: false,
     });
+
+    const requestFingerprint = createHash('sha256')
+      .update(`${ip}::render`)
+      .digest('hex')
+      .slice(0, 16);
+    logAuditAction(null, 'rendered', 'system', 'public', {
+      ipFingerprint: requestFingerprint,
+      latexLength: latex.length,
+    }).catch(() => {});
 
     // Return full HTML page for screenshot/embedding
     const fullPage = `<!DOCTYPE html>

@@ -14,13 +14,25 @@ async function resolveActorEmail(adminId: string, actorEmail?: string) {
 }
 
 export async function logAuditAction(
-  adminId: string,
+  adminId: string | null,
   action: string,
   targetType: string,
   targetId: string,
   details?: Record<string, unknown>,
   actorEmail?: string,
 ) {
+  if (adminId === null) {
+    return prisma.auditLog.create({
+      data: {
+        action,
+        targetType,
+        targetId,
+        actorEmail: actorEmail ?? undefined,
+        details: details ? JSON.parse(JSON.stringify(details)) : undefined,
+      },
+    });
+  }
+
   const resolvedActorEmail = await resolveActorEmail(adminId, actorEmail);
 
   return prisma.auditLog.create({

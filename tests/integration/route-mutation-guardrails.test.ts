@@ -4,9 +4,7 @@ import { join } from 'path';
 
 const SOURCE_ROOT = 'src/app/api/v1';
 
-const AUDIT_EXEMPT_ROUTES = new Set([
-  'src/app/api/v1/render/route.ts', // public endpoint; intentionally no audit trail
-]);
+const AUDIT_EXEMPT_ROUTES = new Set<string>([]);
 
 const AUTH_EXEMPT_MUTATION_ROUTES = new Set([
   'src/app/api/v1/render/route.ts', // public render helper endpoint
