@@ -114,6 +114,14 @@ describe('auth security configuration', () => {
     expect(authModule).toMatch(/logAuditAction\(null, 'login\.rate_limited'[\s\S]*reason: 'email'/);
   });
 
+  it('malformed credential payloads are audit logged as invalid payload', () => {
+    const authModule = readFileSync(join(process.cwd(), 'src/lib/auth.ts'), 'utf-8');
+    expect(authModule).toContain('reason: \'invalid_payload\'');
+    expect(authModule).toContain('ipFingerprint');
+    expect(authModule).toContain('hasEmail');
+    expect(authModule).toContain('hasPassword');
+  });
+
   describe('login validation', () => {
     it('rejects empty email', () => {
       const result = loginSchema.safeParse({ email: '', password: 'test' });

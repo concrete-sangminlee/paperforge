@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { errorResponse } from '@/lib/errors';
 import { apiError } from '@/lib/api-response';
 import { enforceRateLimit, getClientIp } from '@/lib/rate-limit';
-import { RATE_LIMITS } from '@/lib/constants';
+import { RATE_LIMITS, SYSTEM_TARGET_ID } from '@/lib/constants';
 import { logAuditAction } from '@/services/audit-service';
 import { createHash } from 'crypto';
 
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       .update(`${ip}::render`)
       .digest('hex')
       .slice(0, 16);
-    logAuditAction(null, 'rendered', 'system', '00000000-0000-0000-0000-000000000000', {
+    logAuditAction(null, 'rendered', 'system', SYSTEM_TARGET_ID, {
       ipFingerprint: requestFingerprint,
       latexLength: latex.length,
     }).catch(() => {});

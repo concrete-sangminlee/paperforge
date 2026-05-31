@@ -42,6 +42,8 @@ export const RATE_LIMITS = {
   AI_GLOBAL:      { limit: 1000, windowSeconds: 3600 },
 } as const;
 
+export const SYSTEM_TARGET_ID = '00000000-0000-0000-0000-000000000000' as const;
+
 // ── Authentication ───────────────────────────────────────
 export const AUTH = {
   MAX_FAILED_ATTEMPTS: 20,

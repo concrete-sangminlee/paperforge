@@ -6,7 +6,7 @@ import { upsertOAuthUser, verifyCredentials } from '@/services/user-service';
 import { logAuditAction } from '@/services/audit-service';
 import { loginSchema } from '@/lib/validation';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
-import { RATE_LIMITS } from '@/lib/constants';
+import { RATE_LIMITS, SYSTEM_TARGET_ID } from '@/lib/constants';
 import { getOAuthProviderConfig } from '@/lib/oauth-providers';
 import { prisma } from '@/lib/prisma';
 import { env } from '@/lib/env';
@@ -59,25 +59,35 @@ const providers: Provider[] = [
     },
     async authorize(credentials, request) {
       const parsed = loginSchema.safeParse(credentials);
-      if (!parsed.success) return null;
-      const email = parsed.data.email.toLowerCase();
+      const ip = getClientIp(request.headers);
+      const ipFingerprint = createHash('sha256').update(ip).digest('hex').slice(0, 16);
+      if (!parsed.success) {
+        logAuditAction(null, 'login.rate_limited', 'system', SYSTEM_TARGET_ID, {
+          reason: 'invalid_payload',
+          ipFingerprint,
+          hasEmail: Boolean((credentials as { email?: string })?.email),
+          hasPassword: Boolean((credentials as { password?: string })?.password),
+        }).catch(() => {});
+        return null;
+      }
+
       const emailFingerprint = createHash('sha256')
         .update(parsed.data.email.toLowerCase())
         .digest('hex')
         .slice(0, 16);
+      const email = parsed.data.email.toLowerCase();
 
       // Broad spray limit: blocks one IP from trying many different emails.
-      const ip = getClientIp(request.headers);
       const ipRateLimit = await checkRateLimit(
         `rate:login-ip:${ip}`,
         RATE_LIMITS.LOGIN_IP.limit,
         RATE_LIMITS.LOGIN_IP.windowSeconds,
       );
       if (!ipRateLimit.allowed) {
-        logAuditAction(null, 'login.rate_limited', 'system', '00000000-0000-0000-0000-000000000000', {
+        logAuditAction(null, 'login.rate_limited', 'system', SYSTEM_TARGET_ID, {
           reason: 'ip',
           emailFingerprint,
-          ip,
+          ipFingerprint,
         }).catch(() => {});
         return null;
       }
@@ -86,9 +96,8 @@ const providers: Provider[] = [
       const rateLimitKey = `rate:login:${email}`;
       const rateLimit = await checkRateLimit(rateLimitKey, RATE_LIMITS.LOGIN.limit, RATE_LIMITS.LOGIN.windowSeconds);
       if (!rateLimit.allowed) {
-        logAuditAction(null, 'login.rate_limited', 'system', '00000000-0000-0000-0000-000000000000', {
+        logAuditAction(null, 'login.rate_limited', 'system', SYSTEM_TARGET_ID, {
           reason: 'email',
-          email,
           emailFingerprint,
         }).catch(() => {});
         return null;
