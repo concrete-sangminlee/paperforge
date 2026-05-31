@@ -10,6 +10,7 @@ import { RATE_LIMITS } from '@/lib/constants';
 import { getOAuthProviderConfig } from '@/lib/oauth-providers';
 import { prisma } from '@/lib/prisma';
 import { env } from '@/lib/env';
+import { createHash } from 'crypto';
 
 import type { Account, Profile, User } from 'next-auth';
 import type { Provider } from 'next-auth/providers';
@@ -59,6 +60,11 @@ const providers: Provider[] = [
     async authorize(credentials, request) {
       const parsed = loginSchema.safeParse(credentials);
       if (!parsed.success) return null;
+      const email = parsed.data.email.toLowerCase();
+      const emailFingerprint = createHash('sha256')
+        .update(parsed.data.email.toLowerCase())
+        .digest('hex')
+        .slice(0, 16);
 
       // Broad spray limit: blocks one IP from trying many different emails.
       const ip = getClientIp(request.headers);
@@ -67,12 +73,26 @@ const providers: Provider[] = [
         RATE_LIMITS.LOGIN_IP.limit,
         RATE_LIMITS.LOGIN_IP.windowSeconds,
       );
-      if (!ipRateLimit.allowed) return null;
+      if (!ipRateLimit.allowed) {
+        logAuditAction(null, 'login.rate_limited', 'system', '00000000-0000-0000-0000-000000000000', {
+          reason: 'ip',
+          emailFingerprint,
+          ip,
+        }).catch(() => {});
+        return null;
+      }
 
       // Rate limit login attempts: 10 per 5 minutes per email
-      const rateLimitKey = `rate:login:${parsed.data.email.toLowerCase()}`;
+      const rateLimitKey = `rate:login:${email}`;
       const rateLimit = await checkRateLimit(rateLimitKey, RATE_LIMITS.LOGIN.limit, RATE_LIMITS.LOGIN.windowSeconds);
-      if (!rateLimit.allowed) return null;
+      if (!rateLimit.allowed) {
+        logAuditAction(null, 'login.rate_limited', 'system', '00000000-0000-0000-0000-000000000000', {
+          reason: 'email',
+          email,
+          emailFingerprint,
+        }).catch(() => {});
+        return null;
+      }
 
       const user = await verifyCredentials(parsed.data.email, parsed.data.password);
       if (!user) return null;

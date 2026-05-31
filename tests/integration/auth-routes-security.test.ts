@@ -27,6 +27,15 @@ describe('auth routes have rate limiting', () => {
     expect(c).toContain('rate:login-ip');
   });
 
+  it('auth.ts logs anonymous login rate-limit denials', () => {
+    const c = readFileSync(join(process.cwd(), 'src/lib/auth.ts'), 'utf-8');
+    expect(c).toContain('login.rate_limited');
+    expect(c).toContain('reason: \'ip\'');
+    expect(c).toContain('reason: \'email\'');
+    // Should be fire-and-forget to avoid impacting auth UX
+    expect(c).toMatch(/logAuditAction\(null, 'login\.rate_limited'[\s\S]*\.catch\(\(\)\s*=>\s*\{\}\)/);
+  });
+
   it('auth.ts has cookie hardening', () => {
     const c = readFileSync(join(process.cwd(), 'src/lib/auth.ts'), 'utf-8');
     expect(c).toContain('httpOnly');

@@ -102,6 +102,18 @@ describe('auth security configuration', () => {
     expect(authModule.indexOf('rate:login-ip:')).toBeLessThan(authModule.indexOf('rate:login:'));
   });
 
+  it('rates-limited credential logins are audit logged', () => {
+    const authModule = readFileSync(join(process.cwd(), 'src/lib/auth.ts'), 'utf-8');
+
+    // Login hardening should capture both IP and email bucket exhaustion.
+    expect(authModule).toContain('login.rate_limited');
+    expect(authModule).toContain('rate:login-ip:');
+    expect(authModule).toContain('rate:login:');
+    expect(authModule).toContain('emailFingerprint');
+    expect(authModule).toMatch(/logAuditAction\(null, 'login\.rate_limited'[\s\S]*reason: 'ip'/);
+    expect(authModule).toMatch(/logAuditAction\(null, 'login\.rate_limited'[\s\S]*reason: 'email'/);
+  });
+
   describe('login validation', () => {
     it('rejects empty email', () => {
       const result = loginSchema.safeParse({ email: '', password: 'test' });
