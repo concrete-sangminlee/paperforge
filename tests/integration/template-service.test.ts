@@ -40,9 +40,14 @@ describe('template route security', () => {
 
 describe('template service', () => {
   const s = readFileSync(join(process.cwd(), 'src/services/template-service.ts'), 'utf-8');
+  const getTemplateFn = s.slice(s.indexOf('export async function getTemplate'));
   it('has listTemplates', () => { expect(s).toContain('listTemplates'); });
   it('has submitTemplate', () => { expect(s).toContain('submitTemplate'); });
   it('has approved filter', () => { expect(s).toContain('isApproved'); });
+  it('getTemplate defaults to approved-only lookup', () => {
+    expect(getTemplateFn).toContain('export async function getTemplate(id: string, requireApproved = true)');
+    expect(getTemplateFn).toContain('requireApproved && !template?.isApproved');
+  });
   it('has download count', () => { expect(s).toContain('downloadCount'); });
   it('submitTemplate blocks deleted projects', () => {
     const submit = s.slice(s.indexOf('export async function submitTemplate'));

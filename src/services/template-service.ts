@@ -54,7 +54,7 @@ export async function listTemplates(
   return { items, total, limit: safeLimit, offset: safeOffset };
 }
 
-export async function getTemplate(id: string) {
+export async function getTemplate(id: string, requireApproved = true) {
   const template = await prisma.template.findUnique({
     where: { id },
     include: {
@@ -64,6 +64,9 @@ export async function getTemplate(id: string) {
       },
     },
   });
+  if (requireApproved && !template?.isApproved) {
+    throw new ApiError(404, 'Template not found');
+  }
   if (!template) throw new ApiError(404, 'Template not found');
   return template;
 }
