@@ -59,6 +59,27 @@ describe('project mutation audit logging', () => {
   });
 });
 
+describe('project and version mutation rate limits', () => {
+  it('project PATCH and DELETE are rate-limited', () => {
+    const c = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/route.ts'), 'utf-8');
+    expect(c).toContain('enforceRateLimit');
+    expect(c).toContain('rate:project-mutate:');
+    expect(c).toContain('PROJECT_MUTATE');
+  });
+
+  it('version create POST is rate-limited', () => {
+    const c = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/versions/route.ts'), 'utf-8');
+    expect(c).toContain('enforceRateLimit');
+    expect(c).toContain('VERSION_CREATE');
+  });
+
+  it('version create POST emits version.created audit event', () => {
+    const c = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/versions/route.ts'), 'utf-8');
+    expect(c).toContain('logAuditAction');
+    expect(c).toContain('version.created');
+  });
+});
+
 describe('project creation and sharing audit trail', () => {
   it('project POST emits project.created audit event', () => {
     const c = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/route.ts'), 'utf-8');

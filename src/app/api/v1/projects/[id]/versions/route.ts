@@ -5,6 +5,9 @@ import { apiSuccess, ApiErrors } from '@/lib/api-response';
 import { errorResponse } from '@/lib/errors';
 import { assertProjectRole } from '@/services/project-service';
 import { createVersion, listVersions } from '@/services/version-service';
+import { enforceRateLimit } from '@/lib/rate-limit';
+import { RATE_LIMITS } from '@/lib/constants';
+import { logAuditAction } from '@/services/audit-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,6 +45,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const userId = (session.user as { id: string }).id;
     const { id } = await params;
 
+    const limited = await enforceRateLimit(`rate:version-create:${userId}`, RATE_LIMITS.VERSION_CREATE);
+    if (limited) return limited;
+
     // Only owners and editors can create versions
     await assertProjectRole(id, userId, ['owner', 'editor']);
 
@@ -49,6 +55,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const { label } = createVersionSchema.parse(body);
 
     const version = await createVersion(id, userId, label);
+
+    logAuditAction(userId, 'version.created', 'project', id, { versionId: version.id, label }).catch(() => {});
+
     return apiSuccess(version, 201);
   } catch (error) {
     return errorResponse(error);

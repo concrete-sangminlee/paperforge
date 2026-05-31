@@ -8,6 +8,8 @@ import {
   deleteProject,
 } from '@/services/project-service';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
+import { enforceRateLimit } from '@/lib/rate-limit';
+import { RATE_LIMITS } from '@/lib/constants';
 import { logAuditAction } from '@/services/audit-service';
 
 export const dynamic = 'force-dynamic';
@@ -37,6 +39,10 @@ export async function PATCH(
     if (!session?.user) return ApiErrors.unauthorized();
     const userId = (session.user as { id: string }).id;
     const { id } = await params;
+
+    const limited = await enforceRateLimit(`rate:project-mutate:${userId}`, RATE_LIMITS.PROJECT_MUTATE);
+    if (limited) return limited;
+
     const body = await request.json();
     const data = updateProjectSchema.parse(body);
     const project = await updateProject(id, userId, data);
@@ -58,6 +64,10 @@ export async function DELETE(
     if (!session?.user) return ApiErrors.unauthorized();
     const userId = (session.user as { id: string }).id;
     const { id } = await params;
+
+    const limited = await enforceRateLimit(`rate:project-mutate:${userId}`, RATE_LIMITS.PROJECT_MUTATE);
+    if (limited) return limited;
+
     await deleteProject(id, userId);
     return apiSuccess({ deleted: true });
   } catch (error) {

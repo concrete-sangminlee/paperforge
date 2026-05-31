@@ -19,10 +19,12 @@ export const RATE_LIMITS = {
   GIT_CREDENTIAL_DELETE:  { limit: 10, windowSeconds: 3600 },  // 10 deletions per hour per user
   ADMIN_LIST:    { limit: 60, windowSeconds: 60 },    // 60 list/search requests per min per admin
   ADMIN_MUTATE:  { limit: 20, windowSeconds: 60 },    // 20 user mutations per min per admin
-  PROJECT_CREATE:   { limit: 20, windowSeconds: 3600 }, // 20 project creations per hour per user
+  PROJECT_CREATE:    { limit: 20, windowSeconds: 3600 }, // 20 project creations per hour per user
+  PROJECT_MUTATE:    { limit: 30, windowSeconds: 60 },   // 30 project rename/update ops per min per user
   PROJECT_INVITE:    { limit: 20, windowSeconds: 3600 }, // 20 member invites per hour per user
-  PROJECT_MEMBER_OP: { limit: 20, windowSeconds: 60 },  // 20 member update/remove ops per min per user
-  VERSION_RESTORE:   { limit: 5,  windowSeconds: 300 }, // 5 restores per 5 min per user (expensive op)
+  PROJECT_MEMBER_OP: { limit: 20, windowSeconds: 60 },   // 20 member update/remove ops per min per user
+  VERSION_CREATE:    { limit: 20, windowSeconds: 60 },   // 20 version snapshots per min per user
+  VERSION_RESTORE:   { limit: 5,  windowSeconds: 300 },  // 5 restores per 5 min per user (expensive op)
   COMPILATION:    { limit: 10, windowSeconds: 60 },    // 10 per min per user per project
   EXPORT:         { limit: 10, windowSeconds: 3600 },  // 10 per hour per user
   RENDER:         { limit: 60, windowSeconds: 60 },    // 60 KaTeX renders per min per IP (public)
