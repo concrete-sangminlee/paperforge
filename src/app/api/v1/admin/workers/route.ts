@@ -1,7 +1,9 @@
 import { auth } from '@/lib/auth';
 import { errorResponse } from '@/lib/errors';
 import { ApiErrors, apiSuccess } from '@/lib/api-response';
+import { enforceRateLimit } from '@/lib/rate-limit';
 import { redis } from '@/lib/redis';
+import { RATE_LIMITS } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +14,10 @@ export async function GET() {
     if (!session?.user || userRole !== 'admin') {
       return ApiErrors.forbidden();
     }
+    const adminId = (session.user as { id: string }).id;
+
+    const limited = await enforceRateLimit(`rate:admin-list:${adminId}`, RATE_LIMITS.ADMIN_LIST);
+    if (limited) return limited;
 
     // Get queue info from Redis (if available)
     let waiting = 0, active = 0, completed = 0, failed = 0;

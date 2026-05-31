@@ -64,6 +64,13 @@ describe('admin user PATCH — session invalidation', () => {
 });
 
 describe('admin routes rate limiting', () => {
+  it('analytics route is rate-limited per admin', () => {
+    const a = readFileSync(join(process.cwd(), 'src/app/api/v1/admin/analytics/route.ts'), 'utf-8');
+    expect(a).toContain('enforceRateLimit');
+    expect(a).toContain('rate:admin-list:');
+    expect(a).toContain('ADMIN_LIST');
+  });
+
   it('user list is rate-limited per admin', () => {
     const u = readFileSync(join(process.cwd(), 'src/app/api/v1/admin/users/route.ts'), 'utf-8');
     expect(u).toContain('enforceRateLimit');
@@ -83,6 +90,34 @@ describe('admin routes rate limiting', () => {
     expect(t).toContain('enforceRateLimit');
     expect(t).toContain('rate:admin-mutate:');
     expect(t).toContain('ADMIN_MUTATE');
+  });
+
+  it('audit-log GET is rate-limited per admin', () => {
+    const a = readFileSync(join(process.cwd(), 'src/app/api/v1/admin/audit-log/route.ts'), 'utf-8');
+    expect(a).toContain('enforceRateLimit');
+    expect(a).toContain('rate:admin-list:');
+    expect(a).toContain('ADMIN_LIST');
+  });
+
+  it('templates pending GET is rate-limited per admin', () => {
+    const t = readFileSync(join(process.cwd(), 'src/app/api/v1/admin/templates/pending/route.ts'), 'utf-8');
+    expect(t).toContain('enforceRateLimit');
+    expect(t).toContain('rate:admin-list:');
+    expect(t).toContain('ADMIN_LIST');
+  });
+
+  it('workers GET is rate-limited per admin', () => {
+    const w = readFileSync(join(process.cwd(), 'src/app/api/v1/admin/workers/route.ts'), 'utf-8');
+    expect(w).toContain('enforceRateLimit');
+    expect(w).toContain('rate:admin-list:');
+    expect(w).toContain('ADMIN_LIST');
+  });
+
+  it('admin stats is rate-limited per admin', () => {
+    const s = readFileSync(join(process.cwd(), 'src/app/api/v1/admin/stats/route.ts'), 'utf-8');
+    expect(s).toContain('enforceRateLimit');
+    expect(s).toContain('rate:admin-list:');
+    expect(s).toContain('ADMIN_LIST');
   });
 
   it('ADMIN_LIST and ADMIN_MUTATE constants are defined', () => {

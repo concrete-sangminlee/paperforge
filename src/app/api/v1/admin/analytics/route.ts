@@ -2,6 +2,8 @@ import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { errorResponse } from '@/lib/errors';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
+import { enforceRateLimit } from '@/lib/rate-limit';
+import { RATE_LIMITS } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +16,10 @@ export async function GET() {
     const session = await auth();
     const userRole = (session?.user as { role?: string } | undefined)?.role;
     if (!session?.user || userRole !== 'admin') return ApiErrors.forbidden();
+    const adminId = (session.user as { id: string }).id;
+
+    const limited = await enforceRateLimit(`rate:admin-list:${adminId}`, RATE_LIMITS.ADMIN_LIST);
+    if (limited) return limited;
 
     const now = new Date();
     const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
