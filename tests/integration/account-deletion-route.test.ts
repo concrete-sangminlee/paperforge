@@ -83,4 +83,11 @@ describe('DELETE /api/v1/user/account contract', () => {
     expect(route).toContain('delete_account');
     expect(route).toContain('actorEmail');
   });
+
+  it('blocks account deletion when owned projects have collaborators', () => {
+    expect(route).toContain('project: { createdBy: userId }');
+    expect(route).toContain('projectMember.findFirst');
+    expect(route).toContain('userId: { not: userId }');
+    expect(route).toContain('Transfer project ownership before deleting your account');
+  });
 });

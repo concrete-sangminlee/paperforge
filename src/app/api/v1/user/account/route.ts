@@ -17,12 +17,6 @@ const deleteAccountSchema = z.object({
 /**
  * DELETE /api/v1/user/account
  * Permanently destroys the user record and everything they own.
- *
- * Known gaps tracked for follow-up:
- *   - Projects owned by the user are hard-deleted, taking every collaborator's
- *     work with them. There is no transfer-ownership flow yet, so the choice
- *     is "block deletion when shared" (UX cliff) vs "warn + proceed" (current).
- *     Revisit once an ownership-transfer endpoint exists.
  */
 export async function DELETE(request: Request) {
   try {
@@ -44,6 +38,20 @@ export async function DELETE(request: Request) {
       select: { passwordHash: true, email: true },
     });
     if (!user) return ApiErrors.unauthorized();
+
+    const sharedMembership = await prisma.projectMember.findFirst({
+      where: {
+        project: { createdBy: userId },
+        userId: { not: userId },
+      },
+      select: { projectId: true },
+    });
+    if (sharedMembership) {
+      throw new ApiError(
+        409,
+        'Transfer project ownership before deleting your account because this account owns a project with collaborators.',
+      );
+    }
 
     if (user.passwordHash) {
       if (!currentPassword) {
