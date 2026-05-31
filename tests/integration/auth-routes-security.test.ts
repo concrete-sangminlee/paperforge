@@ -47,6 +47,7 @@ describe('auth routes have rate limiting', () => {
     expect(c).toContain('checkRateLimit');
     expect(c).toContain('rate:verify-email:');
     expect(c).toContain('VERIFY_EMAIL');
+    expect(c).toContain('rateLimitHeaders');
   });
 
   it('verify-email route emits audit event on success', () => {
@@ -85,6 +86,15 @@ describe('auth routes have rate limiting', () => {
     expect(c).toContain('forgot_password');
     // Must be fire-and-forget so audit never breaks the auth flow
     expect(c).toMatch(/logAuditAction[\s\S]*\.catch\(\(\)\s*=>\s*\{\}\)/);
+    expect(c).toContain('FORGOT_PASSWORD');
+    expect(c).toContain('rateLimitHeaders');
+  });
+
+  it('reset-password route has rate-limit headers when rejected', () => {
+    const c = readFileSync(join(process.cwd(), 'src/app/api/v1/auth/reset-password/route.ts'), 'utf-8');
+    expect(c).toContain('checkRateLimit');
+    expect(c).toContain('rateLimitHeaders');
+    expect(c).toContain('RESET_PASSWORD');
   });
 
   it('profile PATCH has per-user rate limiting', () => {

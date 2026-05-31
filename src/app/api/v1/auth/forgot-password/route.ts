@@ -5,7 +5,7 @@ import { createSignedToken } from '@/lib/jwt-utils';
 import { sendEmail } from '@/lib/email';
 import { errorResponse } from '@/lib/errors';
 import { emailTemplate, buttonHtml, escapeHtml } from '@/lib/email-templates';
-import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { checkRateLimit, getClientIp, rateLimitHeaders } from '@/lib/rate-limit';
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { RATE_LIMITS } from '@/lib/constants';
 import { logAuditAction } from '@/services/audit-service';
@@ -23,7 +23,9 @@ export async function POST(request: Request) {
     const ip = getClientIp(headersList as unknown as Headers);
     const ipRateLimit = await checkRateLimit(`rate:forgot-pw:${ip}`, RATE_LIMITS.FORGOT_PASSWORD.limit, RATE_LIMITS.FORGOT_PASSWORD.windowSeconds);
     if (!ipRateLimit.allowed) {
-      return apiError('Too many attempts. Please try again later.', 429, 'RATE_LIMITED');
+      return apiError('Too many attempts. Please try again later.', 429, 'RATE_LIMITED', {
+        ...rateLimitHeaders(RATE_LIMITS.FORGOT_PASSWORD.limit, ipRateLimit),
+      });
     }
 
     const reqBody = await request.json();

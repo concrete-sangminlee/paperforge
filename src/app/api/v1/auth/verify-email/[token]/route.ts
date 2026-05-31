@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { verifySignedToken } from '@/lib/jwt-utils';
 import { prisma } from '@/lib/prisma';
 import { errorResponse, ApiError } from '@/lib/errors';
-import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { checkRateLimit, getClientIp, rateLimitHeaders } from '@/lib/rate-limit';
 import { apiError } from '@/lib/api-response';
 import { RATE_LIMITS } from '@/lib/constants';
 import { logAuditAction } from '@/services/audit-service';
@@ -22,7 +22,9 @@ export async function GET(
       RATE_LIMITS.VERIFY_EMAIL.windowSeconds,
     );
     if (!rateLimit.allowed) {
-      return apiError('Too many verification attempts. Please try again later.', 429, 'RATE_LIMITED');
+      return apiError('Too many verification attempts. Please try again later.', 429, 'RATE_LIMITED', {
+        ...rateLimitHeaders(RATE_LIMITS.VERIFY_EMAIL.limit, rateLimit),
+      });
     }
 
     const { token } = await params;
