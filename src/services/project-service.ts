@@ -135,8 +135,14 @@ export async function assertProjectRole(
   userId: string,
   roles: string[],
 ) {
-  const member = await prisma.projectMember.findUnique({
-    where: { projectId_userId: { projectId, userId } },
+  // Join against the project to also enforce soft-delete: members of a deleted
+  // project must not be able to read or mutate it via direct API calls.
+  const member = await prisma.projectMember.findFirst({
+    where: {
+      projectId,
+      userId,
+      project: { deletedAt: null },
+    },
   });
   if (!member || !roles.includes(member.role)) {
     throw new ApiError(403, 'Insufficient permissions');

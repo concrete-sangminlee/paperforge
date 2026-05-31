@@ -22,6 +22,27 @@ const memberService = readFileSync(
   'utf-8',
 );
 
+const projectService = readFileSync(
+  join(process.cwd(), 'src/services/project-service.ts'),
+  'utf-8',
+);
+
+describe('assertProjectRole — soft-delete enforcement', () => {
+  it('filters out soft-deleted projects so members cannot access deleted resources', () => {
+    // assertProjectRole must include deletedAt: null in its query so that
+    // a project.delete (soft) immediately revokes all member access, even
+    // for users who still have a ProjectMember row.
+    const assertFn = projectService.slice(projectService.indexOf('export async function assertProjectRole'));
+    expect(assertFn).toMatch(/deletedAt:\s*null/);
+  });
+
+  it('uses findFirst (not findUnique) to allow the project join with deletedAt filter', () => {
+    const assertFn = projectService.slice(projectService.indexOf('export async function assertProjectRole'));
+    expect(assertFn).toContain('findFirst');
+    expect(assertFn).not.toContain('findUnique');
+  });
+});
+
 describe('member-service guards', () => {
   it('inviteMember catches P2002 (unique constraint) and turns it into a 409', () => {
     expect(memberService).toContain('inviteMember');
