@@ -126,5 +126,6 @@ describe('auth routes have rate limiting', () => {
   it('export route has rate limiting', () => {
     const c = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/export/route.ts'), 'utf-8');
     expect(c).toContain('checkRateLimit');
+    expect(c).toContain('rateLimitHeaders');
   });
 });

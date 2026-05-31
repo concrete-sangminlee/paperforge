@@ -3,8 +3,8 @@ import { auth } from '@/lib/auth';
 import { errorResponse } from '@/lib/errors';
 import { assertProjectRole, getProject } from '@/services/project-service';
 import { listFiles, getFileContent } from '@/services/file-service';
-import { ApiErrors } from '@/lib/api-response';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { apiError, ApiErrors } from '@/lib/api-response';
+import { checkRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
 import { RATE_LIMITS, LIMITS } from '@/lib/constants';
 import { logAuditAction } from '@/services/audit-service';
 
@@ -26,7 +26,11 @@ export async function GET(
 
     // Rate limit: 10 exports per hour per user
     const rateLimit = await checkRateLimit(`rate:export:${userId}`, RATE_LIMITS.EXPORT.limit, RATE_LIMITS.EXPORT.windowSeconds);
-    if (!rateLimit.allowed) return ApiErrors.rateLimited();
+    if (!rateLimit.allowed) {
+      return apiError('Too many export requests. Please wait before retrying.', 429, 'RATE_LIMITED', {
+        ...rateLimitHeaders(RATE_LIMITS.EXPORT.limit, rateLimit),
+      });
+    }
 
     await assertProjectRole(id, userId, ['owner', 'editor', 'viewer']);
 
