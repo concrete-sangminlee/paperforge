@@ -65,4 +65,12 @@ describe('mutation route guardrails', () => {
       expect(source).toContain('auth()');
     });
   }
+
+  it('render endpoint does not reference external stylesheets for HTML output', () => {
+    const renderRoute = readFileSync(
+      'src/app/api/v1/render/route.ts',
+      'utf-8',
+    );
+    expect(renderRoute).not.toContain('cdn.jsdelivr.net');
+  });
 });

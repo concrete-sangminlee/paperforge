@@ -39,10 +39,10 @@ export async function POST(request: NextRequest) {
     const fullPage = `<!DOCTYPE html>
 <html>
 <head>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 <style>
 body { margin: 0; padding: 24px; display: flex; align-items: center; justify-content: center; min-height: 100vh; background: white; font-size: 20px; }
 .dark body { background: #0a0a0a; color: white; }
+code, .katex { white-space: pre-wrap; word-break: break-word; }
 </style>
 </head>
 <body>${html}</body>
