@@ -300,9 +300,13 @@ export async function submitTemplate(
   description: string,
   category: string,
 ) {
-  // Verify user owns the project
-  const member = await prisma.projectMember.findUnique({
-    where: { projectId_userId: { projectId, userId } },
+  // Verify user owns an existing (non-deleted) project
+  const member = await prisma.projectMember.findFirst({
+    where: {
+      projectId,
+      userId,
+      project: { deletedAt: null },
+    },
   });
   if (!member || member.role !== 'owner') {
     throw new ApiError(403, 'Only the project owner can submit templates');

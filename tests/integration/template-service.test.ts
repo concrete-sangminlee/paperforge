@@ -44,6 +44,12 @@ describe('template service', () => {
   it('has submitTemplate', () => { expect(s).toContain('submitTemplate'); });
   it('has approved filter', () => { expect(s).toContain('isApproved'); });
   it('has download count', () => { expect(s).toContain('downloadCount'); });
+  it('submitTemplate blocks deleted projects', () => {
+    const submit = s.slice(s.indexOf('export async function submitTemplate'));
+    expect(submit).toContain('findFirst');
+    expect(submit).toContain('deletedAt');
+    expect(submit).toContain('project: { deletedAt: null }');
+  });
 });
 
 describe('template page', () => {
