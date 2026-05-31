@@ -60,7 +60,18 @@ export async function getTemplate(id: string, requireApproved = true) {
     include: {
       author: { select: { id: true, name: true } },
       sourceProject: {
-        include: { files: { where: { deletedAt: null } } },
+        select: {
+          id: true,
+          compiler: true,
+          files: {
+            where: { deletedAt: null },
+            select: {
+              id: true,
+              path: true,
+              isBinary: true,
+            },
+          },
+        },
       },
     },
   });

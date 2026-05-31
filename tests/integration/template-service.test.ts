@@ -48,6 +48,11 @@ describe('template service', () => {
     expect(getTemplateFn).toContain('export async function getTemplate(id: string, requireApproved = true)');
     expect(getTemplateFn).toContain('requireApproved && !template?.isApproved');
   });
+  it('getTemplate excludes template source project file contents', () => {
+    expect(getTemplateFn).toContain('select: {');
+    expect(getTemplateFn).toContain('path: true,');
+    expect(getTemplateFn).toContain('isBinary: true,');
+  });
   it('has download count', () => { expect(s).toContain('downloadCount'); });
   it('submitTemplate blocks deleted projects', () => {
     const submit = s.slice(s.indexOf('export async function submitTemplate'));
