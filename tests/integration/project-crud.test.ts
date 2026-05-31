@@ -161,6 +161,12 @@ describe('remaining route security hardening', () => {
     expect(c).toContain('logAuditAction');
     expect(c).toContain('project.compiled');
   });
+
+  it('project export GET emits audit event', () => {
+    const c = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/export/route.ts'), 'utf-8');
+    expect(c).toContain('logAuditAction');
+    expect(c).toContain('project.exported');
+  });
 });
 
 describe('project service', () => {

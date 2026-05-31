@@ -6,6 +6,7 @@ import { listFiles, getFileContent } from '@/services/file-service';
 import { ApiErrors } from '@/lib/api-response';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { RATE_LIMITS, LIMITS } from '@/lib/constants';
+import { logAuditAction } from '@/services/audit-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -169,6 +170,11 @@ export async function GET(
     for (const part of zipParts) { zip.set(part, pos); pos += part.length; }
     for (const cd of centralDir) { zip.set(cd, pos); pos += cd.length; }
     zip.set(eocd, pos);
+
+    logAuditAction(userId, 'project.exported', 'project', id, {
+      fileCount: files.length,
+      name: project.name,
+    }).catch(() => {});
 
     return new NextResponse(zip, {
       status: 200,
