@@ -7,6 +7,7 @@ import { apiSuccess, ApiErrors } from '@/lib/api-response';
 import { safeString } from '@/lib/validation';
 import { enforceRateLimit } from '@/lib/rate-limit';
 import { RATE_LIMITS } from '@/lib/constants';
+import { logAuditAction } from '@/services/audit-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -75,6 +76,11 @@ export async function PATCH(request: NextRequest) {
       },
       select: profileSelect,
     });
+
+    const changedFields = Object.keys(data).filter((key) => data[key as keyof typeof data] !== undefined);
+    logAuditAction(userId, 'profile.updated', 'user', userId, {
+      changedFields,
+    }).catch(() => {});
 
     return apiSuccess(serializeProfile(updated));
   } catch (error) {

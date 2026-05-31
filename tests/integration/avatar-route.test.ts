@@ -33,4 +33,22 @@ describe('user avatar route', () => {
     expect(route).toContain('data:');
     expect(route).toContain('base64');
   });
+  it('POST is rate-limited', () => {
+    expect(route).toContain('enforceRateLimit');
+    expect(route).toContain('rate:avatar:');
+    expect(route).toContain('AVATAR_UPLOAD');
+  });
+  it('POST and DELETE emit audit logs', () => {
+    expect(route).toContain('avatar.uploaded');
+    expect(route).toContain('avatar.deleted');
+    expect(route).toContain('logAuditAction');
+  });
+  it('DELETE is rate-limited', () => {
+    expect(route).toContain('export async function DELETE');
+    const deleteSectionStart = route.lastIndexOf('export async function DELETE');
+    expect(deleteSectionStart).toBeGreaterThan(-1);
+    const deleteSection = route.slice(deleteSectionStart);
+    expect(deleteSection).toContain('enforceRateLimit');
+    expect(deleteSection).toContain('rate:avatar:');
+  });
 });

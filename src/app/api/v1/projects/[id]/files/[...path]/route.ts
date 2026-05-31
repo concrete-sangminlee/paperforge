@@ -10,6 +10,7 @@ import {
 } from '@/services/file-service';
 import { isValidFilePath, LIMITS, RATE_LIMITS } from '@/lib/constants';
 import { enforceRateLimit } from '@/lib/rate-limit';
+import { logAuditAction } from '@/services/audit-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -70,6 +71,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     const file = await createFile(id, filePath, content);
+    logAuditAction(userId, 'file.updated', 'project', id, { path: filePath }).catch(() => {});
+
     return apiSuccess({ file });
   } catch (error) {
     return errorResponse(error);
@@ -100,6 +103,8 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     }
 
     await deleteFile(id, filePath);
+    logAuditAction(userId, 'file.deleted', 'project', id, { path: filePath }).catch(() => {});
+
     return apiSuccess({ message: 'Deleted' });
   } catch (error) {
     return errorResponse(error);

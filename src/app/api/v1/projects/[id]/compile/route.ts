@@ -6,6 +6,7 @@ import { assertProjectRole } from '@/services/project-service';
 import { triggerCompilation } from '@/services/compilation-service';
 import { apiSuccess, apiError, ApiErrors } from '@/lib/api-response';
 import { RATE_LIMITS } from '@/lib/constants';
+import { logAuditAction } from '@/services/audit-service';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 180;
@@ -32,6 +33,14 @@ export async function POST(
     }
 
     const compilation = await triggerCompilation(id, userId);
+    if (compilation?.id) {
+      logAuditAction(userId, 'project.compiled', 'project', id, {
+        compilationId: compilation.id,
+        compiler: compilation.compiler,
+        status: compilation.status,
+      }).catch(() => {});
+    }
+
     const res = apiSuccess(compilation, 202);
     Object.entries(rateLimitHeaders(RATE_LIMITS.COMPILATION.limit, rateLimit)).forEach(([k, v]) => res.headers.set(k, v));
     return res;

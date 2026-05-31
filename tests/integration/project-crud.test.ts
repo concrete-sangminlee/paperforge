@@ -109,6 +109,18 @@ describe('project creation and sharing audit trail', () => {
 });
 
 describe('remaining route security hardening', () => {
+  it('file PUT has audit event and rate limit', () => {
+    const c = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/files/[...path]/route.ts'), 'utf-8');
+    const putIdx = c.indexOf('async function PUT');
+    expect(putIdx).toBeGreaterThan(-1);
+    const putSection = c.slice(putIdx);
+    expect(putSection).toContain('enforceRateLimit');
+    expect(putSection).toContain('rate:file-write:');
+    expect(putSection).toContain('FILE_WRITE');
+    expect(putSection).toContain('logAuditAction');
+    expect(putSection).toContain('file.updated');
+  });
+
   it('git/link POST has rate limiting and audit log', () => {
     const c = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/git/link/route.ts'), 'utf-8');
     expect(c).toContain('enforceRateLimit');
@@ -134,6 +146,20 @@ describe('remaining route security hardening', () => {
     expect(deleteSection).toContain('enforceRateLimit');
     expect(deleteSection).toContain('rate:file-write:');
     expect(deleteSection).toContain('FILE_WRITE');
+    expect(deleteSection).toContain('logAuditAction');
+    expect(deleteSection).toContain('file.deleted');
+  });
+
+  it('file upload POST has audit event', () => {
+    const c = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/files/upload/route.ts'), 'utf-8');
+    expect(c).toContain('logAuditAction');
+    expect(c).toContain('file.uploaded');
+  });
+
+  it('project compile route emits audit event', () => {
+    const c = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/compile/route.ts'), 'utf-8');
+    expect(c).toContain('logAuditAction');
+    expect(c).toContain('project.compiled');
   });
 });
 

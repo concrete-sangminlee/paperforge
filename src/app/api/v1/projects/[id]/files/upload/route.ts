@@ -7,6 +7,7 @@ import { isValidFilePath, RATE_LIMITS } from '@/lib/constants';
 import { apiSuccess, apiError, ApiErrors } from '@/lib/api-response';
 import { BLOCKED_EXTENSIONS, MAX_FILE_SIZE } from '@/lib/validation';
 import { enforceRateLimit } from '@/lib/rate-limit';
+import { logAuditAction } from '@/services/audit-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,6 +78,12 @@ export async function POST(
     const buffer = Buffer.from(arrayBuffer);
 
     const file = await uploadBinaryFile(id, filePath, buffer, mimeType);
+
+    logAuditAction(userId, 'file.uploaded', 'project', id, {
+      path: filePath,
+      size: Number(file.sizeBytes),
+      mimeType,
+    }).catch(() => {});
     return apiSuccess({ file }, 201);
   } catch (error) {
     return errorResponse(error);

@@ -13,6 +13,15 @@ describe('user profile route', () => {
     expect(p).toContain('hasPassword');
     expect(p).toMatch(/const\s+\{\s*passwordHash,\s*\.\.\.profile\s*\}/);
   });
+  it('PATCH is rate-limited', () => {
+    expect(p).toContain('enforceRateLimit');
+    expect(p).toContain('rate:profile-update:');
+    expect(p).toContain('PROFILE_UPDATE');
+  });
+  it('PATCH emits audit event', () => {
+    expect(p).toContain('logAuditAction');
+    expect(p).toContain('profile.updated');
+  });
 });
 
 describe('user settings route', () => {
@@ -20,6 +29,15 @@ describe('user settings route', () => {
   it('has GET', () => { expect(s).toContain('GET'); });
   it('has PATCH', () => { expect(s).toContain('PATCH'); });
   it('merges settings', () => { expect(s).toContain('merged'); });
+  it('PATCH is rate-limited', () => {
+    expect(s).toContain('enforceRateLimit');
+    expect(s).toContain('rate:settings-update:');
+    expect(s).toContain('SETTINGS_UPDATE');
+  });
+  it('PATCH emits audit event', () => {
+    expect(s).toContain('logAuditAction');
+    expect(s).toContain('settings.updated');
+  });
 });
 
 describe('user git-credentials route', () => {

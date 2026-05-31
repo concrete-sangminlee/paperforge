@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
 import { enforceRateLimit } from '@/lib/rate-limit';
 import { RATE_LIMITS } from '@/lib/constants';
+import { logAuditAction } from '@/services/audit-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -80,6 +81,12 @@ export async function PATCH(request: NextRequest) {
       data: { settings: JSON.parse(JSON.stringify(merged)) },
       select: { settings: true },
     });
+
+    logAuditAction(userId, 'settings.updated', 'user', userId, {
+      keys: Object.keys(sanitized),
+      hasSensitiveKeys:
+        Object.keys(sanitized).some((key) => ['notifications', 'language', 'autoCompile'].includes(key)),
+    }).catch(() => {});
 
     return apiSuccess({ settings: updated.settings });
   } catch (error) {

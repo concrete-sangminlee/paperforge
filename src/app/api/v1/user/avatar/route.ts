@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { apiSuccess, apiError, ApiErrors } from '@/lib/api-response';
 import { enforceRateLimit } from '@/lib/rate-limit';
 import { RATE_LIMITS } from '@/lib/constants';
+import { logAuditAction } from '@/services/audit-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -86,6 +87,8 @@ export async function POST(request: NextRequest) {
       select: profileSelect,
     });
 
+    logAuditAction(userId, 'avatar.uploaded', 'user', userId).catch(() => {});
+
     return apiSuccess(updated);
   } catch (error) {
     return errorResponse(error);
@@ -98,11 +101,20 @@ export async function DELETE() {
     if (!session?.user) return ApiErrors.unauthorized();
     const userId = (session.user as { id: string }).id;
 
+    const limited = await enforceRateLimit(
+      `rate:avatar:${userId}`,
+      RATE_LIMITS.AVATAR_UPLOAD,
+      'Too many avatar updates. Please wait before trying again.',
+    );
+    if (limited) return limited;
+
     const updated = await prisma.user.update({
       where: { id: userId },
       data: { avatarUrl: null },
       select: profileSelect,
     });
+
+    logAuditAction(userId, 'avatar.deleted', 'user', userId).catch(() => {});
 
     return apiSuccess(updated);
   } catch (error) {
