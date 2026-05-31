@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       .update(`${ip}::render`)
       .digest('hex')
       .slice(0, 16);
-    logAuditAction(null, 'rendered', 'system', 'public', {
+    logAuditAction(null, 'rendered', 'system', '00000000-0000-0000-0000-000000000000', {
       ipFingerprint: requestFingerprint,
       latexLength: latex.length,
     }).catch(() => {});
