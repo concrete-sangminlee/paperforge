@@ -16,6 +16,7 @@ describe('POST /api/v1/ai/assist contract', () => {
   it('enforces both the per-user and the global rate limit constants', () => {
     expect(route).toContain('RATE_LIMITS.AI_USER');
     expect(route).toContain('RATE_LIMITS.AI_GLOBAL');
+    expect(route).toContain('enforceRateLimit');
     expect(route).toContain("'rate:ai:global'");
     expect(route).toMatch(/`rate:ai:user:\$\{userId\}`/);
   });
@@ -39,6 +40,7 @@ describe('POST /api/v1/ai/assist contract', () => {
 
   it('returns AI_OVERLOADED when the global cap is hit', () => {
     expect(route).toContain("'AI_OVERLOADED'");
+    expect(route).toContain('rateLimitHeaders');
   });
 
   it('writes a privacy-preserving audit record after successful AI calls', () => {

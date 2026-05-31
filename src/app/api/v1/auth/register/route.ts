@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     const rateLimit = await checkRateLimit(`rate:register:${ip}`, RATE_LIMITS.REGISTER.limit, RATE_LIMITS.REGISTER.windowSeconds);
     if (!rateLimit.allowed) {
       return apiError('Too many registration attempts. Please try again later.', 429, 'RATE_LIMITED', {
-        ...rateLimitHeaders(5, rateLimit),
+        ...rateLimitHeaders(RATE_LIMITS.REGISTER.limit, rateLimit),
       });
     }
 

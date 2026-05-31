@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { errorResponse } from '@/lib/errors';
 import { apiSuccess, apiError, ApiErrors } from '@/lib/api-response';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { checkRateLimit, enforceRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
 import { env } from '@/lib/env';
 import { RATE_LIMITS } from '@/lib/constants';
 import { logAuditAction } from '@/services/audit-service';
@@ -28,13 +28,13 @@ export async function POST(request: NextRequest) {
 
     // Per-user cap — cheap, blocks the noisy individual first so the
     // global slot is preserved for everyone else.
-    const userLimit = await checkRateLimit(
+    const userLimit = await enforceRateLimit(
       `rate:ai:user:${userId}`,
-      RATE_LIMITS.AI_USER.limit,
-      RATE_LIMITS.AI_USER.windowSeconds,
+      RATE_LIMITS.AI_USER,
+      'AI request limit reached. Try again later.',
     );
-    if (!userLimit.allowed) {
-      return apiError('AI request limit reached. Try again later.', 429, 'RATE_LIMITED');
+    if (userLimit) {
+      return userLimit;
     }
 
     const apiKey = env.ANTHROPIC_API_KEY;
@@ -54,11 +54,15 @@ export async function POST(request: NextRequest) {
       RATE_LIMITS.AI_GLOBAL.windowSeconds,
     );
     if (!globalLimit.allowed) {
-      return apiError(
+      const limited = apiError(
         'AI assistant is temporarily unavailable due to high demand. Try again later.',
         503,
         'AI_OVERLOADED',
       );
+      Object.entries(rateLimitHeaders(RATE_LIMITS.AI_GLOBAL.limit, globalLimit)).forEach(([k, v]) => {
+        limited.headers.set(k, v);
+      });
+      return limited;
     }
 
     const systemPrompt = getSystemPrompt(mode);

@@ -68,6 +68,11 @@ describe('auth routes have rate limiting', () => {
     expect(c).toContain('user.register');
   });
 
+  it('register route uses REGISTER constant for rate-limit headers', () => {
+    const c = readFileSync(join(process.cwd(), 'src/app/api/v1/auth/register/route.ts'), 'utf-8');
+    expect(c).toContain('RATE_LIMITS.REGISTER.limit');
+  });
+
   it('VERIFY_EMAIL and CHANGE_PASSWORD rate-limit constants are defined', () => {
     const c = readFileSync(join(process.cwd(), 'src/lib/constants.ts'), 'utf-8');
     expect(c).toContain('VERIFY_EMAIL');
