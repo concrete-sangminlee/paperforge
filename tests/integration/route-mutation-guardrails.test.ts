@@ -8,6 +8,13 @@ const AUDIT_EXEMPT_ROUTES = new Set([
   'src/app/api/v1/render/route.ts', // public endpoint; intentionally no audit trail
 ]);
 
+const AUTH_EXEMPT_MUTATION_ROUTES = new Set([
+  'src/app/api/v1/render/route.ts', // public render helper endpoint
+  'src/app/api/v1/auth/forgot-password/route.ts', // unauthenticated by design for recovery
+  'src/app/api/v1/auth/register/route.ts', // allows bootstrap account creation
+  'src/app/api/v1/auth/reset-password/route.ts', // bootstrap without existing session
+]);
+
 function listRouteFiles(dir: string): string[] {
   const result: string[] = [];
   const entries = readdirSync(dir, { withFileTypes: true }) as Dirent[];
@@ -51,5 +58,11 @@ describe('mutation route guardrails', () => {
         expect(hasAudit(source), `${routePath} must call logAuditAction or write audit_log`).toBe(true);
       });
     }
+
+    it(`requires auth or explicit exception: ${routePath}`, () => {
+      if (AUTH_EXEMPT_MUTATION_ROUTES.has(routePath)) return;
+      const source = readFileSync(routePath, 'utf-8');
+      expect(source).toContain('auth()');
+    });
   }
 });
