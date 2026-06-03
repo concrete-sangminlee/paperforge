@@ -6,6 +6,8 @@ import { apiSuccess, apiError, ApiErrors } from '@/lib/api-response';
 import { checkRateLimit, enforceRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
 import { env } from '@/lib/env';
 import { RATE_LIMITS } from '@/lib/constants';
+import { prisma } from '@/lib/prisma';
+import { aiHourlyRateLimit, getEntitledPlan } from '@/lib/entitlements';
 import { logAuditAction } from '@/services/audit-service';
 
 export const dynamic = 'force-dynamic';
@@ -27,10 +29,15 @@ export async function POST(request: NextRequest) {
     const userId = (session.user as { id: string }).id;
 
     // Per-user cap — cheap, blocks the noisy individual first so the
-    // global slot is preserved for everyone else.
+    // global slot is preserved for everyone else. The hourly allowance is
+    // plan-aware: paid plans get a larger AI budget than Free.
+    const aiUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { settings: true, storageQuotaBytes: true },
+    });
     const userLimit = await enforceRateLimit(
       `rate:ai:user:${userId}`,
-      RATE_LIMITS.AI_USER,
+      aiHourlyRateLimit(getEntitledPlan(aiUser ?? {})),
       'AI request limit reached. Try again later.',
     );
     if (userLimit) {

@@ -16,6 +16,7 @@ export interface BillingPlan {
   projectLimit: number | null;
   collaboratorLimit: number | null;
   exportFormats: readonly ExportFormat[];
+  aiRequestsPerHour: number;
   compilePriority: 'standard' | 'priority' | 'enterprise';
   support: string;
   cta: string;
@@ -38,6 +39,7 @@ export const BILLING_PLANS = {
     projectLimit: 3,
     collaboratorLimit: 2,
     exportFormats: ['pdf'],
+    aiRequestsPerHour: 20,
     compilePriority: 'standard',
     support: 'Community support',
     cta: 'Get Started',
@@ -63,6 +65,7 @@ export const BILLING_PLANS = {
     projectLimit: null,
     collaboratorLimit: 10,
     exportFormats: ['pdf', 'docx', 'zip', 'synctex'],
+    aiRequestsPerHour: 100,
     compilePriority: 'priority',
     support: 'Email support',
     cta: 'Start Pro Trial',
@@ -89,6 +92,7 @@ export const BILLING_PLANS = {
     projectLimit: null,
     collaboratorLimit: null,
     exportFormats: ['pdf', 'docx', 'zip', 'synctex'],
+    aiRequestsPerHour: 300,
     compilePriority: 'enterprise',
     support: 'Priority support with SLA',
     cta: 'Contact Sales',

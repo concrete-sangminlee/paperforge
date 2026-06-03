@@ -106,10 +106,13 @@ Deliverables:
 - Export-format entitlement. Shipped in `src/services/entitlement-service.ts`: DOCX, ZIP, and
   SyncTeX downloads require a paid plan (PDF stays free), gated by the project owner's plan and
   surfaced as an upgrade toast in the editor toolbar instead of a failed download.
-- Tests for entitlement math, storage-quota math, export gating, and service wiring. Shipped.
-- Remaining future work: AI entitlements, user-facing upgrade banners for every blocked action,
-  and a one-time backfill so existing accounts' cached storage usage is exact before their next
-  file write (today it converges on the next write).
+- Plan-aware AI allowance. Shipped: the per-user hourly AI cap in `ai/assist` now scales with the
+  user's plan (`aiRequestsPerHour`) via `aiHourlyRateLimit`.
+- Storage cache backfill. Shipped: `recalculateAllUsersStorage` + admin route
+  `POST /api/v1/admin/storage/recalc` recompute every account's cached usage from the files table.
+- Tests for entitlement math, storage-quota math, export gating, AI tiering, and service wiring. Shipped.
+- Remaining future work: user-facing upgrade banners for every blocked action, and a payment
+  webhook that writes the same `settings.billingPlan` admin provisioning already writes.
 
 ## Sprint 5 - Billing Provider Integration
 

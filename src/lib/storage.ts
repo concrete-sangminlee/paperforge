@@ -56,6 +56,21 @@ export async function syncUserStorageUsed(ownerId: string): Promise<bigint> {
 }
 
 /**
+ * Backfill/repair every account's cached `storageUsedBytes` from the files
+ * table. Useful once after introducing storage accounting (existing rows are
+ * stale until their owner's next write) and as an admin repair action.
+ */
+export async function recalculateAllUsersStorage(): Promise<{ updated: number }> {
+  const users = await prisma.user.findMany({ select: { id: true } });
+  let updated = 0;
+  for (const user of users) {
+    await syncUserStorageUsed(user.id);
+    updated += 1;
+  }
+  return { updated };
+}
+
+/**
  * Throw 413 if adding `additionalBytes` to the owner's current usage would
  * exceed their plan quota. A null/missing owner is treated as unenforceable
  * (the write proceeds; it will fail later if the project is genuinely invalid).

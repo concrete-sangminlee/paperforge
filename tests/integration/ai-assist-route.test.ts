@@ -13,8 +13,10 @@ describe('POST /api/v1/ai/assist contract', () => {
     expect(route).toContain('ApiErrors.unauthorized');
   });
 
-  it('enforces both the per-user and the global rate limit constants', () => {
-    expect(route).toContain('RATE_LIMITS.AI_USER');
+  it('enforces a plan-aware per-user limit and the global rate limit constant', () => {
+    // The per-user hourly cap is derived from the user's plan; the global cap
+    // remains a fixed deployment-wide constant.
+    expect(route).toContain('aiHourlyRateLimit');
     expect(route).toContain('RATE_LIMITS.AI_GLOBAL');
     expect(route).toContain('enforceRateLimit');
     expect(route).toContain("'rate:ai:global'");

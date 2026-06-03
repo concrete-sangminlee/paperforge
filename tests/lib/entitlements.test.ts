@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { BILLING_PLANS, PLAN_IDS, resolveBillingPlanForUser } from '@/lib/billing-plans';
 import {
+  aiHourlyRateLimit,
   canAddProjectCollaborator,
   canExportFormat,
   collaboratorLimitMessage,
@@ -41,6 +42,16 @@ describe('plan entitlements', () => {
   it('points free users to the next upgrade for blocked exports', () => {
     expect(exportUpgradeMessage(BILLING_PLANS.free, 'docx')).toContain('DOCX');
     expect(exportUpgradeMessage(BILLING_PLANS.free, 'docx')).toContain('Upgrade to Pro');
+  });
+
+  it('grows the hourly AI allowance with the plan', () => {
+    expect(aiHourlyRateLimit(BILLING_PLANS.free).windowSeconds).toBe(3600);
+    expect(aiHourlyRateLimit(BILLING_PLANS.free).limit).toBeLessThan(
+      aiHourlyRateLimit(BILLING_PLANS.pro).limit,
+    );
+    expect(aiHourlyRateLimit(BILLING_PLANS.pro).limit).toBeLessThan(
+      aiHourlyRateLimit(BILLING_PLANS.team).limit,
+    );
   });
 
   it('maps paid plans to stronger queue priority', () => {

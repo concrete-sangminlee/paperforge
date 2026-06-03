@@ -43,6 +43,10 @@ export function exportUpgradeMessage(plan: BillingPlan, format: ExportFormat) {
   }`;
 }
 
+export function aiHourlyRateLimit(plan: BillingPlan): { limit: number; windowSeconds: number } {
+  return { limit: plan.aiRequestsPerHour, windowSeconds: 3600 };
+}
+
 export function compilationQueuePriority(plan: BillingPlan) {
   switch (plan.compilePriority) {
     case 'enterprise':

@@ -74,6 +74,14 @@ describe('SaaS billing implementation', () => {
     expect(templates).toContain('salesInquiryEmailTemplate');
   });
 
+  it('AI assist applies a plan-aware per-user rate limit', () => {
+    const entitlements = readFileSync(join(process.cwd(), 'src/lib/entitlements.ts'), 'utf-8');
+    const aiRoute = readFileSync(join(process.cwd(), 'src/app/api/v1/ai/assist/route.ts'), 'utf-8');
+    expect(entitlements).toContain('aiHourlyRateLimit');
+    expect(aiRoute).toContain('aiHourlyRateLimit');
+    expect(aiRoute).toContain('getEntitledPlan');
+  });
+
   it('rich export routes are gated by the project owner plan', () => {
     const service = readFileSync(join(process.cwd(), 'src/services/entitlement-service.ts'), 'utf-8');
     const docx = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/compile/[compileId]/docx/route.ts'), 'utf-8');
@@ -94,6 +102,14 @@ describe('SaaS billing implementation', () => {
     expect(storage).toContain('syncUserStorageUsed');
     expect(fileService).toContain('assertStorageQuota');
     expect(fileService).toContain('syncUserStorageUsed');
+  });
+
+  it('exposes an admin storage-recalc backfill route', () => {
+    expect(existsSync(join(process.cwd(), 'src/app/api/v1/admin/storage/recalc/route.ts'))).toBe(true);
+    const storage = readFileSync(join(process.cwd(), 'src/lib/storage.ts'), 'utf-8');
+    const route = readFileSync(join(process.cwd(), 'src/app/api/v1/admin/storage/recalc/route.ts'), 'utf-8');
+    expect(storage).toContain('recalculateAllUsersStorage');
+    expect(route).toContain('storage.recalculate');
   });
 
   it('admins can provision a billing plan, closing the entitlement loop', () => {
