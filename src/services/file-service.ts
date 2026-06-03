@@ -4,6 +4,11 @@ import { prisma } from '@/lib/prisma';
 import { env } from '@/lib/env';
 import { minioClient, getBucket, ensureBucket } from '@/lib/minio';
 import { ApiError } from '@/lib/errors';
+import {
+  assertStorageQuota,
+  getProjectOwnerId,
+  syncUserStorageUsed,
+} from '@/lib/storage';
 
 /**
  * Local filesystem fallback for file storage when MinIO is unavailable.
@@ -74,6 +79,15 @@ export async function createFile(
   const buffer = Buffer.from(content, 'utf-8');
   const mimeType = detectTextMimeType(path);
 
+  // Resolve ownership and enforce the owner's storage quota BEFORE writing any
+  // bytes, so an over-quota save is rejected instead of stored-then-orphaned.
+  const ownerId = await getProjectOwnerId(projectId);
+  const existing = await prisma.file.findFirst({
+    where: { projectId, path },
+  });
+  const oldSize = existing && !existing.deletedAt ? Number(existing.sizeBytes) : 0;
+  if (ownerId) await assertStorageQuota(ownerId, buffer.length - oldSize);
+
   try {
     await ensureBucket();
     const bucket = getBucket();
@@ -85,35 +99,32 @@ export async function createFile(
     await writeLocal(minioKey, buffer);
   }
 
-  const existing = await prisma.file.findFirst({
-    where: { projectId, path },
-  });
+  const result = existing
+    ? await prisma.file.update({
+        where: { id: existing.id },
+        data: {
+          sizeBytes: BigInt(buffer.length),
+          minioKey,
+          deletedAt: null,
+          isBinary: false,
+          mimeType,
+          content,
+        },
+      })
+    : await prisma.file.create({
+        data: {
+          projectId,
+          path,
+          isBinary: false,
+          sizeBytes: BigInt(buffer.length),
+          mimeType,
+          minioKey,
+          content,
+        },
+      });
 
-  if (existing) {
-    return prisma.file.update({
-      where: { id: existing.id },
-      data: {
-        sizeBytes: BigInt(buffer.length),
-        minioKey,
-        deletedAt: null,
-        isBinary: false,
-        mimeType,
-        content,
-      },
-    });
-  }
-
-  return prisma.file.create({
-    data: {
-      projectId,
-      path,
-      isBinary: false,
-      sizeBytes: BigInt(buffer.length),
-      mimeType,
-      minioKey,
-      content,
-    },
-  });
+  if (ownerId) await syncUserStorageUsed(ownerId);
+  return result;
 }
 
 /**
@@ -180,10 +191,15 @@ export async function deleteFile(projectId: string, path: string) {
   });
   if (!file) throw new ApiError(404, 'File not found');
 
-  return prisma.file.update({
+  const result = await prisma.file.update({
     where: { id: file.id },
     data: { deletedAt: new Date() },
   });
+
+  // Freeing space — refresh the owner's cached usage so the quota is reclaimed.
+  const ownerId = await getProjectOwnerId(projectId);
+  if (ownerId) await syncUserStorageUsed(ownerId);
+  return result;
 }
 
 /**
@@ -198,6 +214,15 @@ export async function uploadBinaryFile(
   mimeType: string,
 ) {
   const minioKey = `projects/${projectId}/files/${path}`;
+
+  // Enforce the owner's storage quota before persisting the (potentially large)
+  // binary payload.
+  const ownerId = await getProjectOwnerId(projectId);
+  const existing = await prisma.file.findFirst({
+    where: { projectId, path },
+  });
+  const oldSize = existing && !existing.deletedAt ? Number(existing.sizeBytes) : 0;
+  if (ownerId) await assertStorageQuota(ownerId, buffer.length - oldSize);
 
   let minioAvailable = false;
   try {
@@ -216,34 +241,31 @@ export async function uploadBinaryFile(
     ? buffer.toString('base64')
     : undefined;
 
-  const existing = await prisma.file.findFirst({
-    where: { projectId, path },
-  });
+  const result = existing
+    ? await prisma.file.update({
+        where: { id: existing.id },
+        data: {
+          sizeBytes: BigInt(buffer.length),
+          minioKey,
+          mimeType,
+          isBinary: true,
+          deletedAt: null,
+          ...(dbContent !== undefined ? { content: dbContent } : {}),
+        },
+      })
+    : await prisma.file.create({
+        data: {
+          projectId,
+          path,
+          isBinary: true,
+          sizeBytes: BigInt(buffer.length),
+          mimeType,
+          minioKey,
+          ...(dbContent !== undefined ? { content: dbContent } : {}),
+        },
+      });
 
-  if (existing) {
-    return prisma.file.update({
-      where: { id: existing.id },
-      data: {
-        sizeBytes: BigInt(buffer.length),
-        minioKey,
-        mimeType,
-        isBinary: true,
-        deletedAt: null,
-        ...(dbContent !== undefined ? { content: dbContent } : {}),
-      },
-    });
-  }
-
-  return prisma.file.create({
-    data: {
-      projectId,
-      path,
-      isBinary: true,
-      sizeBytes: BigInt(buffer.length),
-      mimeType,
-      minioKey,
-      ...(dbContent !== undefined ? { content: dbContent } : {}),
-    },
-  });
+  if (ownerId) await syncUserStorageUsed(ownerId);
+  return result;
 }
 

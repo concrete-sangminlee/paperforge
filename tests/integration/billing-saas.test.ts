@@ -74,6 +74,17 @@ describe('SaaS billing implementation', () => {
     expect(templates).toContain('salesInquiryEmailTemplate');
   });
 
+  it('file writes are guarded by storage-quota entitlements', () => {
+    const storage = readFileSync(join(process.cwd(), 'src/lib/storage.ts'), 'utf-8');
+    const fileService = readFileSync(join(process.cwd(), 'src/services/file-service.ts'), 'utf-8');
+    // Quota is enforced at the service layer so every entry point (save, upload)
+    // is covered, and usage is written through to the cache the UI reads.
+    expect(storage).toContain('STORAGE_QUOTA_EXCEEDED');
+    expect(storage).toContain('syncUserStorageUsed');
+    expect(fileService).toContain('assertStorageQuota');
+    expect(fileService).toContain('syncUserStorageUsed');
+  });
+
   it('admins can provision a billing plan, closing the entitlement loop', () => {
     const route = readFileSync(join(process.cwd(), 'src/app/api/v1/admin/users/[id]/route.ts'), 'utf-8');
     const listRoute = readFileSync(join(process.cwd(), 'src/app/api/v1/admin/users/route.ts'), 'utf-8');

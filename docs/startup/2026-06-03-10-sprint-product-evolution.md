@@ -99,9 +99,14 @@ Deliverables:
 
 - Entitlement helper for collaborators. Shipped in `src/lib/entitlements.ts`.
 - Collaborator invite and share-link join enforcement. Shipped in `src/services/member-service.ts`.
-- Tests for entitlement math and service wiring. Shipped.
-- Remaining future work: storage, compile priority, exports, AI, user-facing upgrade
-  banners for every blocked action, and admin override path for support-driven plan adjustments.
+- Storage-quota enforcement and accurate usage accounting. Shipped in `src/lib/storage.ts`,
+  enforced at the file-service layer (save, upload, delete) so usage is attributed to the
+  project owner and written through to the `storageUsedBytes` the UI reads.
+- Compile priority. Shipped in `src/services/compilation-service.ts`.
+- Tests for entitlement math, storage-quota math, and service wiring. Shipped.
+- Remaining future work: export-volume and AI entitlements, user-facing upgrade banners for
+  every blocked action, and a one-time backfill so existing accounts' cached usage is exact
+  before their next file write (today it converges on the next write).
 
 ## Sprint 5 - Billing Provider Integration
 
