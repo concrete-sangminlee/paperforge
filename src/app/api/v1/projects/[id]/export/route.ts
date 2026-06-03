@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { errorResponse } from '@/lib/errors';
 import { assertProjectRole, getProject } from '@/services/project-service';
+import { assertExportEntitlement } from '@/services/entitlement-service';
 import { listFiles, getFileContent } from '@/services/file-service';
 import { apiError, ApiErrors } from '@/lib/api-response';
 import { checkRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
@@ -33,6 +34,7 @@ export async function GET(
     }
 
     await assertProjectRole(id, userId, ['owner', 'editor', 'viewer']);
+    await assertExportEntitlement(id, 'zip');
 
     const project = await getProject(id, userId);
     const files = await listFiles(id);

@@ -103,10 +103,13 @@ Deliverables:
   enforced at the file-service layer (save, upload, delete) so usage is attributed to the
   project owner and written through to the `storageUsedBytes` the UI reads.
 - Compile priority. Shipped in `src/services/compilation-service.ts`.
-- Tests for entitlement math, storage-quota math, and service wiring. Shipped.
-- Remaining future work: export-volume and AI entitlements, user-facing upgrade banners for
-  every blocked action, and a one-time backfill so existing accounts' cached usage is exact
-  before their next file write (today it converges on the next write).
+- Export-format entitlement. Shipped in `src/services/entitlement-service.ts`: DOCX, ZIP, and
+  SyncTeX downloads require a paid plan (PDF stays free), gated by the project owner's plan and
+  surfaced as an upgrade toast in the editor toolbar instead of a failed download.
+- Tests for entitlement math, storage-quota math, export gating, and service wiring. Shipped.
+- Remaining future work: AI entitlements, user-facing upgrade banners for every blocked action,
+  and a one-time backfill so existing accounts' cached storage usage is exact before their next
+  file write (today it converges on the next write).
 
 ## Sprint 5 - Billing Provider Integration
 

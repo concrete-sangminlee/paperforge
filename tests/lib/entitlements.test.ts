@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { BILLING_PLANS, PLAN_IDS, resolveBillingPlanForUser } from '@/lib/billing-plans';
 import {
   canAddProjectCollaborator,
+  canExportFormat,
   collaboratorLimitMessage,
   compilationQueuePriority,
+  exportUpgradeMessage,
   getEntitledPlan,
 } from '@/lib/entitlements';
 
@@ -23,6 +25,22 @@ describe('plan entitlements', () => {
   it('produces upgrade copy for limited plans', () => {
     expect(collaboratorLimitMessage(BILLING_PLANS.free)).toContain('Upgrade to Pro');
     expect(collaboratorLimitMessage(BILLING_PLANS.team)).toBeNull();
+  });
+
+  it('gates rich export formats behind paid plans but always allows PDF', () => {
+    expect(canExportFormat(BILLING_PLANS.free, 'pdf')).toBe(true);
+    expect(canExportFormat(BILLING_PLANS.free, 'docx')).toBe(false);
+    expect(canExportFormat(BILLING_PLANS.free, 'zip')).toBe(false);
+    expect(canExportFormat(BILLING_PLANS.free, 'synctex')).toBe(false);
+    for (const format of ['pdf', 'docx', 'zip', 'synctex'] as const) {
+      expect(canExportFormat(BILLING_PLANS.pro, format)).toBe(true);
+      expect(canExportFormat(BILLING_PLANS.team, format)).toBe(true);
+    }
+  });
+
+  it('points free users to the next upgrade for blocked exports', () => {
+    expect(exportUpgradeMessage(BILLING_PLANS.free, 'docx')).toContain('DOCX');
+    expect(exportUpgradeMessage(BILLING_PLANS.free, 'docx')).toContain('Upgrade to Pro');
   });
 
   it('maps paid plans to stronger queue priority', () => {

@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { errorResponse, ApiError } from '@/lib/errors';
 import { ApiErrors } from '@/lib/api-response';
 import { assertProjectRole } from '@/services/project-service';
+import { assertExportEntitlement } from '@/services/entitlement-service';
 import { prisma } from '@/lib/prisma';
 import { minioClient, getBucket } from '@/lib/minio';
 import { LIMITS, isValidFilePath } from '@/lib/constants';
@@ -22,6 +23,7 @@ export async function GET(
     const { id, compileId } = await params;
 
     await assertProjectRole(id, userId, ['owner', 'editor', 'viewer']);
+    await assertExportEntitlement(id, 'docx');
 
     const compilation = await prisma.compilation.findFirst({
       where: { id: compileId, projectId: id },

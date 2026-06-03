@@ -20,7 +20,7 @@ describe('project scale', () => {
   it('25+ API route files', () => { expect(countFiles(join(process.cwd(), 'src/app/api'), '.ts')).toBeGreaterThan(25); });
   it('14+ editor components', () => { expect(countFiles(join(process.cwd(), 'src/components/editor'), '.tsx')).toBeGreaterThanOrEqual(14); });
   it('15+ lib utilities', () => { expect(countFiles(join(process.cwd(), 'src/lib'), '.ts')).toBeGreaterThan(15); });
-  it('9 services', () => { expect(countFiles(join(process.cwd(), 'src/services'), '.ts')).toBe(9); });
+  it('10 services', () => { expect(countFiles(join(process.cwd(), 'src/services'), '.ts')).toBe(10); });
 });
 
 describe('documentation completeness', () => {

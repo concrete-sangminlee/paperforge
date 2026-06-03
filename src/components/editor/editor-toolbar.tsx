@@ -184,6 +184,34 @@ export function EditorToolbar({ projectId, projectName, onCompileReady }: Editor
 
   const isCompiling = compilationStatus === 'compiling';
 
+  // Download via fetch so plan-gated responses (e.g. 402 on DOCX/ZIP for Free
+  // plans) surface as a toast instead of saving an error payload to disk.
+  async function guardedDownload(url: string, filename: string) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        const message =
+          typeof body?.error === 'string'
+            ? body.error
+            : body?.error?.message ?? 'Download failed';
+        toast.error(message);
+        return;
+      }
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      toast.error('Download failed');
+    }
+  }
+
   return (
     <div className="flex items-center gap-1.5 border-b bg-background px-3 py-1.5">
       {/* Project name */}
@@ -213,26 +241,36 @@ export function EditorToolbar({ projectId, projectName, onCompileReady }: Editor
 
       {/* Download DOCX — only shown after a successful compilation with DOCX output */}
       {docxUrl && (
-        <a
-          href={docxUrl}
-          download={`${(projectName || 'output').replace(/[^a-zA-Z0-9_-]/g, '_')}.docx`}
+        <button
+          type="button"
+          onClick={() =>
+            guardedDownload(
+              docxUrl,
+              `${(projectName || 'output').replace(/[^a-zA-Z0-9_-]/g, '_')}.docx`,
+            )
+          }
           className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1 text-sm font-medium hover:bg-muted transition-colors"
         >
           <FileDownIcon className="size-3.5" />
           DOCX
-        </a>
+        </button>
       )}
 
       {/* Export ZIP */}
-      <a
-        href={`/api/v1/projects/${projectId}/export`}
-        download={`${(projectName || 'project').replace(/[^a-zA-Z0-9_-]/g, '_')}.zip`}
+      <button
+        type="button"
+        onClick={() =>
+          guardedDownload(
+            `/api/v1/projects/${projectId}/export`,
+            `${(projectName || 'project').replace(/[^a-zA-Z0-9_-]/g, '_')}.zip`,
+          )
+        }
         className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
         title="Download project as ZIP"
       >
         <ArchiveIcon className="size-3.5" />
         ZIP
-      </a>
+      </button>
 
       {/* Export as Markdown */}
       <Button

@@ -2,6 +2,7 @@ export const PLAN_IDS = ['free', 'pro', 'team'] as const;
 
 export type PlanId = (typeof PLAN_IDS)[number];
 export type BillingCadence = 'monthly' | 'annual';
+export type ExportFormat = 'pdf' | 'docx' | 'zip' | 'synctex';
 
 export interface BillingPlan {
   id: PlanId;
@@ -14,6 +15,7 @@ export interface BillingPlan {
   storageBytes: number;
   projectLimit: number | null;
   collaboratorLimit: number | null;
+  exportFormats: readonly ExportFormat[];
   compilePriority: 'standard' | 'priority' | 'enterprise';
   support: string;
   cta: string;
@@ -35,6 +37,7 @@ export const BILLING_PLANS = {
     storageBytes: 2 * GIB,
     projectLimit: 3,
     collaboratorLimit: 2,
+    exportFormats: ['pdf'],
     compilePriority: 'standard',
     support: 'Community support',
     cta: 'Get Started',
@@ -59,6 +62,7 @@ export const BILLING_PLANS = {
     storageBytes: 20 * GIB,
     projectLimit: null,
     collaboratorLimit: 10,
+    exportFormats: ['pdf', 'docx', 'zip', 'synctex'],
     compilePriority: 'priority',
     support: 'Email support',
     cta: 'Start Pro Trial',
@@ -84,6 +88,7 @@ export const BILLING_PLANS = {
     storageBytes: 250 * GIB,
     projectLimit: null,
     collaboratorLimit: null,
+    exportFormats: ['pdf', 'docx', 'zip', 'synctex'],
     compilePriority: 'enterprise',
     support: 'Priority support with SLA',
     cta: 'Contact Sales',

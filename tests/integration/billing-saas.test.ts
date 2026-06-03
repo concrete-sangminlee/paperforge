@@ -74,6 +74,17 @@ describe('SaaS billing implementation', () => {
     expect(templates).toContain('salesInquiryEmailTemplate');
   });
 
+  it('rich export routes are gated by the project owner plan', () => {
+    const service = readFileSync(join(process.cwd(), 'src/services/entitlement-service.ts'), 'utf-8');
+    const docx = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/compile/[compileId]/docx/route.ts'), 'utf-8');
+    const synctex = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/compile/[compileId]/synctex/route.ts'), 'utf-8');
+    const zip = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/export/route.ts'), 'utf-8');
+    expect(service).toContain('PLAN_EXPORT_NOT_ALLOWED');
+    expect(docx).toContain("assertExportEntitlement(id, 'docx')");
+    expect(synctex).toContain("assertExportEntitlement(id, 'synctex')");
+    expect(zip).toContain("assertExportEntitlement(id, 'zip')");
+  });
+
   it('file writes are guarded by storage-quota entitlements', () => {
     const storage = readFileSync(join(process.cwd(), 'src/lib/storage.ts'), 'utf-8');
     const fileService = readFileSync(join(process.cwd(), 'src/services/file-service.ts'), 'utf-8');

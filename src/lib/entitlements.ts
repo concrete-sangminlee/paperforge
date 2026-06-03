@@ -1,5 +1,6 @@
 import {
   type BillingPlan,
+  type ExportFormat,
   getNextUpgradePlan,
   resolveBillingPlanForUser,
 } from '@/lib/billing-plans';
@@ -29,6 +30,17 @@ export function collaboratorLimitMessage(plan: BillingPlan) {
     : ' Contact sales to raise this limit.';
 
   return `${plan.name} includes ${plan.collaboratorLimit} collaborators per project.${suffix}`;
+}
+
+export function canExportFormat(plan: BillingPlan, format: ExportFormat) {
+  return plan.exportFormats.includes(format);
+}
+
+export function exportUpgradeMessage(plan: BillingPlan, format: ExportFormat) {
+  const upgrade = getNextUpgradePlan(plan.id);
+  return `${format.toUpperCase()} export is available on paid plans.${
+    upgrade ? ` Upgrade to ${upgrade.name} to enable it.` : ''
+  }`;
 }
 
 export function compilationQueuePriority(plan: BillingPlan) {
