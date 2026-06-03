@@ -82,7 +82,9 @@ Deliverables:
 - Sales inquiry audit event. Shipped as `billing.sales_inquiry`.
 - Email template for sales notifications. Shipped as `salesInquiryEmailTemplate`.
 - Billing dashboard Team inquiry form. Shipped.
-- Remaining future work: `/pricing` Team FAQ and buyer objections.
+- `/pricing` Team FAQ and buyer objections. Shipped: a "Buying for a lab or department?"
+  section answering billing, self-hosting, data residency/export, SSO/audit, cancellation,
+  and support-SLA questions, with a CTA into the Team inquiry form.
 
 ## Sprint 4 - Usage Entitlements
 

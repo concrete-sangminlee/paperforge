@@ -16,6 +16,14 @@ describe('SaaS billing implementation', () => {
     expect(pricing).toContain('formatPlanPrice');
   });
 
+  it('pricing page answers Team buyer objections and routes to a sales inquiry', () => {
+    const pricing = readFileSync(join(process.cwd(), 'src/app/pricing/page.tsx'), 'utf-8');
+    expect(pricing).toContain('TEAM_FAQ');
+    expect(pricing).toContain('Buying for a lab or department?');
+    expect(pricing).toContain('Start a Team inquiry');
+    expect(pricing).toContain('/billing');
+  });
+
   it('dashboard exposes an authenticated billing page', () => {
     const billingPage = readFileSync(join(process.cwd(), 'src/app/(dashboard)/billing/page.tsx'), 'utf-8');
     const navbar = readFileSync(join(process.cwd(), 'src/components/shared/navbar.tsx'), 'utf-8');

@@ -8,6 +8,39 @@ import { cn } from '@/lib/utils';
 import { CheckoutButton } from '@/components/billing/checkout-button';
 import { BILLING_PLAN_LIST, formatPlanPrice } from '@/lib/billing-plans';
 
+const TEAM_FAQ: { question: string; answer: string }[] = [
+  {
+    question: 'How does Team billing work?',
+    answer:
+      'Team is priced per user per month. We invoice annually for purchase orders or charge the configured checkout provider monthly — start a Team inquiry from the billing page and we route procurement-ready details to your finance contact.',
+  },
+  {
+    question: 'Can we self-host instead of using the hosted SaaS?',
+    answer:
+      'Yes. The full editor is MIT-licensed and self-hostable at no cost. Paid plans add managed operations — priority compilation, larger storage, support coverage — without forking the open-source core.',
+  },
+  {
+    question: 'Where is our data stored, and can we export it?',
+    answer:
+      'Projects live in PostgreSQL with file blobs in S3-compatible object storage. Every project exports to ZIP (sources), PDF, DOCX, and SyncTeX, and Git push/pull keeps a copy under your own version control at any time.',
+  },
+  {
+    question: 'Do you support SSO and an audit trail?',
+    answer:
+      'Team includes an admin dashboard and an audit log of administrative actions, with SSO readiness on the roadmap. Talk to us about your identity provider during the Team inquiry.',
+  },
+  {
+    question: 'What happens to collaborators and projects if we cancel?',
+    answer:
+      'Downgrading keeps your data; only paid entitlements (extra collaborators, rich exports, priority compilation) revert to Free limits. You can export everything first, and self-hosting remains available as a fallback.',
+  },
+  {
+    question: 'How fast is support?',
+    answer:
+      'Free uses community support, Pro adds email support, and Team adds priority support with an SLA so deadline-driven labs are not blocked.',
+  },
+];
+
 export default function PricingPage() {
   return (
     <div className="min-h-screen bg-background">
@@ -99,6 +132,35 @@ export default function PricingPage() {
             )}
           </div>
         ))}
+      </div>
+
+      {/* Team buyer FAQ — answers the common procurement objections */}
+      <div className="border-t bg-muted/20">
+        <div className="mx-auto max-w-5xl px-6 py-16">
+          <div className="mx-auto mb-10 max-w-2xl text-center">
+            <Badge variant="secondary" className="mb-4">For Teams</Badge>
+            <h2 className="text-3xl font-bold tracking-tight">Buying for a lab or department?</h2>
+            <p className="mt-3 text-muted-foreground">
+              The questions procurement, security, and finance ask before they sign off.
+            </p>
+          </div>
+          <div className="grid gap-x-10 gap-y-8 sm:grid-cols-2">
+            {TEAM_FAQ.map((item) => (
+              <div key={item.question}>
+                <h3 className="font-semibold text-foreground">{item.question}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{item.answer}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-12 flex flex-col items-center gap-3 text-center">
+            <p className="text-sm text-muted-foreground">
+              Need a security review, invoice, or a procurement-ready quote?
+            </p>
+            <Link href="/billing" className={cn(buttonVariants({ size: 'sm' }))}>
+              Start a Team inquiry
+            </Link>
+          </div>
+        </div>
       </div>
 
       {/* FAQ hint */}
