@@ -5,6 +5,31 @@ import { sendEmail } from '@/lib/email';
 import { assertProjectRole } from '@/services/project-service';
 import { emailTemplate, buttonHtml, escapeHtml } from '@/lib/email-templates';
 import { getAppBaseUrl } from '@/lib/app-url';
+import {
+  canAddProjectCollaborator,
+  collaboratorLimitMessage,
+  getEntitledPlan,
+} from '@/lib/entitlements';
+
+async function assertCollaboratorEntitlement(projectId: string, ownerId: string) {
+  const [owner, memberCount] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: ownerId },
+      select: { settings: true, storageQuotaBytes: true },
+    }),
+    prisma.projectMember.count({ where: { projectId } }),
+  ]);
+  if (!owner) throw new ApiError(404, 'Project owner not found', 'OWNER_NOT_FOUND');
+
+  const plan = getEntitledPlan(owner);
+  if (!canAddProjectCollaborator(plan, memberCount)) {
+    throw new ApiError(
+      402,
+      collaboratorLimitMessage(plan) ?? 'Collaborator limit reached.',
+      'PLAN_COLLABORATOR_LIMIT_REACHED',
+    );
+  }
+}
 
 export async function inviteMember(
   projectId: string,
@@ -23,6 +48,8 @@ export async function inviteMember(
     // In production, consider sending an invitation email to unregistered addresses.
     return { invited: true, message: 'If an account with that email exists, the invitation has been sent.' };
   }
+
+  await assertCollaboratorEntitlement(projectId, inviterId);
 
   // Race-safe insert: rely on the (projectId, userId) unique constraint
   // rather than check-then-create. Two concurrent invites for the same
@@ -186,6 +213,19 @@ export async function joinViaShareLink(token: string, userId: string) {
     where: { id: link.projectId, deletedAt: null },
   });
   if (!project) throw new ApiError(410, 'The project this link references is no longer available');
+
+  const existingMember = await prisma.projectMember.findUnique({
+    where: { projectId_userId: { projectId: link.projectId, userId } },
+    select: { userId: true },
+  });
+  if (!existingMember) {
+    const owner = await prisma.projectMember.findFirst({
+      where: { projectId: link.projectId, role: 'owner' },
+      select: { userId: true },
+    });
+    if (!owner) throw new ApiError(409, 'Project owner not found', 'OWNER_NOT_FOUND');
+    await assertCollaboratorEntitlement(link.projectId, owner.userId);
+  }
 
   // Race-safe insert via unique constraint catch instead of check-then-create.
   try {

@@ -70,4 +70,10 @@ describe('member-service guards', () => {
     expect(memberService).toMatch(/assertProjectRole\(projectId,\s*requesterId,\s*\['owner'\]\)/);
     expect(memberService).toMatch(/deleteMany\(\{\s*where:\s*\{\s*id:\s*linkId,\s*projectId\s*\}/);
   });
+
+  it('member additions enforce plan collaborator entitlements', () => {
+    expect(memberService).toContain('assertCollaboratorEntitlement');
+    expect(memberService).toContain('PLAN_COLLABORATOR_LIMIT_REACHED');
+    expect(memberService).toContain('canAddProjectCollaborator');
+  });
 });

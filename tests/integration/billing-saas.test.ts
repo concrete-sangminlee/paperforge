@@ -40,6 +40,13 @@ describe('SaaS billing implementation', () => {
     expect(projectService).toContain('PLAN_LIMIT_REACHED');
   });
 
+  it('collaboration growth is guarded by plan entitlements', () => {
+    const entitlements = readFileSync(join(process.cwd(), 'src/lib/entitlements.ts'), 'utf-8');
+    const memberService = readFileSync(join(process.cwd(), 'src/services/member-service.ts'), 'utf-8');
+    expect(entitlements).toContain('canAddProjectCollaborator');
+    expect(memberService).toContain('PLAN_COLLABORATOR_LIMIT_REACHED');
+  });
+
   it('dashboard exposes activation checklist for first-run users', () => {
     const projectsPage = readFileSync(join(process.cwd(), 'src/app/(dashboard)/projects/page.tsx'), 'utf-8');
     const checklist = readFileSync(join(process.cwd(), 'src/components/dashboard/activation-checklist.tsx'), 'utf-8');

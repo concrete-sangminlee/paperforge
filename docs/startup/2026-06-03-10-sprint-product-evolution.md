@@ -97,9 +97,11 @@ Role conversation:
 
 Deliverables:
 
-- Entitlement helper for storage, collaborators, compile priority, exports, and AI.
-- User-facing upgrade banners for blocked actions.
-- Admin override path for support-driven plan adjustments.
+- Entitlement helper for collaborators. Shipped in `src/lib/entitlements.ts`.
+- Collaborator invite and share-link join enforcement. Shipped in `src/services/member-service.ts`.
+- Tests for entitlement math and service wiring. Shipped.
+- Remaining future work: storage, compile priority, exports, AI, user-facing upgrade
+  banners for every blocked action, and admin override path for support-driven plan adjustments.
 
 ## Sprint 5 - Billing Provider Integration
 
@@ -220,6 +222,6 @@ Deliverables:
 
 1. Complete Sprint 2 persisted activation event markers and welcome email.
 2. Add Sprint 3 pricing-page Team FAQ and buyer objection copy.
-3. Extend entitlements beyond project count.
+3. Extend entitlements beyond project count and collaborators.
 4. Add payment provider webhook after the provider is chosen.
 5. Move plan state from `settings.billingPlan` inference to a first-class subscription model when webhook work begins.
