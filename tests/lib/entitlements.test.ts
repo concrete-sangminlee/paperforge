@@ -3,6 +3,7 @@ import { BILLING_PLANS } from '@/lib/billing-plans';
 import {
   canAddProjectCollaborator,
   collaboratorLimitMessage,
+  compilationQueuePriority,
   getEntitledPlan,
 } from '@/lib/entitlements';
 
@@ -22,5 +23,10 @@ describe('plan entitlements', () => {
   it('produces upgrade copy for limited plans', () => {
     expect(collaboratorLimitMessage(BILLING_PLANS.free)).toContain('Upgrade to Pro');
     expect(collaboratorLimitMessage(BILLING_PLANS.team)).toBeNull();
+  });
+
+  it('maps paid plans to stronger queue priority', () => {
+    expect(compilationQueuePriority(BILLING_PLANS.free)).toBeGreaterThan(compilationQueuePriority(BILLING_PLANS.pro));
+    expect(compilationQueuePriority(BILLING_PLANS.pro)).toBeGreaterThan(compilationQueuePriority(BILLING_PLANS.team));
   });
 });

@@ -5,6 +5,7 @@ import { LIMITS, isValidFilePath } from '@/lib/constants';
 import { minioClient, getBucket, ensureBucket } from '@/lib/minio';
 import { getFileContent } from '@/services/file-service';
 import { env } from '@/lib/env';
+import { compilationQueuePriority, getEntitledPlan } from '@/lib/entitlements';
 
 // Cap the bytes we will ever buffer from the upstream LaTeX API. A misbehaving
 // or hostile peer could otherwise send an unbounded body and OOM the serverless
@@ -281,6 +282,12 @@ export async function triggerCompilation(projectId: string, userId: string) {
   });
 
   if (compilationQueue) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { settings: true, storageQuotaBytes: true },
+    });
+    const priority = compilationQueuePriority(getEntitledPlan(user ?? {}));
+
     // Production mode with Redis: use BullMQ queue
     await compilationQueue.add(
       'compile',
@@ -296,7 +303,7 @@ export async function triggerCompilation(projectId: string, userId: string) {
           isBinary: f.isBinary,
         })),
       },
-      { priority: 2, attempts: 2, backoff: { type: 'exponential', delay: 5000 } },
+      { priority, attempts: 2, backoff: { type: 'exponential', delay: 5000 } },
     );
   } else {
     // Serverless fallback: finish the external API call before returning.

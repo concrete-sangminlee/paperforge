@@ -154,7 +154,8 @@ Role conversation:
 
 Deliverables:
 
-- Plan-aware queue priority.
+- Plan-aware queue priority. Shipped in `src/services/compilation-service.ts`.
+- Queue priority mapping. Shipped in `src/lib/entitlements.ts`.
 - Compile latency metrics.
 - Admin worker SLA widget.
 - Support runbook for stuck queues.

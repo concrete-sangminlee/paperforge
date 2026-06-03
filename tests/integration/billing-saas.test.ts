@@ -47,6 +47,14 @@ describe('SaaS billing implementation', () => {
     expect(memberService).toContain('PLAN_COLLABORATOR_LIMIT_REACHED');
   });
 
+  it('compilation queue priority is plan-aware', () => {
+    const entitlements = readFileSync(join(process.cwd(), 'src/lib/entitlements.ts'), 'utf-8');
+    const compilationService = readFileSync(join(process.cwd(), 'src/services/compilation-service.ts'), 'utf-8');
+    expect(entitlements).toContain('compilationQueuePriority');
+    expect(compilationService).toContain('getEntitledPlan');
+    expect(compilationService).toContain('priority');
+  });
+
   it('dashboard exposes activation checklist for first-run users', () => {
     const projectsPage = readFileSync(join(process.cwd(), 'src/app/(dashboard)/projects/page.tsx'), 'utf-8');
     const checklist = readFileSync(join(process.cwd(), 'src/components/dashboard/activation-checklist.tsx'), 'utf-8');

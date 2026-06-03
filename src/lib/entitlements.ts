@@ -30,3 +30,14 @@ export function collaboratorLimitMessage(plan: BillingPlan) {
 
   return `${plan.name} includes ${plan.collaboratorLimit} collaborators per project.${suffix}`;
 }
+
+export function compilationQueuePriority(plan: BillingPlan) {
+  switch (plan.compilePriority) {
+    case 'enterprise':
+      return 1;
+    case 'priority':
+      return 2;
+    default:
+      return 5;
+  }
+}
