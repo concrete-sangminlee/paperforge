@@ -1,10 +1,47 @@
 import { prisma } from '@/lib/prisma';
 import { ApiError } from '@/lib/errors';
+import {
+  canCreateProjectForPlan,
+  getNextUpgradePlan,
+  resolveBillingPlanForUser,
+} from '@/lib/billing-plans';
+
+async function assertProjectCreationAllowed(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      settings: true,
+      storageQuotaBytes: true,
+    },
+  });
+  if (!user) throw new ApiError(404, 'User not found', 'USER_NOT_FOUND');
+
+  const plan = resolveBillingPlanForUser(user);
+  if (plan.projectLimit === null) return;
+
+  const ownedProjectCount = await prisma.project.count({
+    where: {
+      deletedAt: null,
+      members: { some: { userId, role: 'owner' } },
+    },
+  });
+
+  if (!canCreateProjectForPlan(plan, ownedProjectCount)) {
+    const upgrade = getNextUpgradePlan(plan.id);
+    throw new ApiError(
+      402,
+      `${plan.name} includes ${plan.projectLimit} active owned projects. ${upgrade ? `Upgrade to ${upgrade.name} for unlimited projects.` : 'Contact sales to raise this limit.'}`,
+      'PLAN_LIMIT_REACHED',
+    );
+  }
+}
 
 export async function createProject(
   userId: string,
   data: { name: string; description?: string; compiler?: string },
 ) {
+  await assertProjectCreationAllowed(userId);
+
   const project = await prisma.project.create({
     data: {
       createdBy: userId,

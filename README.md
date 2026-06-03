@@ -28,7 +28,7 @@
 
 ## Why PaperForge?
 
-> Overleaf is great, but it's not yours. PaperForge gives you the same power — **for free, forever, on your own terms.**
+> Overleaf is great, but it is not yours. PaperForge gives you an open-source core you can self-host, plus hosted SaaS plans for teams that want managed operations.
 
 | | Overleaf Free | Overleaf Pro ($199/yr) | **PaperForge** |
 |---|:---:|:---:|:---:|
@@ -41,7 +41,7 @@
 | Self-Hostable | - | - | **Yes** |
 | Import (ZIP + GitHub) | - | - | **Yes (Overleaf + GitHub)** |
 | Templates | Limited | Limited | **Extensible** |
-| Cost | Free | $199/yr | **$0 Forever** |
+| Cost | Free | $199/yr | **Free self-host / SaaS from $8/mo** |
 
 ---
 
@@ -99,7 +99,7 @@
 | v7.0 | **Document Statistics** | Words by section, figures/tables/equations count, reading time estimate |
 | v7.0 | **12 Editor Panels** | PDF, History, Git, Outline, Symbols, Cite, Math, AI, Table, Equation, Stats |
 | v7.0 | **160+ Completions** | BibTeX syntax, 27 snippets, 70+ symbols, quick-fix, spellcheck, global search |
-| v7.0 | **1,649 Tests** | 0 type errors · 0 lint errors · 0 production audit issues · 50 API routes · 62 components |
+| v7.0 | **2,028 Tests** | 0 type errors · 0 lint errors · 0 production audit issues · billing routes · 62 components |
 
 ---
 
@@ -528,7 +528,7 @@ Includes all services: Next.js app, WebSocket server, compilation workers, Postg
 - [x] 100% API standardization (all routes use consistent response format)
 - [x] File upload validation (size limits, blocked extensions, path traversal)
 - [x] Admin real-time dashboards (15s auto-refresh)
-- [x] Comprehensive test suite (1,649 tests — linting, completions, error parsing, API, services, E2E)
+- [x] Comprehensive test suite (2,028 passing tests — linting, completions, error parsing, API, services, E2E)
 - [x] Email error handling (graceful SMTP failure recovery)
 - [x] LaTeX syntax highlighting (custom StreamLanguage parser)
 - [x] LaTeX autocomplete (70+ commands, Greek letters, environments)
@@ -608,7 +608,7 @@ PaperForge is built on the shoulders of outstanding open-source projects:
 
 **Built with determination by [concrete-sangminlee](https://github.com/concrete-sangminlee)**
 
-**230+ source files · 1,649 tests (136 suites) · 50 API routes · 25 pages · 8 Docker services · v23.0.0 · [Live Demo](https://projectlatexcompiler.vercel.app)**
+**230+ source files · 2,028 passing tests (158 files) · billing-ready API routes · 25+ pages · 8 Docker services · v23.0.0 · [Live Demo](https://projectlatexcompiler.vercel.app)**
 
 [Pricing](https://projectlatexcompiler.vercel.app/pricing) · [Getting Started](https://projectlatexcompiler.vercel.app/docs/getting-started) · [Docs](https://projectlatexcompiler.vercel.app/docs) · [API](https://projectlatexcompiler.vercel.app/docs/api) · [Symbols](https://projectlatexcompiler.vercel.app/docs/symbols) · [Templates](https://projectlatexcompiler.vercel.app/docs/templates) · [Status](https://projectlatexcompiler.vercel.app/status) · [Changelog](https://projectlatexcompiler.vercel.app/changelog)
 

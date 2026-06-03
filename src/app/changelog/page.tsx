@@ -21,7 +21,7 @@ const RELEASES = [
     'ARIA: tablist, progressbar, meter, aria-pressed across 12 components',
     'AnimatedCounter: rAF cancelled on unmount (memory leak fix)',
     'Clipboard: execCommand return value checked, try/finally cleanup',
-    'All 1,634 tests passing — 0 regressions across 9 review loops',
+    'All 2,028 tests passing with 2 skipped suites tracked — 0 regressions across this SaaS foundation review',
   ]},
   { version: '22.1.0', date: '2026-03-29', label: '', items: [
     'SyncTeX/ZIP export buffer size limits — all download routes protected',

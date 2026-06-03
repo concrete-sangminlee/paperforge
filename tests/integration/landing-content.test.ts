@@ -19,8 +19,9 @@ describe('landing page content', () => {
 
 describe('pricing page content', () => {
   const pp = readFileSync(join(process.cwd(), 'src/app/pricing/page.tsx'), 'utf-8');
-  it('has 3 plans', () => { expect((pp.match(/name:/g) || []).length).toBe(3); });
-  it('has storage limits', () => { expect(pp).toContain('GB'); });
+  const billingPlans = readFileSync(join(process.cwd(), 'src/lib/billing-plans.ts'), 'utf-8');
+  it('uses centralized plans', () => { expect(pp).toContain('BILLING_PLAN_LIST'); });
+  it('has storage limits', () => { expect(billingPlans).toContain('GB'); });
   it('has CTA buttons', () => { expect(pp).toContain('Start'); });
   it('has popular badge', () => { expect(pp).toContain('Most Popular'); });
 });

@@ -8,6 +8,7 @@ import { safeString } from '@/lib/validation';
 import { enforceRateLimit } from '@/lib/rate-limit';
 import { RATE_LIMITS } from '@/lib/constants';
 import { logAuditAction } from '@/services/audit-service';
+import { resolveBillingPlanForUser } from '@/lib/billing-plans';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +36,11 @@ const profileSelect = {
 function serializeProfile<T extends { passwordHash: string | null }>(user: T | null) {
   if (!user) return null;
   const { passwordHash, ...profile } = user;
-  return { ...profile, hasPassword: !!passwordHash };
+  return {
+    ...profile,
+    hasPassword: !!passwordHash,
+    billingPlan: resolveBillingPlanForUser(profile),
+  };
 }
 
 export async function GET() {

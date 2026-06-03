@@ -25,6 +25,13 @@ const GROUPS: { name: string; endpoints: Endpoint[] }[] = [
     ],
   },
   {
+    name: 'Billing',
+    endpoints: [
+      { method: 'GET', path: '/api/v1/billing/plans', description: 'List commercial plan catalog', auth: false },
+      { method: 'POST', path: '/api/v1/billing/checkout', description: 'Start hosted checkout or sales-assisted upgrade', auth: true },
+    ],
+  },
+  {
     name: 'Projects',
     endpoints: [
       { method: 'GET', path: '/api/v1/projects', description: 'List user projects', auth: true },
@@ -104,7 +111,7 @@ export default function ApiDocsPage() {
       <div className="mx-auto max-w-4xl px-6 py-16">
         <h1 className="text-4xl font-extrabold tracking-tight">API Reference</h1>
         <p className="mt-2 text-lg text-muted-foreground">
-          40 REST endpoints. All responses follow <code className="rounded bg-muted px-1.5 py-0.5 text-sm">{'{ success, data }'}</code> format.
+          Project, collaboration, export, and billing endpoints. All responses follow <code className="rounded bg-muted px-1.5 py-0.5 text-sm">{'{ success, data }'}</code> format.
         </p>
         <p className="mt-1 text-sm text-muted-foreground">Base URL: <code className="rounded bg-muted px-1.5 py-0.5">https://your-domain.com</code> or <code className="rounded bg-muted px-1.5 py-0.5">http://localhost:3000</code></p>
 

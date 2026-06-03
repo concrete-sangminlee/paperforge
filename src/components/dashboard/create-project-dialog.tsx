@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { PlusIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -30,6 +31,7 @@ export function CreateProjectDialog() {
   const [compiler, setCompiler] = useState('pdflatex');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [limitReached, setLimitReached] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -40,6 +42,7 @@ export function CreateProjectDialog() {
 
     setLoading(true);
     setError('');
+    setLimitReached(false);
 
     try {
       const res = await fetch('/api/v1/projects', {
@@ -50,6 +53,7 @@ export function CreateProjectDialog() {
 
       if (!res.ok) {
         const errData = await res.json();
+        setLimitReached(errData.error?.code === 'PLAN_LIMIT_REACHED');
         throw new Error(errData.error?.message || errData.error || 'Failed to create project');
       }
 
@@ -112,7 +116,14 @@ export function CreateProjectDialog() {
             </div>
 
             {error && (
-              <p className="text-sm text-destructive">{error}</p>
+              <div className="flex flex-col gap-2 rounded-lg border border-destructive/20 bg-destructive/5 p-3">
+                <p className="text-sm text-destructive">{error}</p>
+                {limitReached && (
+                  <Link href="/billing" className={buttonVariants({ size: 'sm' })}>
+                    Upgrade Plan
+                  </Link>
+                )}
+              </div>
             )}
           </div>
 

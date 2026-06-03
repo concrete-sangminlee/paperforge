@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
-export const alt = 'PaperForge — Open-Source Collaborative LaTeX Editor';
+export const alt = 'PaperForge - Open-Source Collaborative LaTeX Editor';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -83,7 +83,7 @@ export default function OGImage() {
             'Git Integration',
             'DOCX Export',
             'Self-Hosted',
-            'Free Forever',
+            'Hosted Pro Plans',
           ].map((feature) => (
             <div
               key={feature}

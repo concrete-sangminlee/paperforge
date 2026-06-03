@@ -5,65 +5,8 @@ import { CheckIcon, FlameIcon } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-
-const PLANS = [
-  {
-    name: 'Free',
-    price: '$0',
-    period: 'forever',
-    description: 'Perfect for individual researchers',
-    features: [
-      '1 GB storage',
-      '3 projects',
-      'Real-time collaboration (2 users)',
-      'PDF preview & export',
-      'LaTeX autocomplete',
-      'Community support',
-    ],
-    cta: 'Get Started',
-    href: '/register',
-    popular: false,
-  },
-  {
-    name: 'Pro',
-    price: '$8',
-    period: '/month',
-    description: 'For serious academics and teams',
-    features: [
-      '10 GB storage',
-      'Unlimited projects',
-      'Real-time collaboration (10 users)',
-      'PDF, DOCX & ZIP export',
-      'Git integration',
-      'Version history',
-      'Priority compilation',
-      'Email support',
-    ],
-    cta: 'Start Pro Trial',
-    href: '/register?plan=pro',
-    popular: true,
-  },
-  {
-    name: 'Team',
-    price: '$15',
-    period: '/user/month',
-    description: 'For research labs and departments',
-    features: [
-      '100 GB shared storage',
-      'Unlimited projects & users',
-      'Real-time collaboration (unlimited)',
-      'All export formats',
-      'Git integration + SSO',
-      'Admin dashboard',
-      'Audit log',
-      'Priority support + SLA',
-      'Custom templates',
-    ],
-    cta: 'Contact Sales',
-    href: 'mailto:sales@paperforge.dev',
-    popular: false,
-  },
-];
+import { CheckoutButton } from '@/components/billing/checkout-button';
+import { BILLING_PLAN_LIST, formatPlanPrice } from '@/lib/billing-plans';
 
 export default function PricingPage() {
   return (
@@ -88,35 +31,39 @@ export default function PricingPage() {
       <div className="mx-auto max-w-5xl px-6 py-16 text-center">
         <Badge variant="secondary" className="mb-4">Pricing</Badge>
         <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
-          Simple, transparent pricing
+          Plans for serious paper teams
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-          Start free. Upgrade when you need more storage, collaborators, or priority compilation.
+          Start free, then subscribe when you need more projects, storage, collaborators,
+          exports, and priority compilation.
         </p>
       </div>
 
       {/* Plans */}
       <div className="mx-auto grid max-w-5xl gap-6 px-6 pb-24 sm:grid-cols-2 lg:grid-cols-3">
-        {PLANS.map((plan) => (
+        {BILLING_PLAN_LIST.map((plan) => (
           <div
             key={plan.name}
             className={cn(
               'relative flex flex-col rounded-2xl border bg-card p-8 shadow-sm transition-all hover:shadow-lg',
-              plan.popular && 'border-orange-500 shadow-md ring-1 ring-orange-500/20',
+              plan.recommended && 'border-orange-500 shadow-md ring-1 ring-orange-500/20',
             )}
           >
-            {plan.popular && (
+            {plan.recommended && (
               <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-orange-500 text-white hover:bg-orange-600">
                 Most Popular
               </Badge>
             )}
 
             <h3 className="text-xl font-bold">{plan.name}</h3>
+            <p className="mt-1 text-xs font-medium uppercase tracking-wide text-orange-600">
+              {plan.audience}
+            </p>
             <p className="mt-1 text-sm text-muted-foreground">{plan.description}</p>
 
             <div className="mt-6 flex items-baseline gap-1">
-              <span className="text-4xl font-extrabold">{plan.price}</span>
-              <span className="text-sm text-muted-foreground">{plan.period}</span>
+              <span className="text-4xl font-extrabold">{formatPlanPrice(plan)}</span>
+              <span className="text-sm text-muted-foreground">{plan.priceUnit}</span>
             </div>
 
             <ul className="mt-8 flex-1 space-y-3">
@@ -128,18 +75,28 @@ export default function PricingPage() {
               ))}
             </ul>
 
-            <Link
-              href={plan.href}
-              className={cn(
-                buttonVariants({
-                  variant: plan.popular ? 'default' : 'outline',
-                }),
-                'mt-8 w-full',
-                plan.popular && 'bg-orange-500 hover:bg-orange-600',
-              )}
-            >
-              {plan.cta}
-            </Link>
+            {plan.id === 'free' ? (
+              <Link
+                href="/register"
+                className={cn(
+                  buttonVariants({ variant: 'outline' }),
+                  'mt-8 w-full',
+                )}
+              >
+                {plan.cta}
+              </Link>
+            ) : (
+              <CheckoutButton
+                planId={plan.id}
+                variant={plan.recommended ? 'default' : 'outline'}
+                className={cn(
+                  'mt-8 w-full',
+                  plan.recommended && 'bg-orange-500 hover:bg-orange-600',
+                )}
+              >
+                {plan.cta}
+              </CheckoutButton>
+            )}
           </div>
         ))}
       </div>
@@ -147,7 +104,8 @@ export default function PricingPage() {
       {/* FAQ hint */}
       <div className="border-t bg-muted/30 py-12 text-center">
         <p className="text-sm text-muted-foreground">
-          All plans include LaTeX autocomplete, inline linting, and real-time collaboration.
+          The hosted SaaS funds priority compilation, support, and production operations.
+          The open-source self-hosted edition remains available under the MIT license.
         </p>
         <p className="mt-2 text-xs text-muted-foreground">
           Questions? <a href="mailto:support@paperforge.dev" className="underline">Contact us</a>

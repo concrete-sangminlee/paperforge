@@ -18,10 +18,11 @@ describe('landing page', () => {
 
 describe('pricing page', () => {
   const pp = readFileSync(join(process.cwd(), 'src/app/pricing/page.tsx'), 'utf-8');
-  it('has Free plan', () => { expect(pp).toContain('Free'); });
-  it('has Pro plan', () => { expect(pp).toContain('Pro'); });
-  it('has Team plan', () => { expect(pp).toContain('Team'); });
-  it('has price', () => { expect(pp).toContain('$8'); });
+  const plans = readFileSync(join(process.cwd(), 'src/lib/billing-plans.ts'), 'utf-8');
+  it('has Free plan', () => { expect(plans).toContain("name: 'Free'"); });
+  it('has Pro plan', () => { expect(plans).toContain("name: 'Pro'"); });
+  it('has Team plan', () => { expect(plans).toContain("name: 'Team'"); });
+  it('has price', () => { expect(plans).toContain('monthlyPriceCents: 800'); });
   it('has features list', () => { expect(pp).toContain('CheckIcon'); });
   it('has popular badge', () => { expect(pp).toContain('Popular'); });
 });

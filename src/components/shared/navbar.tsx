@@ -19,6 +19,7 @@ import {
   FolderOpenIcon,
   LayoutTemplateIcon,
   BookOpenIcon,
+  CreditCardIcon,
   ChevronRightIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -46,6 +47,7 @@ import {
 const navLinks = [
   { href: '/projects', label: 'Projects', icon: FolderOpenIcon },
   { href: '/templates', label: 'Templates', icon: LayoutTemplateIcon },
+  { href: '/billing', label: 'Billing', icon: CreditCardIcon },
   { href: '/docs', label: 'Docs', icon: BookOpenIcon },
 ] as const;
 
@@ -58,6 +60,7 @@ function useBreadcrumbs() {
   const labelMap: Record<string, string> = {
     projects: 'Projects',
     templates: 'Templates',
+    billing: 'Billing',
     settings: 'Settings',
     editor: 'Editor',
     admin: 'Admin',

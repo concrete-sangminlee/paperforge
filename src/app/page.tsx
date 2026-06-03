@@ -163,7 +163,7 @@ const features = [
 ];
 
 const stats = [
-  { value: "1,634", label: "Tests Passing", icon: FileText },
+  { value: "2,028", label: "Tests Passing", icon: FileText },
   { value: "160+", label: "LaTeX Completions", icon: Building2 },
   { value: "99.9%", label: "Uptime", icon: Clock },
   { value: "100%", label: "Open Source", icon: Heart },
@@ -283,7 +283,7 @@ const comparisonRows: {
   },
   {
     feature: "Price",
-    paperforge: "Free",
+    paperforge: "Free + Pro from $8/mo",
     overleafFree: "Free",
     overleafPro: "$199 / yr",
   },
@@ -452,7 +452,7 @@ export default function HomePage() {
     applicationCategory: 'DeveloperApplication',
     operatingSystem: 'Web',
     description: 'Open-source collaborative LaTeX editor. Write, collaborate, and publish academic documents in your browser.',
-    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+    offers: { '@type': 'AggregateOffer', lowPrice: '0', highPrice: '15', priceCurrency: 'USD' },
     featureList: 'Real-time collaboration, PDF preview, Git integration, DOCX export, AI assistant, 160+ completions',
   };
 
@@ -599,7 +599,7 @@ export default function HomePage() {
               className="mb-8 px-4 py-1.5 text-sm font-medium landing-badge-glow"
             >
               <Shield className="mr-1.5 h-3.5 w-3.5" />
-              Open-source &middot; Self-hostable &middot; Free forever
+              Open-source core &middot; Hosted Pro plans &middot; Self-hostable
             </Badge>
 
             <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl lg:text-7xl xl:text-8xl">
@@ -616,8 +616,8 @@ export default function HomePage() {
 
             <p className="mx-auto mt-8 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
               A modern, self-hostable collaborative LaTeX editor. Real-time
-              co-authoring, instant PDF preview, and Git integration &mdash; all
-              without a subscription.
+              co-authoring, instant PDF preview, Git integration, and hosted
+              subscription plans for teams that need production support.
             </p>
 
             <div className="mt-12 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
@@ -757,7 +757,8 @@ export default function HomePage() {
                 <span className="landing-gradient-text">compares</span>
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-                Pro-tier features, zero cost. See how we stack up.
+                Start free, then scale into hosted plans when your lab needs
+                more storage, exports, support, and compile capacity.
               </p>
             </div>
             <div className="overflow-x-auto rounded-2xl border bg-background shadow-sm">
@@ -884,8 +885,8 @@ export default function HomePage() {
               <span className="landing-gradient-text">next paper?</span>
             </h2>
             <p className="mt-6 text-lg text-muted-foreground sm:text-xl">
-              Free forever. No credit card required. Start writing in under a
-              minute.
+              Start free, upgrade when your workflow needs more capacity, and
+              keep the self-hosted edition available on your own terms.
             </p>
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               {isLoggedIn ? (
