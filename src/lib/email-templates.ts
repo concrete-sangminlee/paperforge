@@ -32,3 +32,34 @@ export function emailTemplate(title: string, body: string): string {
 export function buttonHtml(text: string, url: string): string {
   return `<a href="${escapeHtml(url)}" style="display:inline-block;padding:12px 24px;background:#18181b;color:#fff;text-decoration:none;border-radius:6px;font-weight:500;margin:16px 0">${escapeHtml(text)}</a>`;
 }
+
+export function salesInquiryEmailTemplate(input: {
+  requesterEmail: string;
+  requesterName: string;
+  organizationName: string;
+  seats: number;
+  timeline: string;
+  message?: string | null;
+}) {
+  const rows = [
+    ['Requester', `${input.requesterName} <${input.requesterEmail}>`],
+    ['Organization', input.organizationName],
+    ['Seats', String(input.seats)],
+    ['Timeline', input.timeline],
+    ['Message', input.message?.trim() || 'No message provided'],
+  ];
+
+  const body = `
+    <p style="margin:0 0 16px;color:#3f3f46;line-height:1.5">A Team plan inquiry was submitted from PaperForge.</p>
+    <table style="width:100%;border-collapse:collapse">
+      ${rows.map(([label, value]) => `
+        <tr>
+          <td style="padding:8px 0;border-bottom:1px solid #e4e4e7;color:#71717a;width:140px">${escapeHtml(label)}</td>
+          <td style="padding:8px 0;border-bottom:1px solid #e4e4e7;color:#18181b">${escapeHtml(value)}</td>
+        </tr>
+      `).join('')}
+    </table>
+  `;
+
+  return emailTemplate('Team plan inquiry', body);
+}

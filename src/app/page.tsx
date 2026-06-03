@@ -163,7 +163,7 @@ const features = [
 ];
 
 const stats = [
-  { value: "2,028", label: "Tests Passing", icon: FileText },
+  { value: "2,037", label: "Tests Passing", icon: FileText },
   { value: "160+", label: "LaTeX Completions", icon: Building2 },
   { value: "99.9%", label: "Uptime", icon: Clock },
   { value: "100%", label: "Open Source", icon: Heart },

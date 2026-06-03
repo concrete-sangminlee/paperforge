@@ -6,6 +6,7 @@ describe('SaaS billing implementation', () => {
   it('exposes billing plan and checkout API routes', () => {
     expect(existsSync(join(process.cwd(), 'src/app/api/v1/billing/plans/route.ts'))).toBe(true);
     expect(existsSync(join(process.cwd(), 'src/app/api/v1/billing/checkout/route.ts'))).toBe(true);
+    expect(existsSync(join(process.cwd(), 'src/app/api/v1/billing/sales-inquiry/route.ts'))).toBe(true);
   });
 
   it('pricing page uses the centralized billing catalog and checkout button', () => {
@@ -20,6 +21,7 @@ describe('SaaS billing implementation', () => {
     const navbar = readFileSync(join(process.cwd(), 'src/components/shared/navbar.tsx'), 'utf-8');
     expect(billingPage).toContain('Plan and Billing');
     expect(billingPage).toContain('resolveBillingPlanForUser');
+    expect(billingPage).toContain('SalesInquiryForm');
     expect(navbar).toContain('/billing');
   });
 
@@ -36,6 +38,25 @@ describe('SaaS billing implementation', () => {
     expect(projectService).toContain('assertProjectCreationAllowed');
     expect(projectService).toContain('resolveBillingPlanForUser');
     expect(projectService).toContain('PLAN_LIMIT_REACHED');
+  });
+
+  it('dashboard exposes activation checklist for first-run users', () => {
+    const projectsPage = readFileSync(join(process.cwd(), 'src/app/(dashboard)/projects/page.tsx'), 'utf-8');
+    const checklist = readFileSync(join(process.cwd(), 'src/components/dashboard/activation-checklist.tsx'), 'utf-8');
+    expect(projectsPage).toContain('ActivationChecklist');
+    expect(checklist).toContain('Launch Checklist');
+    expect(checklist).toContain('getActivationChecklist');
+  });
+
+  it('sales inquiry route is rate-limited, audited, and sends email', () => {
+    const route = readFileSync(join(process.cwd(), 'src/app/api/v1/billing/sales-inquiry/route.ts'), 'utf-8');
+    const form = readFileSync(join(process.cwd(), 'src/components/billing/sales-inquiry-form.tsx'), 'utf-8');
+    const templates = readFileSync(join(process.cwd(), 'src/lib/email-templates.ts'), 'utf-8');
+    expect(route).toContain('BILLING_SALES_INQUIRY');
+    expect(route).toContain('sendEmail');
+    expect(route).toContain('billing.sales_inquiry');
+    expect(form).toContain('/api/v1/billing/sales-inquiry');
+    expect(templates).toContain('salesInquiryEmailTemplate');
   });
 
   it('documents the startup operating model and 10-sprint evolution', () => {

@@ -29,6 +29,7 @@ const GROUPS: { name: string; endpoints: Endpoint[] }[] = [
     endpoints: [
       { method: 'GET', path: '/api/v1/billing/plans', description: 'List commercial plan catalog', auth: false },
       { method: 'POST', path: '/api/v1/billing/checkout', description: 'Start hosted checkout or sales-assisted upgrade', auth: true },
+      { method: 'POST', path: '/api/v1/billing/sales-inquiry', description: 'Send Team sales inquiry', auth: true },
     ],
   },
   {

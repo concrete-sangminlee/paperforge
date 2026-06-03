@@ -28,6 +28,7 @@ import { CreateProjectDialog } from '@/components/dashboard/create-project-dialo
 import { ImportProjectDialog } from '@/components/dashboard/import-project-dialog';
 import { StorageBar } from '@/components/dashboard/storage-bar';
 import { GlobalSearch } from '@/components/dashboard/global-search';
+import { ActivationChecklist } from '@/components/dashboard/activation-checklist';
 
 type SortOption = 'updated' | 'name-asc' | 'name-desc' | 'created';
 type RoleFilter = 'all' | 'mine' | 'shared';
@@ -294,6 +295,13 @@ export default function ProjectsPage() {
           usedBytes={user.storageUsedBytes ?? 0}
           quotaBytes={user.storageQuotaBytes}
           className="max-w-sm"
+        />
+      )}
+
+      {projects && (
+        <ActivationChecklist
+          projects={projects}
+          storageQuotaBytes={user?.storageQuotaBytes}
         />
       )}
 

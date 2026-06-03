@@ -11,6 +11,7 @@ const API_ROUTES = [
   'src/app/api/v1/auth/configured-providers/route.ts',
   'src/app/api/v1/billing/plans/route.ts',
   'src/app/api/v1/billing/checkout/route.ts',
+  'src/app/api/v1/billing/sales-inquiry/route.ts',
   'src/app/api/v1/projects/route.ts',
   'src/app/api/v1/projects/[id]/route.ts',
   'src/app/api/v1/projects/[id]/compile/route.ts',

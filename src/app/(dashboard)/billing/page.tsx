@@ -16,6 +16,7 @@ import {
   resolveBillingPlanForUser,
 } from '@/lib/billing-plans';
 import { CheckoutButton } from '@/components/billing/checkout-button';
+import { SalesInquiryForm } from '@/components/billing/sales-inquiry-form';
 import { Badge } from '@/components/ui/badge';
 import {
   Card,
@@ -207,6 +208,18 @@ export default async function BillingPage() {
             <p className="font-medium">Usage guardrails</p>
             <p className="mt-1 text-muted-foreground">Free accounts are limited before operational cost grows unchecked.</p>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Team Sales Inquiry</CardTitle>
+          <CardDescription>
+            Send a procurement-ready request to the PaperForge sales mailbox.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <SalesInquiryForm />
         </CardContent>
       </Card>
     </div>

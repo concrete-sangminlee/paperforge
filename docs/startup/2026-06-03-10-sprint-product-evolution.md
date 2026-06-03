@@ -57,10 +57,11 @@ Role conversation:
 
 Deliverables:
 
-- First-run checklist on `/projects`.
-- Template-first create flow.
-- Activation event markers: project_created, first_file_saved, first_compile_success.
-- Welcome email with direct links to docs and templates.
+- First-run checklist on `/projects`. Shipped via `ActivationChecklist`.
+- Activation computation helper in `src/lib/activation.ts`.
+- Activation tests in `tests/lib/activation.test.ts`.
+- Remaining future work: template-first create flow, persisted activation event markers,
+  and welcome email with direct links to docs and templates.
 
 ## Sprint 3 - Team Selling Surface
 
@@ -77,10 +78,11 @@ Role conversation:
 
 Deliverables:
 
-- `/pricing` Team FAQ and buyer objections.
-- `/api/v1/billing/sales-inquiry`.
-- Sales inquiry audit event.
-- Email template for sales notifications.
+- `/api/v1/billing/sales-inquiry`. Shipped.
+- Sales inquiry audit event. Shipped as `billing.sales_inquiry`.
+- Email template for sales notifications. Shipped as `salesInquiryEmailTemplate`.
+- Billing dashboard Team inquiry form. Shipped.
+- Remaining future work: `/pricing` Team FAQ and buyer objections.
 
 ## Sprint 4 - Usage Entitlements
 
@@ -216,8 +218,8 @@ Deliverables:
 
 ## Next Pickup Queue
 
-1. Implement Sprint 2 activation checklist and event markers.
-2. Add Sprint 3 sales inquiry API and email template.
+1. Complete Sprint 2 persisted activation event markers and welcome email.
+2. Add Sprint 3 pricing-page Team FAQ and buyer objection copy.
 3. Extend entitlements beyond project count.
 4. Add payment provider webhook after the provider is chosen.
 5. Move plan state from `settings.billingPlan` inference to a first-class subscription model when webhook work begins.

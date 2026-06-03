@@ -37,6 +37,7 @@ export const RATE_LIMITS = {
   ACCOUNT_DELETE: { limit: 3,  windowSeconds: 86400 }, // 3 account-deletion attempts per day per user
   AVATAR_UPLOAD:  { limit: 10, windowSeconds: 3600 },  // 10 avatar uploads per hour per user
   BILLING_CHECKOUT: { limit: 10, windowSeconds: 3600 }, // 10 checkout starts per hour per user
+  BILLING_SALES_INQUIRY: { limit: 5, windowSeconds: 3600 }, // 5 Team inquiries per hour per user
   AI_USER:        { limit: 20, windowSeconds: 3600 },  // 20 AI assist calls per hour per user
   // Global cap across all users — protects deployment from runaway Anthropic spend
   // during viral moments / abuse. Tune per deployment budget.
