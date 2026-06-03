@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { apiSuccess, ApiErrors } from '@/lib/api-response';
 import { enforceRateLimit } from '@/lib/rate-limit';
 import { RATE_LIMITS } from '@/lib/constants';
+import { resolveBillingPlanForUser } from '@/lib/billing-plans';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,6 +47,7 @@ export async function GET(request: NextRequest) {
           role: true,
           institution: true,
           emailVerified: true,
+          settings: true,
           storageUsedBytes: true,
           storageQuotaBytes: true,
           lockedUntil: true,
@@ -55,7 +57,14 @@ export async function GET(request: NextRequest) {
       prisma.user.count({ where }),
     ]);
 
-    return apiSuccess({ users, total, page, limit });
+    // Resolve the billing plan server-side and drop the raw settings blob so we
+    // surface the plan badge without leaking unrelated user settings.
+    const usersWithPlan = users.map(({ settings, ...rest }) => ({
+      ...rest,
+      plan: resolveBillingPlanForUser({ settings, storageQuotaBytes: rest.storageQuotaBytes }).id,
+    }));
+
+    return apiSuccess({ users: usersWithPlan, total, page, limit });
   } catch (error) {
     return errorResponse(error);
   }

@@ -6,6 +6,12 @@ import { prisma } from '@/lib/prisma';
 import { logAuditAction } from '@/services/audit-service';
 import { enforceRateLimit } from '@/lib/rate-limit';
 import { RATE_LIMITS } from '@/lib/constants';
+import {
+  type PlanId,
+  PLAN_IDS,
+  BILLING_PLANS,
+  resolveBillingPlanForUser,
+} from '@/lib/billing-plans';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
@@ -13,6 +19,10 @@ export const dynamic = 'force-dynamic';
 const patchUserSchema = z.object({
   role: z.enum(['user', 'admin']).optional(),
   suspend: z.boolean().optional(),
+  // Sales-assisted provisioning: an admin grants a billing plan after a
+  // Contact Sales / checkout conversation. This is the only path that actually
+  // writes settings.billingPlan, which the entitlement layer reads.
+  plan: z.enum([...PLAN_IDS] as [PlanId, ...PlanId[]]).optional(),
 });
 
 export async function PATCH(
@@ -59,6 +69,25 @@ export async function PATCH(
         updateData.failedLoginAttempts = 0;
         auditDetails.action = 'unsuspend';
       }
+    }
+
+    if (data.plan !== undefined) {
+      const targetPlan = BILLING_PLANS[data.plan];
+      const currentPlan = resolveBillingPlanForUser({
+        settings: user.settings,
+        storageQuotaBytes: user.storageQuotaBytes,
+      });
+      // Merge into existing settings rather than overwriting — settings is a
+      // shared JSON blob (editor prefs, etc.). Only the billingPlan key changes.
+      const currentSettings =
+        user.settings && typeof user.settings === 'object' && !Array.isArray(user.settings)
+          ? (user.settings as Record<string, unknown>)
+          : {};
+      updateData.settings = { ...currentSettings, billingPlan: targetPlan.id };
+      // Keep the storage quota consistent with the plan so quota enforcement and
+      // the storage-based plan fallback agree with the explicit assignment.
+      updateData.storageQuotaBytes = BigInt(targetPlan.storageBytes);
+      auditDetails.plan = { from: currentPlan.id, to: targetPlan.id };
     }
 
     const updated = await prisma.user.update({

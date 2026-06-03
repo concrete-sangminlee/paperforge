@@ -8,6 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Table,
   TableBody,
   TableCell,
@@ -15,6 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { PLAN_IDS, BILLING_PLANS, type PlanId } from '@/lib/billing-plans';
 
 
 interface User {
@@ -22,6 +30,7 @@ interface User {
   name: string;
   email: string;
   role: string;
+  plan: PlanId;
   institution?: string | null;
   emailVerified: boolean;
   lockedUntil?: string | null;
@@ -83,6 +92,21 @@ export default function AdminUsersPage() {
     }
   }
 
+  async function setPlan(user: User, plan: PlanId) {
+    if (plan === user.plan) return;
+    setActioning(user.id);
+    try {
+      await fetch(`/api/v1/admin/users/${user.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan }),
+      });
+      mutate(`/api/v1/admin/users${params}`);
+    } finally {
+      setActioning(null);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
@@ -111,6 +135,7 @@ export default function AdminUsersPage() {
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
+              <TableHead>Plan</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Joined</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -125,6 +150,24 @@ export default function AdminUsersPage() {
                   <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
                     {user.role}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                  <Select
+                    value={user.plan}
+                    onValueChange={(value) => value && setPlan(user, value as PlanId)}
+                    disabled={actioning === user.id}
+                  >
+                    <SelectTrigger className="h-8 w-[110px]" aria-label="Set plan">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PLAN_IDS.map((planId) => (
+                        <SelectItem key={planId} value={planId}>
+                          {BILLING_PLANS[planId].name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </TableCell>
                 <TableCell>
                   {isSuspended(user) ? (
@@ -177,7 +220,7 @@ export default function AdminUsersPage() {
             ))}
             {!data?.users.length && (
               <TableRow>
-                <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
+                <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
                   No users found.
                 </TableCell>
               </TableRow>

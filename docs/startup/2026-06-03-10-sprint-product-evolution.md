@@ -178,6 +178,10 @@ Deliverables:
 - Workspace member management.
 - Workspace audit view.
 - Template library scoped to workspace.
+- Admin plan provisioning. Shipped via `PATCH /api/v1/admin/users/[id]` (`plan`) and the
+  admin users plan selector — the sales-assisted path that actually assigns
+  `settings.billingPlan`, making the entitlement layer reachable before a payment
+  provider exists.
 
 ## Sprint 9 - Growth Funnel
 
@@ -223,6 +227,7 @@ Deliverables:
 
 1. Complete Sprint 2 persisted activation event markers and welcome email.
 2. Add Sprint 3 pricing-page Team FAQ and buyer objection copy.
-3. Extend entitlements beyond project count and collaborators.
-4. Add payment provider webhook after the provider is chosen.
+3. Extend entitlements beyond project count and collaborators (storage usage, export formats).
+4. Add payment provider webhook after the provider is chosen — it can write the same
+   `settings.billingPlan` that admin provisioning already writes.
 5. Move plan state from `settings.billingPlan` inference to a first-class subscription model when webhook work begins.

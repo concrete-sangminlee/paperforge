@@ -74,6 +74,22 @@ describe('SaaS billing implementation', () => {
     expect(templates).toContain('salesInquiryEmailTemplate');
   });
 
+  it('admins can provision a billing plan, closing the entitlement loop', () => {
+    const route = readFileSync(join(process.cwd(), 'src/app/api/v1/admin/users/[id]/route.ts'), 'utf-8');
+    const listRoute = readFileSync(join(process.cwd(), 'src/app/api/v1/admin/users/route.ts'), 'utf-8');
+    const adminUi = readFileSync(join(process.cwd(), 'src/app/admin/users/page.tsx'), 'utf-8');
+    // The PATCH route is the only path that writes settings.billingPlan, which
+    // every entitlement check reads. Without it the SaaS plans are unreachable.
+    expect(route).toContain('billingPlan');
+    expect(route).toContain('storageQuotaBytes');
+    expect(route).toContain('auditDetails.plan');
+    // List route surfaces the resolved plan without leaking the raw settings blob.
+    expect(listRoute).toContain('resolveBillingPlanForUser');
+    expect(listRoute).toContain('usersWithPlan');
+    // Admin UI exposes the plan selector.
+    expect(adminUi).toContain('setPlan');
+  });
+
   it('documents the startup operating model and 10-sprint evolution', () => {
     const operatingModel = readFileSync(join(process.cwd(), 'docs/startup/2026-06-03-saas-operating-system.md'), 'utf-8');
     const sprintPlan = readFileSync(join(process.cwd(), 'docs/startup/2026-06-03-10-sprint-product-evolution.md'), 'utf-8');
