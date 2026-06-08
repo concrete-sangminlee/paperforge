@@ -261,7 +261,16 @@ async function compileViaAPI(
 export async function triggerCompilation(projectId: string, userId: string) {
   const project = await prisma.project.findFirst({
     where: { id: projectId, deletedAt: null },
-    include: { files: { where: { deletedAt: null } } },
+    include: {
+      files: { where: { deletedAt: null } },
+      members: {
+        where: { role: 'owner' },
+        select: {
+          user: { select: { settings: true, storageQuotaBytes: true } },
+        },
+        take: 1,
+      },
+    },
   });
   if (!project) throw new ApiError(404, 'Project not found');
 
@@ -282,11 +291,8 @@ export async function triggerCompilation(projectId: string, userId: string) {
   });
 
   if (compilationQueue) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { settings: true, storageQuotaBytes: true },
-    });
-    const priority = compilationQueuePriority(getEntitledPlan(user ?? {}));
+    const owner = project.members[0]?.user;
+    const priority = compilationQueuePriority(getEntitledPlan(owner ?? {}));
 
     // Production mode with Redis: use BullMQ queue
     await compilationQueue.add(
