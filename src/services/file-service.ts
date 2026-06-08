@@ -16,6 +16,26 @@ import {
  */
 const LOCAL_STORAGE = pathModule.join(env.LOCAL_STORAGE_PATH || (process.cwd() + '/.local-storage'));
 
+const fileWriteSelect = {
+  id: true,
+  deletedAt: true,
+  sizeBytes: true,
+} as const;
+
+async function findFileForWrite(projectId: string, filePath: string) {
+  const active = await prisma.file.findFirst({
+    where: { projectId, path: filePath, deletedAt: null },
+    select: fileWriteSelect,
+  });
+  if (active) return active;
+
+  return prisma.file.findFirst({
+    where: { projectId, path: filePath, deletedAt: { not: null } },
+    orderBy: { deletedAt: 'desc' },
+    select: fileWriteSelect,
+  });
+}
+
 function localPath(minioKey: string): string {
   const resolved = pathModule.resolve(LOCAL_STORAGE, minioKey);
   if (!resolved.startsWith(pathModule.resolve(LOCAL_STORAGE) + pathModule.sep)) {
@@ -82,9 +102,7 @@ export async function createFile(
   // Resolve ownership and enforce the owner's storage quota BEFORE writing any
   // bytes, so an over-quota save is rejected instead of stored-then-orphaned.
   const ownerId = await getProjectOwnerId(projectId);
-  const existing = await prisma.file.findFirst({
-    where: { projectId, path },
-  });
+  const existing = await findFileForWrite(projectId, path);
   const oldSize = existing && !existing.deletedAt ? Number(existing.sizeBytes) : 0;
   if (ownerId) await assertStorageQuota(ownerId, buffer.length - oldSize);
 
@@ -218,9 +236,7 @@ export async function uploadBinaryFile(
   // Enforce the owner's storage quota before persisting the (potentially large)
   // binary payload.
   const ownerId = await getProjectOwnerId(projectId);
-  const existing = await prisma.file.findFirst({
-    where: { projectId, path },
-  });
+  const existing = await findFileForWrite(projectId, path);
   const oldSize = existing && !existing.deletedAt ? Number(existing.sizeBytes) : 0;
   if (ownerId) await assertStorageQuota(ownerId, buffer.length - oldSize);
 
@@ -250,7 +266,7 @@ export async function uploadBinaryFile(
           mimeType,
           isBinary: true,
           deletedAt: null,
-          ...(dbContent !== undefined ? { content: dbContent } : {}),
+          content: dbContent ?? null,
         },
       })
     : await prisma.file.create({
@@ -261,11 +277,10 @@ export async function uploadBinaryFile(
           sizeBytes: BigInt(buffer.length),
           mimeType,
           minioKey,
-          ...(dbContent !== undefined ? { content: dbContent } : {}),
+          content: dbContent ?? null,
         },
       });
 
   if (ownerId) await syncUserStorageUsed(ownerId);
   return result;
 }
-
