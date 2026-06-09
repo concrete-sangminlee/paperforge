@@ -4,6 +4,7 @@ import useSWR, { mutate } from 'swr';
 import { fetcher } from '@/lib/fetcher';
 import { useState } from 'react';
 import { CheckIcon, XIcon } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -32,15 +33,34 @@ export default function AdminTemplatesPage() {
   const { data: templates } = useSWR<PendingTemplate[]>(KEY, fetcher, { refreshInterval: 15000 });
   const [actioning, setActioning] = useState<string | null>(null);
 
+  async function patchTemplate(id: string, approved: boolean): Promise<boolean> {
+    const response = await fetch(`/api/v1/admin/templates/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ approved }),
+    });
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      const message =
+        (body as { error?: { message?: string } })?.error?.message ??
+        'Failed to update template';
+      toast.error(message);
+      return false;
+    }
+
+    return true;
+  }
+
   async function handleAction(id: string, approved: boolean) {
     setActioning(id);
     try {
-      await fetch(`/api/v1/admin/templates/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ approved }),
-      });
-      mutate(KEY);
+      const ok = await patchTemplate(id, approved);
+      if (ok) {
+        mutate(KEY);
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to update template');
     } finally {
       setActioning(null);
     }
