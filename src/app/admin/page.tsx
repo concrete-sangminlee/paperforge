@@ -53,7 +53,7 @@ export default function AdminDashboard() {
     { refreshInterval: 10000 },
   );
 
-  const { data: health } = useSWR<HealthData>(
+  const { data: health, error: healthError, isLoading: isHealthLoading } = useSWR<HealthData>(
     '/api/healthz',
     fetcher,
     { refreshInterval: 15000 },
@@ -127,13 +127,13 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats Cards */}
-      {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-32 animate-pulse rounded-xl bg-muted" />
-          ))}
-        </div>
-      ) : (
+            {isLoading ? (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-32 animate-pulse rounded-xl bg-muted" />
+                ))}
+              </div>
+            ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {cards.map(({ title, value, icon: Icon, color, bgColor, href }) => (
             <Link key={title} href={href}>
@@ -172,10 +172,10 @@ export default function AdminDashboard() {
             <CardDescription>Real-time service status</CardDescription>
           </CardHeader>
           <CardContent>
-            {health ? (
-              <div className="space-y-3">
-                {/* Overall status */}
-                <div className={`flex items-center justify-between rounded-lg px-3 py-2 ${statusBg[health.status]}`}>
+                {health ? (
+                  <div className="space-y-3">
+                    {/* Overall status */}
+                    <div className={`flex items-center justify-between rounded-lg px-3 py-2 ${statusBg[health.status]}`}>
                   <div className="flex items-center gap-2">
                     {health.status === 'ok' ? (
                       <CheckCircleIcon className="size-4 text-green-500" />
@@ -212,17 +212,23 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   ))}
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-10 animate-pulse rounded-md bg-muted" />
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                    </div>
+                  </div>
+                ) : isHealthLoading ? (
+                  <div className="space-y-2">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="h-10 animate-pulse rounded-md bg-muted" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
+                    {healthError
+                      ? 'Could not load health status. Retry if this persists.'
+                      : 'No health data available'}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
         {/* Quick Links */}
         <Card>
