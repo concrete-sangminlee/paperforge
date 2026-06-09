@@ -63,6 +63,17 @@ describe('admin user PATCH — session invalidation', () => {
   });
 });
 
+describe('admin user PATCH validation', () => {
+  const patch = readFileSync(join(process.cwd(), 'src/app/api/v1/admin/users/[id]/route.ts'), 'utf-8');
+  it('requires at least one mutable field', () => {
+    expect(patch).toContain('.refine(');
+    expect(patch).toContain('At least one user field must be provided');
+    expect(
+      patch
+    ).toContain('data.role !== undefined || data.suspend !== undefined || data.plan !== undefined');
+  });
+});
+
 describe('admin routes rate limiting', () => {
   it('analytics route is rate-limited per admin', () => {
     const a = readFileSync(join(process.cwd(), 'src/app/api/v1/admin/analytics/route.ts'), 'utf-8');

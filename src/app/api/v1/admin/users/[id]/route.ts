@@ -16,14 +16,22 @@ import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
 
-const patchUserSchema = z.object({
-  role: z.enum(['user', 'admin']).optional(),
-  suspend: z.boolean().optional(),
-  // Sales-assisted provisioning: an admin grants a billing plan after a
-  // Contact Sales / checkout conversation. This is the only path that actually
-  // writes settings.billingPlan, which the entitlement layer reads.
-  plan: z.enum([...PLAN_IDS] as [PlanId, ...PlanId[]]).optional(),
-});
+const patchUserSchema = z
+  .object({
+    role: z.enum(['user', 'admin']).optional(),
+    suspend: z.boolean().optional(),
+    // Sales-assisted provisioning: an admin grants a billing plan after a
+    // Contact Sales / checkout conversation. This is the only path that actually
+    // writes settings.billingPlan, which the entitlement layer reads.
+    plan: z.enum([...PLAN_IDS] as [PlanId, ...PlanId[]]).optional(),
+  })
+  .refine(
+    (data) =>
+      data.role !== undefined || data.suspend !== undefined || data.plan !== undefined,
+    {
+      message: 'At least one user field must be provided',
+    },
+  );
 
 export async function PATCH(
   request: NextRequest,
