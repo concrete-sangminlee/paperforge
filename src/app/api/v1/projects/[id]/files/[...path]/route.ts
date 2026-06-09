@@ -61,8 +61,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const body = await request.json();
     const content = typeof body.content === 'string' ? body.content : '';
 
-    // Enforce content size limit
-    if (content.length > LIMITS.MAX_FILE_SIZE) {
+    // Enforce the same byte limit used by storage accounting.
+    if (Buffer.byteLength(content, 'utf8') > LIMITS.MAX_FILE_SIZE) {
       return apiError(
         `Content too large. Maximum size is ${LIMITS.MAX_FILE_SIZE / (1024 * 1024)}MB`,
         413,

@@ -121,6 +121,15 @@ describe('remaining route security hardening', () => {
     expect(putSection).toContain('file.updated');
   });
 
+  it('file PUT enforces the text size limit by UTF-8 bytes', () => {
+    const c = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/files/[...path]/route.ts'), 'utf-8');
+    const putIdx = c.indexOf('async function PUT');
+    expect(putIdx).toBeGreaterThan(-1);
+    const putSection = c.slice(putIdx, c.indexOf('async function DELETE'));
+    expect(putSection).toContain("Buffer.byteLength(content, 'utf8')");
+    expect(putSection).not.toContain('content.length > LIMITS.MAX_FILE_SIZE');
+  });
+
   it('git/link POST has rate limiting and audit log', () => {
     const c = readFileSync(join(process.cwd(), 'src/app/api/v1/projects/[id]/git/link/route.ts'), 'utf-8');
     expect(c).toContain('enforceRateLimit');
