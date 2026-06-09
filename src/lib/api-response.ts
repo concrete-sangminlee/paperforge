@@ -7,12 +7,20 @@ interface ApiErrorDetail {
   details?: Record<string, unknown>;
 }
 
+function jsonSafe<T>(value: T): T {
+  return JSON.parse(
+    JSON.stringify(value, (_key, nested) =>
+      typeof nested === 'bigint' ? nested.toString() : nested,
+    ),
+  ) as T;
+}
+
 /**
  * Standardized success response
  */
 export function apiSuccess<T>(data: T, status = 200) {
   return NextResponse.json(
-    { success: true, data },
+    jsonSafe({ success: true, data }),
     { status },
   );
 }
@@ -26,7 +34,7 @@ export function apiPaginated<T>(
 ) {
   const pages = Math.ceil(pagination.total / pagination.limit);
   return NextResponse.json(
-    {
+    jsonSafe({
       success: true,
       data,
       pagination: {
@@ -37,7 +45,7 @@ export function apiPaginated<T>(
         hasNext: pagination.page < pages,
         hasPrev: pagination.page > 1,
       },
-    },
+    }),
     {
       status: 200,
       headers: {
@@ -64,7 +72,7 @@ export function apiError(
   if (details) error.details = details;
 
   return NextResponse.json(
-    { success: false, error },
+    jsonSafe({ success: false, error }),
     { status },
   );
 }

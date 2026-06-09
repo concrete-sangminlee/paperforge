@@ -15,6 +15,12 @@ describe('apiSuccess', () => {
     const res = apiSuccess({ created: true }, 201);
     expect(res.status).toBe(201);
   });
+
+  it('serializes BigInt values as strings', async () => {
+    const res = apiSuccess({ storageUsedBytes: BigInt(1024) });
+    const body = await res.json();
+    expect(body.data.storageUsedBytes).toBe('1024');
+  });
 });
 
 describe('apiPaginated', () => {
@@ -44,6 +50,16 @@ describe('apiPaginated', () => {
     expect(body.pagination.hasNext).toBe(false);
     expect(body.pagination.hasPrev).toBe(true);
   });
+
+  it('serializes BigInt values in paginated data', async () => {
+    const res = apiPaginated([{ id: '1', sizeBytes: BigInt(2048) }], {
+      page: 1,
+      limit: 10,
+      total: 1,
+    });
+    const body = await res.json();
+    expect(body.data[0].sizeBytes).toBe('2048');
+  });
 });
 
 describe('apiError', () => {
@@ -60,6 +76,12 @@ describe('apiError', () => {
     const res = apiError('Bad', 400, 'BAD', { field: 'email' });
     const body = await res.json();
     expect(body.error.details).toEqual({ field: 'email' });
+  });
+
+  it('serializes BigInt values in error details', async () => {
+    const res = apiError('Too large', 413, 'TOO_LARGE', { limit: BigInt(4096) });
+    const body = await res.json();
+    expect(body.error.details.limit).toBe('4096');
   });
 });
 
