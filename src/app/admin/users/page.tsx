@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import useSWR, { mutate } from 'swr';
 import { fetcher } from '@/lib/fetcher';
 import { SearchIcon, ShieldAlertIcon, ShieldCheckIcon, ShieldIcon } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -42,6 +43,25 @@ function isSuspended(user: User): boolean {
   return new Date(user.lockedUntil) > new Date();
 }
 
+async function patchUser(userId: string, payload: Record<string, unknown>): Promise<boolean> {
+  const response = await fetch(`/api/v1/admin/users/${userId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    const message =
+      (body as { error?: { message?: string } })?.error?.message ??
+      'Failed to update user';
+    toast.error(message);
+    return false;
+  }
+
+  return true;
+}
+
 export default function AdminUsersPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -67,12 +87,12 @@ export default function AdminUsersPage() {
   async function toggleSuspend(user: User) {
     setActioning(user.id);
     try {
-      await fetch(`/api/v1/admin/users/${user.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ suspend: !isSuspended(user) }),
-      });
-      mutate(`/api/v1/admin/users${params}`);
+      const ok = await patchUser(user.id, { suspend: !isSuspended(user) });
+      if (ok) {
+        mutate(`/api/v1/admin/users${params}`);
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to update user');
     } finally {
       setActioning(null);
     }
@@ -81,12 +101,14 @@ export default function AdminUsersPage() {
   async function toggleRole(user: User) {
     setActioning(user.id);
     try {
-      await fetch(`/api/v1/admin/users/${user.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: user.role === 'admin' ? 'user' : 'admin' }),
+      const ok = await patchUser(user.id, {
+        role: user.role === 'admin' ? 'user' : 'admin',
       });
-      mutate(`/api/v1/admin/users${params}`);
+      if (ok) {
+        mutate(`/api/v1/admin/users${params}`);
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to update user');
     } finally {
       setActioning(null);
     }
@@ -96,12 +118,12 @@ export default function AdminUsersPage() {
     if (plan === user.plan) return;
     setActioning(user.id);
     try {
-      await fetch(`/api/v1/admin/users/${user.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan }),
-      });
-      mutate(`/api/v1/admin/users${params}`);
+      const ok = await patchUser(user.id, { plan });
+      if (ok) {
+        mutate(`/api/v1/admin/users${params}`);
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to update user');
     } finally {
       setActioning(null);
     }
