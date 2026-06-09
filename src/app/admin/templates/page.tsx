@@ -58,6 +58,7 @@ export default function AdminTemplatesPage() {
       const ok = await patchTemplate(id, approved);
       if (ok) {
         mutate(KEY);
+        toast.success(approved ? 'Template approved' : 'Template rejected');
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to update template');

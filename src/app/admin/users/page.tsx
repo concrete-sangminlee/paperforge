@@ -90,6 +90,7 @@ export default function AdminUsersPage() {
       const ok = await patchUser(user.id, { suspend: !isSuspended(user) });
       if (ok) {
         mutate(`/api/v1/admin/users${params}`);
+        toast.success(`${isSuspended(user) ? 'Unsuspended' : 'Suspended'} ${user.name}`);
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to update user');
@@ -106,6 +107,11 @@ export default function AdminUsersPage() {
       });
       if (ok) {
         mutate(`/api/v1/admin/users${params}`);
+        toast.success(
+          user.role === 'admin'
+            ? `Demoted ${user.name} to user`
+            : `Promoted ${user.name} to admin`,
+        );
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to update user');
@@ -121,6 +127,7 @@ export default function AdminUsersPage() {
       const ok = await patchUser(user.id, { plan });
       if (ok) {
         mutate(`/api/v1/admin/users${params}`);
+        toast.success(`Updated ${user.name} to ${BILLING_PLANS[plan].name}`);
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to update user');
