@@ -27,9 +27,11 @@ describe('admin user PATCH — session invalidation', () => {
     // Role changes (especially admin demotion) must invalidate the target user's
     // JWT within the next periodic-check window so they cannot retain stale
     // elevated privileges.
-    const roleBlock = patch.slice(patch.indexOf('data.role !== undefined'));
-    const nextBlock = patch.indexOf('data.suspend', patch.indexOf('data.role !== undefined'));
-    const roleSection = patch.slice(patch.indexOf('data.role !== undefined'), nextBlock);
+    const roleCheckIdx = patch.indexOf('if (data.role !== undefined) {');
+    expect(roleCheckIdx).toBeGreaterThan(-1);
+    const nextBlock = patch.indexOf('if (data.suspend !== undefined)', roleCheckIdx);
+    expect(nextBlock).toBeGreaterThan(roleCheckIdx);
+    const roleSection = patch.slice(roleCheckIdx, nextBlock);
     expect(roleSection).toContain('tokenVersion');
     expect(roleSection).toContain('increment');
   });
