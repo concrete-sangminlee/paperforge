@@ -5,6 +5,7 @@ import {
   getNextUpgradePlan,
   resolveBillingPlanForUser,
 } from '@/lib/billing-plans';
+import { syncUserStorageUsed } from '@/lib/storage';
 
 async function assertProjectCreationAllowed(userId: string) {
   const user = await prisma.user.findUnique({
@@ -153,6 +154,7 @@ export async function deleteProject(projectId: string, userId: string) {
     data: { deletedAt: new Date() },
     select: { id: true, name: true, deletedAt: true },
   });
+  await syncUserStorageUsed(userId);
   // Soft-deletes are reversible by direct DB access only; an audit trail
   // makes the action recoverable and answers "who deleted X?" later.
   try {

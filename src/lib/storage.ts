@@ -7,9 +7,9 @@ import { ApiError } from '@/lib/errors';
  * files in every non-deleted project they own.
  *
  * That aggregate is the source of truth; `User.storageUsedBytes` is a
- * write-through cache that the service layer keeps in sync on every file
- * create/replace/delete. Display surfaces read the cache, which converges to
- * the true value on the owner's next file operation.
+ * write-through cache that the service layer keeps in sync on file
+ * create/replace/delete and project soft-delete. Display surfaces read the
+ * cache, with the admin recalc endpoint available as a repair path.
  */
 
 /** Pure quota decision — extracted so it can be tested without a database. */
