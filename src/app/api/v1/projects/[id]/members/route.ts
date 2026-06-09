@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/lib/auth';
-import { apiSuccess, ApiErrors } from '@/lib/api-response';
+import { apiError, apiSuccess, ApiErrors } from '@/lib/api-response';
 import { errorResponse } from '@/lib/errors';
 import { inviteMemberSchema } from '@/lib/validation';
 import { getMembers, inviteMember } from '@/services/member-service';
@@ -42,10 +42,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       RATE_LIMITS.PROJECT_INVITE.windowSeconds,
     );
     if (!rl.allowed) {
-      return NextResponse.json(
-        { error: 'Too many invitations. Please try again later.' },
-        { status: 429, headers: rateLimitHeaders(RATE_LIMITS.PROJECT_INVITE.limit, rl) },
+      const response = apiError('Too many invitations. Please try again later.', 429, 'RATE_LIMITED');
+      Object.entries(rateLimitHeaders(RATE_LIMITS.PROJECT_INVITE.limit, rl)).forEach(
+        ([key, value]) => {
+          response.headers.set(key, value);
+        },
       );
+      return response;
     }
 
     const body = await request.json();

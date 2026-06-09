@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/lib/auth';
 import { errorResponse } from '@/lib/errors';
 import {
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     // Keep the array shape clients already depend on (data: Template[]) but
     // surface pagination through standard headers so a future infinite-scroll
     // UI has access to it without breaking existing consumers.
-    const res = NextResponse.json({ success: true, data: items });
+    const res = apiSuccess(items);
     res.headers.set('X-Total-Count', String(total));
     res.headers.set('X-Page-Limit', String(limit));
     res.headers.set('X-Page-Offset', String(offset));

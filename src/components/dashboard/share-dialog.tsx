@@ -138,7 +138,12 @@ export function ShareDialog({ projectId, currentUserRole, open: openProp, onOpen
         body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
       });
       const result = await res.json();
-      if (!res.ok) throw new Error(result.error ?? 'Failed to invite');
+      if (!res.ok) {
+        throw new Error(
+          result.error?.message ??
+            (typeof result.error === 'string' ? result.error : 'Failed to invite'),
+        );
+      }
       setInviteSuccess(`Invitation sent to ${inviteEmail.trim()}`);
       setInviteEmail('');
       await fetchMembers();

@@ -28,9 +28,17 @@ export async function GET(
     // Rate limit: 10 exports per hour per user
     const rateLimit = await checkRateLimit(`rate:export:${userId}`, RATE_LIMITS.EXPORT.limit, RATE_LIMITS.EXPORT.windowSeconds);
     if (!rateLimit.allowed) {
-      return apiError('Too many export requests. Please wait before retrying.', 429, 'RATE_LIMITED', {
-        ...rateLimitHeaders(RATE_LIMITS.EXPORT.limit, rateLimit),
-      });
+      const response = apiError(
+        'Too many export requests. Please wait before retrying.',
+        429,
+        'RATE_LIMITED',
+      );
+      Object.entries(rateLimitHeaders(RATE_LIMITS.EXPORT.limit, rateLimit)).forEach(
+        ([key, value]) => {
+          response.headers.set(key, value);
+        },
+      );
+      return response;
     }
 
     await assertProjectRole(id, userId, ['owner', 'editor', 'viewer']);
@@ -122,10 +130,7 @@ export async function GET(
       // Enforce total export size limit (500MB = MAX_PROJECT_SIZE)
       offset += header.length + content.length;
       if (offset > LIMITS.MAX_PROJECT_SIZE) {
-        return NextResponse.json(
-          { error: 'Project too large to export as ZIP' },
-          { status: 413 },
-        );
+        return apiError('Project too large to export as ZIP', 413, 'PAYLOAD_TOO_LARGE');
       }
 
       // Central directory entry
