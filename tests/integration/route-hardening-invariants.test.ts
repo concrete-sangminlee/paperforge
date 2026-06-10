@@ -1,114 +1,30 @@
-import { readdirSync, readFileSync } from 'node:fs';
-import { join, relative, resolve, sep } from 'node:path';
 import { describe, it, expect } from 'vitest';
 import ts from 'typescript';
+import path from 'node:path';
+import {
+  collectCallExpressions,
+  collectRouteFiles,
+  callName,
+  hasAnyCall,
+  displayPath,
+  exportedMethods,
+  routeSourceFile,
+} from '../utils/route-analysis';
 
-function collectRouteFiles(dir: string): string[] {
-  const entries = readdirSync(dir, { withFileTypes: true });
-  const files: string[] = [];
-
-  for (const entry of entries) {
-    const fullPath = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      files.push(...collectRouteFiles(fullPath));
-      continue;
-    }
-
-    if (entry.isFile() && entry.name === 'route.ts') {
-      files.push(fullPath);
-    }
-  }
-
-  return files;
-}
-
-function routeSourceFile(filePath: string): ts.SourceFile {
-  return ts.createSourceFile(
-    filePath,
-    readFileSync(filePath, 'utf-8'),
-    ts.ScriptTarget.Latest,
-    true,
-    ts.ScriptKind.TS,
-  );
-}
-
-const routeFiles = collectRouteFiles(resolve(process.cwd(), 'src/app/api/v1'));
+const routeFiles = collectRouteFiles(path.resolve(process.cwd(), 'src', 'app', 'api', 'v1'));
 const mutationMethods = new Set(['POST', 'PATCH', 'PUT', 'DELETE']);
 const rateLimitCallNames = new Set(['enforceRateLimit', 'checkRateLimit']);
 const enforceRateLimitCallNames = new Set(['enforceRateLimit']);
 const rateLimitHeaderCallNames = new Set(['rateLimitHeaders']);
-const auditCallNames = new Set([
+const auditCallNames = new Set<string>([
   'logAuditAction',
   'tx.auditLog.create',
   'tx.auditLog.createMany',
   'tx.auditLog.deleteMany',
 ]);
 
-function displayPath(filePath: string): string {
-  return relative(process.cwd(), filePath).split(sep).join('/');
-}
-
-function hasExportModifier(node: ts.Node): boolean {
-  return (
-    ts.canHaveModifiers(node) &&
-    !!ts.getModifiers(node)?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword)
-  );
-}
-
 function exportedMutationMethods(sourceFile: ts.SourceFile): string[] {
-  const methods: string[] = [];
-
-  for (const statement of sourceFile.statements) {
-    if (!hasExportModifier(statement)) continue;
-
-    if (ts.isFunctionDeclaration(statement) && statement.name && mutationMethods.has(statement.name.text)) {
-      methods.push(statement.name.text);
-      continue;
-    }
-
-    if (ts.isVariableStatement(statement)) {
-      for (const declaration of statement.declarationList.declarations) {
-        if (ts.isIdentifier(declaration.name) && mutationMethods.has(declaration.name.text)) {
-          methods.push(declaration.name.text);
-        }
-      }
-      continue;
-    }
-
-    if (ts.isExportDeclaration(statement) && !statement.isTypeOnly && statement.exportClause) {
-      if (!ts.isNamedExports(statement.exportClause)) continue;
-
-      for (const specifier of statement.exportClause.elements) {
-        if (mutationMethods.has(specifier.name.text)) {
-          methods.push(specifier.name.text);
-        }
-      }
-    }
-  }
-
-  return methods;
-}
-
-function collectCallExpressions(sourceFile: ts.SourceFile): ts.CallExpression[] {
-  const calls: ts.CallExpression[] = [];
-
-  function visit(node: ts.Node) {
-    if (ts.isCallExpression(node)) {
-      calls.push(node);
-    }
-    ts.forEachChild(node, visit);
-  }
-
-  visit(sourceFile);
-  return calls;
-}
-
-function callName(sourceFile: ts.SourceFile, call: ts.CallExpression): string {
-  return call.expression.getText(sourceFile);
-}
-
-function hasAnyCall(sourceFile: ts.SourceFile, names: Set<string>): boolean {
-  return collectCallExpressions(sourceFile).some((call) => names.has(callName(sourceFile, call)));
+  return exportedMethods(sourceFile, mutationMethods);
 }
 
 function checkRateLimitCalls(sourceFile: ts.SourceFile): ts.CallExpression[] {
