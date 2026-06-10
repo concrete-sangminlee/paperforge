@@ -19,6 +19,12 @@ describe('errorResponse Prisma mapping', () => {
     expect((await asJson(res)).error.code).toBe('INVALID_INPUT');
   });
 
+  it('maps P2020 (value out of range) to 400 INVALID_INPUT', async () => {
+    const res = errorResponse(makePrismaError('P2020'));
+    expect(res.status).toBe(400);
+    expect((await asJson(res)).error.code).toBe('INVALID_INPUT');
+  });
+
   it('maps P2025 (not found) to 404 NOT_FOUND', async () => {
     const res = errorResponse(makePrismaError('P2025'));
     expect(res.status).toBe(404);

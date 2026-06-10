@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
+import { apiError, apiValidationError } from '@/lib/api-response';
 
 export class ApiError extends Error {
   constructor(
@@ -35,36 +35,11 @@ function isPrismaValidationError(error: unknown): boolean {
 
 export function errorResponse(error: unknown) {
   if (error instanceof ApiError) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: error.code ?? `ERR_${error.statusCode}`,
-          message: error.message,
-        },
-      },
-      { status: error.statusCode },
-    );
+    return apiError(error.message, error.statusCode, error.code);
   }
 
   if (error instanceof ZodError) {
-    const fieldErrors: Record<string, string[]> = {};
-    for (const issue of error.issues) {
-      const path = issue.path.join('.');
-      if (!fieldErrors[path]) fieldErrors[path] = [];
-      fieldErrors[path].push(issue.message);
-    }
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Validation failed',
-          details: { fields: fieldErrors },
-        },
-      },
-      { status: 400 },
-    );
+    return apiValidationError(error);
   }
 
   // Map common Prisma errors to user-meaningful HTTP responses so we
@@ -74,44 +49,20 @@ export function errorResponse(error: unknown) {
     switch (error.code) {
       case 'P2023': // inconsistent column data (e.g. malformed UUID)
       case 'P2020': // value out of range
-        return NextResponse.json(
-          { success: false, error: { code: 'INVALID_INPUT', message: 'Invalid identifier in request' } },
-          { status: 400 },
-        );
+        return apiError('Invalid identifier in request', 400, 'INVALID_INPUT');
       case 'P2025': // record not found
-        return NextResponse.json(
-          { success: false, error: { code: 'NOT_FOUND', message: 'Resource not found' } },
-          { status: 404 },
-        );
+        return apiError('Resource not found', 404, 'NOT_FOUND');
       case 'P2002': // unique constraint
-        return NextResponse.json(
-          { success: false, error: { code: 'CONFLICT', message: 'Resource already exists' } },
-          { status: 409 },
-        );
+        return apiError('Resource already exists', 409, 'CONFLICT');
       case 'P2003': // foreign key constraint
-        return NextResponse.json(
-          { success: false, error: { code: 'CONFLICT', message: 'Cannot complete operation due to related resources' } },
-          { status: 409 },
-        );
+        return apiError('Cannot complete operation due to related resources', 409, 'CONFLICT');
     }
   }
 
   if (isPrismaValidationError(error)) {
-    return NextResponse.json(
-      { success: false, error: { code: 'INVALID_INPUT', message: 'Invalid request data' } },
-      { status: 400 },
-    );
+    return apiError('Invalid request data', 400, 'INVALID_INPUT');
   }
 
   console.error('Unexpected error:', error);
-  return NextResponse.json(
-    {
-      success: false,
-      error: {
-        code: 'INTERNAL_ERROR',
-        message: 'Internal server error',
-      },
-    },
-    { status: 500 },
-  );
+  return apiError('Internal server error', 500, 'INTERNAL_ERROR');
 }
