@@ -3,15 +3,15 @@ import ts from 'typescript';
 import path from 'node:path';
 import {
   collectCallExpressions,
-  collectRouteFiles,
+  collectRouteSourceFiles,
   callName,
+  callTargetsIdentifier,
   hasAnyCall,
   displayPath,
   exportedMethods,
-  routeSourceFile,
 } from '../utils/route-analysis';
 
-const routeFiles = collectRouteFiles(path.resolve(process.cwd(), 'src', 'app', 'api', 'v1'));
+const routeSourceFiles = collectRouteSourceFiles(path.resolve(process.cwd(), 'src', 'app', 'api', 'v1'));
 const mutationMethods = new Set(['POST', 'PATCH', 'PUT', 'DELETE']);
 const rateLimitCallNames = new Set(['enforceRateLimit', 'checkRateLimit']);
 const enforceRateLimitCallNames = new Set(['enforceRateLimit']);
@@ -28,22 +28,24 @@ function exportedMutationMethods(sourceFile: ts.SourceFile): string[] {
 }
 
 function checkRateLimitCalls(sourceFile: ts.SourceFile): ts.CallExpression[] {
-  return collectCallExpressions(sourceFile).filter((call) => callName(sourceFile, call) === 'checkRateLimit');
+  return collectCallExpressions(sourceFile).filter((call) => {
+    const target = callTargetsIdentifier(call);
+    return target ? target === 'checkRateLimit' : callName(sourceFile, call) === 'checkRateLimit';
+  });
 }
 
 describe('route hardening invariants', () => {
   it('tracks API v1 route files', () => {
-    expect(routeFiles.length).toBeGreaterThan(0);
+    expect(routeSourceFiles.length).toBeGreaterThan(0);
   });
 
   it('mutation routes must enforce a rate limit', () => {
     const missingRateLimit: string[] = [];
 
-    for (const file of routeFiles) {
-      const sourceFile = routeSourceFile(file);
+    for (const { filePath, sourceFile } of routeSourceFiles) {
       if (exportedMutationMethods(sourceFile).length === 0) continue;
       if (!hasAnyCall(sourceFile, rateLimitCallNames)) {
-        missingRateLimit.push(displayPath(file));
+        missingRateLimit.push(displayPath(filePath));
       }
     }
 
@@ -53,11 +55,10 @@ describe('route hardening invariants', () => {
   it('mutation routes should log audit actions', () => {
     const missingAudit: string[] = [];
 
-    for (const file of routeFiles) {
-      const sourceFile = routeSourceFile(file);
+    for (const { filePath, sourceFile } of routeSourceFiles) {
       if (exportedMutationMethods(sourceFile).length === 0) continue;
       if (!hasAnyCall(sourceFile, auditCallNames)) {
-        missingAudit.push(displayPath(file));
+        missingAudit.push(displayPath(filePath));
       }
     }
 
@@ -68,8 +69,7 @@ describe('route hardening invariants', () => {
     const badNumericArgs: string[] = [];
     const missingHeaders: string[] = [];
 
-    for (const file of routeFiles) {
-      const sourceFile = routeSourceFile(file);
+    for (const { filePath, sourceFile } of routeSourceFiles) {
       const manualCalls = checkRateLimitCalls(sourceFile);
       if (manualCalls.length === 0) continue;
 
@@ -77,11 +77,11 @@ describe('route hardening invariants', () => {
         !hasAnyCall(sourceFile, enforceRateLimitCallNames) &&
         !hasAnyCall(sourceFile, rateLimitHeaderCallNames)
       ) {
-        missingHeaders.push(displayPath(file));
+        missingHeaders.push(displayPath(filePath));
       }
 
       if (manualCalls.some((call) => call.arguments.slice(1).some((arg) => ts.isNumericLiteral(arg)))) {
-        badNumericArgs.push(displayPath(file));
+        badNumericArgs.push(displayPath(filePath));
       }
     }
 

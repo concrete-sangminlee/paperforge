@@ -2,11 +2,10 @@ import { describe, expect, it } from 'vitest';
 import ts from 'typescript';
 import path from 'node:path';
 import {
-  collectRouteFiles,
+  collectRouteSourceFiles,
   displayPath,
   exportedDeclarationNames,
   hasDefaultModifier,
-  routeSourceFile,
 } from '../utils/route-analysis';
 
 const APP_ROOT = path.resolve(process.cwd(), 'src', 'app');
@@ -32,8 +31,7 @@ const allowedRouteExports = new Set([
   'generateStaticParams',
 ]);
 
-function collectRouteExportViolations(file: string): string[] {
-  const sourceFile = routeSourceFile(file);
+function collectRouteExportViolations(file: string, sourceFile: ts.SourceFile): string[] {
   const violations: string[] = [];
 
   for (const statement of sourceFile.statements) {
@@ -78,10 +76,12 @@ function collectRouteExportViolations(file: string): string[] {
 
 describe('route handler exports', () => {
   it('should only export route handlers and supported segment config', () => {
-    const routeFiles = collectRouteFiles(APP_ROOT);
-    const violations = routeFiles.flatMap(collectRouteExportViolations);
+    const routeSources = collectRouteSourceFiles(APP_ROOT);
+    const violations = routeSources.flatMap(({ filePath, sourceFile }) =>
+      collectRouteExportViolations(filePath, sourceFile),
+    );
 
-    expect(routeFiles.length).toBeGreaterThan(0);
+    expect(routeSources.length).toBeGreaterThan(0);
     expect(violations).toEqual([]);
   });
 });

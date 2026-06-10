@@ -4,20 +4,38 @@ import ts from 'typescript';
 
 const routeFileName = 'route.ts';
 
-export function collectRouteFiles(dir: string, output: string[] = []): string[] {
-  const entries = readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    const fullPath = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      collectRouteFiles(fullPath, output);
-      continue;
-    }
+export function collectRouteFiles(dir: string): string[] {
+  const output: string[] = [];
 
-    if (entry.isFile() && entry.name === routeFileName) {
-      output.push(fullPath);
+  function walk(currentDir: string) {
+    const entries = readdirSync(currentDir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = join(currentDir, entry.name);
+      if (entry.isDirectory()) {
+        walk(fullPath);
+        continue;
+      }
+
+      if (entry.isFile() && entry.name === routeFileName) {
+        output.push(fullPath);
+      }
     }
   }
+
+  walk(dir);
   return output;
+}
+
+export type RouteSourceFile = {
+  filePath: string;
+  sourceFile: ts.SourceFile;
+};
+
+export function collectRouteSourceFiles(dir: string): RouteSourceFile[] {
+  return collectRouteFiles(dir).map((filePath) => ({
+    filePath,
+    sourceFile: routeSourceFile(filePath),
+  }));
 }
 
 export function displayPath(filePath: string): string {
@@ -50,6 +68,13 @@ export function collectCallExpressions(sourceFile: ts.SourceFile): ts.CallExpres
 
 export function callName(sourceFile: ts.SourceFile, call: ts.CallExpression): string {
   return call.expression.getText(sourceFile);
+}
+
+export function callTargetsIdentifier(call: ts.CallExpression): string | null {
+  const expression = call.expression;
+  if (ts.isIdentifier(expression)) return expression.text;
+  if (ts.isPropertyAccessExpression(expression)) return expression.name.text;
+  return null;
 }
 
 export function hasExportModifier(node: ts.Node): boolean {
@@ -96,7 +121,13 @@ export function exportedDeclarationNames(statement: ts.Statement): string[] {
 }
 
 export function hasAnyCall(sourceFile: ts.SourceFile, names: Set<string>): boolean {
-  return collectCallExpressions(sourceFile).some((call) => names.has(callName(sourceFile, call)));
+  return collectCallExpressions(sourceFile).some(
+    (call) => {
+      const target = callTargetsIdentifier(call);
+      if (target) return names.has(target);
+      return names.has(callName(sourceFile, call));
+    },
+  );
 }
 
 export function exportedMethods(sourceFile: ts.SourceFile, allowedMethods: Set<string>): string[] {
