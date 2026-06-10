@@ -64,4 +64,20 @@ describe('fetcher response unwrap', () => {
 
     return expect(fetcher('/api/test')).rejects.toThrow('broken (500)');
   });
+
+  it('falls back to status-based message when body has no API error message', () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response('', { status: 502, statusText: 'Bad Gateway' }),
+    );
+
+    return expect(fetcher('/api/test')).rejects.toThrow('API error: 502 Bad Gateway');
+  });
+
+  it('falls back when response body is not JSON', () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response('not json', { status: 503, statusText: 'Service Unavailable' }),
+    );
+
+    return expect(fetcher('/api/test')).rejects.toThrow('API error: 503 Service Unavailable');
+  });
 });
