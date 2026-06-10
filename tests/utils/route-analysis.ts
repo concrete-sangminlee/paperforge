@@ -3,12 +3,20 @@ import path, { join } from 'node:path';
 import ts from 'typescript';
 
 const routeFileName = 'route.ts';
+const routeFilesCache = new Map<string, string[]>();
+const routeSourceCache = new Map<string, RouteSourceFile[]>();
 
 export function collectRouteFiles(dir: string): string[] {
+  const normalizedDir = path.resolve(dir);
+  const cached = routeFilesCache.get(normalizedDir);
+  if (cached) {
+    return [...cached];
+  }
+
   const output: string[] = [];
 
   function walk(currentDir: string) {
-    const entries = readdirSync(currentDir, { withFileTypes: true });
+    const entries = readdirSync(currentDir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name));
     for (const entry of entries) {
       const fullPath = join(currentDir, entry.name);
       if (entry.isDirectory()) {
@@ -22,8 +30,9 @@ export function collectRouteFiles(dir: string): string[] {
     }
   }
 
-  walk(dir);
-  return output;
+  walk(normalizedDir);
+  routeFilesCache.set(normalizedDir, [...output]);
+  return [...output];
 }
 
 export type RouteSourceFile = {
@@ -32,10 +41,18 @@ export type RouteSourceFile = {
 };
 
 export function collectRouteSourceFiles(dir: string): RouteSourceFile[] {
-  return collectRouteFiles(dir).map((filePath) => ({
+  const normalizedDir = path.resolve(dir);
+  const cached = routeSourceCache.get(normalizedDir);
+  if (cached) {
+    return [...cached];
+  }
+
+  const result = collectRouteFiles(normalizedDir).map((filePath) => ({
     filePath,
     sourceFile: routeSourceFile(filePath),
   }));
+  routeSourceCache.set(normalizedDir, result);
+  return [...result];
 }
 
 export function displayPath(filePath: string): string {
