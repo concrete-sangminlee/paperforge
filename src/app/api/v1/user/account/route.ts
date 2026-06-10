@@ -64,7 +64,7 @@ export async function DELETE(request: Request) {
     }
 
     // Wrap every deletion in a single transaction so a mid-way failure (timeout,
-    // FK conflict, dropped connection) cannot strand the account half-deleted —
+    // FK conflict, dropped connection) cannot strand the account half-deleted,
     // a state with no UI to recover from. Bumped timeout from the 5s default
     // because heavy users can own thousands of files / compilations.
     await prisma.$transaction(
