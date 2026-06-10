@@ -10,7 +10,6 @@ import { logAuditAction } from '@/services/audit-service';
 import {
   type BillingCadence,
   type BillingPlan,
-  BILLING_PLANS,
   PLAN_IDS,
   getBillingPlan,
 } from '@/lib/billing-plans';
@@ -136,9 +135,4 @@ export async function GET(request: NextRequest) {
     if (error instanceof ApiError) return errorResponse(error);
     return NextResponse.redirect(new URL('/pricing', request.url));
   }
-}
-
-export function planUpgradeCopy(planId: 'pro' | 'team') {
-  const plan = BILLING_PLANS[planId];
-  return `${plan.name} unlocks ${plan.features.slice(0, 3).join(', ')}.`;
 }
