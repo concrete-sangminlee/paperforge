@@ -121,13 +121,11 @@ export function exportedDeclarationNames(statement: ts.Statement): string[] {
 }
 
 export function hasAnyCall(sourceFile: ts.SourceFile, names: Set<string>): boolean {
-  return collectCallExpressions(sourceFile).some(
-    (call) => {
-      const target = callTargetsIdentifier(call);
-      if (target) return names.has(target);
-      return names.has(callName(sourceFile, call));
-    },
-  );
+  return collectCallExpressions(sourceFile).some((call) => {
+    const target = callTargetsIdentifier(call);
+    if (target && names.has(target)) return true;
+    return names.has(callName(sourceFile, call));
+  });
 }
 
 export function exportedMethods(sourceFile: ts.SourceFile, allowedMethods: Set<string>): string[] {
