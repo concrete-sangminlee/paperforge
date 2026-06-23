@@ -2,7 +2,7 @@ import http from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import { authenticateFromCookie, hasSecret } from './auth';
 import { getProjectRole } from './authorization';
-import { handleConnection } from './yjs-server';
+import { handleConnection, getCollabMetrics } from './yjs-server';
 import { env } from './env';
 
 const PORT = env.WS_PORT;
@@ -30,6 +30,22 @@ const server = http.createServer((req, res) => {
       hasAuthSecret: hasSecret(),
     };
     res.writeHead(hasSecret() ? 200 : 503, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(body));
+    return;
+  }
+  // Metrics: aggregate collaboration counts for the admin health panel. Exposes
+  // only counts (live documents, attached clients, distinct users) — never
+  // per-project ids — so it is safe to serve without auth, like /healthz.
+  if (req.url === '/metrics') {
+    const collab = getCollabMetrics();
+    const body = {
+      service: 'paperforge-ws',
+      uptimeSeconds: Math.round((Date.now() - startedAt) / 1000),
+      documents: collab.documents,
+      connections: collab.connections,
+      totalUsers: userConnectionCount.size,
+    };
+    res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(body));
     return;
   }

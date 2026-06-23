@@ -173,10 +173,19 @@ Role conversation:
 
 Deliverables:
 
-- Collaboration health panel.
-- WebSocket metrics route or admin widget.
-- Viewer write-block verification.
-- Reconnect and offline UX polish.
+- WebSocket metrics route. Shipped: `getCollabMetrics()` in
+  `websocket/src/yjs-server.ts` snapshots live documents and attached clients;
+  the WS server serves a `/metrics` endpoint exposing aggregate counts only
+  (documents, connections, distinct users) — never per-project ids — so it is
+  safe to serve unauthenticated like `/healthz`.
+- Viewer write-block verification. Shipped: executable regression tests
+  (`tests/integration/collab-yjs-server.test.ts`) drive the Yjs server with a
+  read-only connection and prove a viewer's sync write is dropped (server doc
+  unchanged, no broadcast) while an editor's write is applied and broadcast.
+  Connection lifecycle + memory cleanup on last-disconnect are covered too.
+- Remaining future work: a collaboration health panel in the admin UI (the
+  metrics endpoint is the data source), and reconnect/offline UX polish in the
+  editor client.
 
 ## Sprint 7 - Compilation SLA
 

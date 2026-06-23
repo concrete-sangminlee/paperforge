@@ -16,6 +16,28 @@ const docs = new Map<string, DocEntry>();
 const messageSync = 0;
 const messageAwareness = 1;
 
+export interface CollabMetrics {
+  documents: number;
+  connections: number;
+  perDocument: Array<{ docName: string; connections: number }>;
+}
+
+/**
+ * Snapshot of in-memory collaboration state for the metrics endpoint / admin
+ * health panel: how many docs are live and how many clients are attached. Pure
+ * read of the module state — no side effects.
+ */
+export function getCollabMetrics(): CollabMetrics {
+  let connections = 0;
+  const perDocument: Array<{ docName: string; connections: number }> = [];
+  for (const [docName, entry] of docs.entries()) {
+    const count = entry.conns.size;
+    connections += count;
+    perDocument.push({ docName, connections: count });
+  }
+  return { documents: docs.size, connections, perDocument };
+}
+
 export function getOrCreateDoc(docName: string): DocEntry {
   let entry = docs.get(docName);
   if (!entry) {
