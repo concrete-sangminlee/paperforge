@@ -184,9 +184,16 @@ Deliverables:
 
 - Plan-aware queue priority. Shipped in `src/services/compilation-service.ts`.
 - Queue priority mapping. Shipped in `src/lib/entitlements.ts`.
-- Compile latency metrics.
-- Admin worker SLA widget.
-- Support runbook for stuck queues.
+- Compile latency metrics. Shipped: `src/lib/compile-sla.ts` (pure percentile +
+  summary math) and `src/services/compilation-metrics-service.ts` aggregate the
+  persisted compilation status/duration into p50/p95/p99 latency, success rate,
+  and throughput over rolling 24h/7d windows, evaluated against
+  `COMPILE_SLA.TARGET_P95_MS`. No schema change — reads the existing table.
+- Admin worker SLA widget. Shipped: `GET /api/v1/admin/compile-sla` (admin-gated,
+  read-only) feeds an SLA section on the admin workers page showing p95/p50
+  latency, success rate, throughput, and target compliance.
+- Remaining future work: persist queue *wait* time (enqueue→start) for a full
+  wait+run SLA, per-plan latency breakdown, and a stuck-queue support runbook.
 
 ## Sprint 8 - Institutional Admin
 

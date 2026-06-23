@@ -67,6 +67,14 @@ export const EDITOR = {
   CLIPBOARD_FEEDBACK_MS: 2000,
 } as const;
 
+// ── Compilation SLA ──────────────────────────────────────
+export const COMPILE_SLA = {
+  // Target p95 latency for successful compilations. Paid priority compilation
+  // is the value proposition, so this is the threshold the admin SLA widget
+  // measures against. Tune per deployment capacity.
+  TARGET_P95_MS: 10000, // 10s
+} as const;
+
 // ── Limits ───────────────────────────────────────────────
 export const LIMITS = {
   MAX_FILE_SIZE: 50 * 1024 * 1024,       // 50 MB
