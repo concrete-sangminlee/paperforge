@@ -251,10 +251,14 @@ Role conversation:
 
 Deliverables:
 
-- Persona landing variants.
-- Campaign attribution stored in user settings.
-- Pricing FAQ and objection handling.
-- Trial conversion dashboard.
+- Campaign attribution stored in user settings. Shipped: `src/lib/campaign.ts`
+  (sanitized, first-touch parse/merge of utm_* / referrer) and
+  `src/services/campaign-service.ts`, captured fire-and-forget at registration
+  into `settings.attribution`.
+- Pricing FAQ and objection handling. Shipped in Sprint 3.
+- Remaining future work: persona landing variants and a trial-conversion
+  dashboard (the attribution data + audit-log subscription events are the
+  inputs; the KPI review template enumerates the metrics).
 
 ## Sprint 10 - Operating Maturity
 
@@ -271,11 +275,16 @@ Role conversation:
 
 Deliverables:
 
-- Incident runbooks.
-- Support macro library.
-- Release checklist.
-- Billing smoke test plan.
-- Post-launch KPI review template.
+- Incident runbooks. Shipped: `docs/operations/incident-runbooks.md` (severity
+  model + RB-1..RB-6 keyed to real health signals and fallbacks).
+- Support macro library. Shipped: `docs/operations/support-macros.md`.
+- Release checklist. Shipped: `docs/operations/release-checklist.md` (pre-flight
+  through rollback, including worker/websocket builds and schema sync).
+- Billing smoke test plan. Shipped: `docs/operations/billing-smoke-test.md`
+  (signed-webhook activation, security/idempotency, downgrade, entitlements).
+- Post-launch KPI review template. Shipped:
+  `docs/operations/kpi-review-template.md`, mapped to the operating-model metrics
+  and to the attribution/activation markers + audit events that source them.
 
 ## Next Pickup Queue
 
