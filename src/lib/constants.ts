@@ -38,6 +38,9 @@ export const RATE_LIMITS = {
   AVATAR_UPLOAD:  { limit: 10, windowSeconds: 3600 },  // 10 avatar uploads per hour per user
   BILLING_CHECKOUT: { limit: 10, windowSeconds: 3600 }, // 10 checkout starts per hour per user
   BILLING_SALES_INQUIRY: { limit: 5, windowSeconds: 3600 }, // 5 Team inquiries per hour per user
+  // Per-IP cap on the unauthenticated webhook endpoint. Signature verification
+  // is the real gate; this throttles brute-force signature/timestamp probing.
+  BILLING_WEBHOOK: { limit: 120, windowSeconds: 60 },
   AI_USER:        { limit: 20, windowSeconds: 3600 },  // 20 AI assist calls per hour per user
   // Global cap across all users — protects deployment from runaway Anthropic spend
   // during viral moments / abuse. Tune per deployment budget.

@@ -114,6 +114,10 @@ export const env = {
   ANTHROPIC_API_KEY: optional('ANTHROPIC_API_KEY'),
   BILLING_PROVIDER: optional('BILLING_PROVIDER', 'manual'),
   BILLING_CONTACT_EMAIL: optional('BILLING_CONTACT_EMAIL', 'sales@paperforge.dev'),
+  // Signing secret for the payment-provider webhook. When unset the webhook
+  // endpoint returns 503 (not configured) so a deployment without a provider
+  // can't be tricked into processing unsigned plan changes.
+  BILLING_WEBHOOK_SECRET: optional('BILLING_WEBHOOK_SECRET'),
   BILLING_CHECKOUT_PRO_MONTHLY_URL: optional('BILLING_CHECKOUT_PRO_MONTHLY_URL'),
   BILLING_CHECKOUT_PRO_ANNUAL_URL: optional('BILLING_CHECKOUT_PRO_ANNUAL_URL'),
   BILLING_CHECKOUT_TEAM_MONTHLY_URL: optional('BILLING_CHECKOUT_TEAM_MONTHLY_URL'),

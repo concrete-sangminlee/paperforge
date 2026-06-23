@@ -130,10 +130,25 @@ Role conversation:
 
 Deliverables:
 
-- Payment provider webhook route.
-- Subscription status stored in DB or settings migration.
-- Checkout success/cancel pages.
-- Audit trail for subscription changes.
+- Payment provider webhook route. Shipped as `POST /api/v1/billing/webhook`: a
+  provider-agnostic, Stripe-shaped endpoint that HMAC-verifies the signature
+  (with a replay-window timestamp tolerance), is idempotent per provider event
+  id (the audit log doubles as the processed-event ledger), and is rate-limited
+  per IP. Returns 503 until `BILLING_WEBHOOK_SECRET` is configured.
+- Subscription status stored via settings migration. Shipped: the webhook writes
+  the same `settings.billingPlan` (+ matching `storageQuotaBytes`) that admin
+  provisioning writes, through the shared `applyBillingPlanToUser` billing
+  service. `checkout.session.completed` / `customer.subscription.updated`
+  activate the paid plan; `customer.subscription.deleted` downgrades to Free.
+- Checkout success/cancel pages. Shipped as `/billing/success` and
+  `/billing/cancel`.
+- Audit trail for subscription changes. Shipped as `billing.subscription_activated`,
+  `billing.subscription_canceled`, and `billing.webhook_processed` audit events.
+- Remaining future work: promote `settings.billingPlan` to a first-class
+  subscription model (provider customer/subscription ids, current-period-end,
+  status) once a single provider is committed; today the webhook is wired and
+  verified end-to-end against Stripe-shaped events but no provider account is
+  bundled.
 
 ## Sprint 6 - Collaboration Reliability
 
@@ -239,8 +254,12 @@ Deliverables:
 ## Next Pickup Queue
 
 1. Complete Sprint 2 persisted activation event markers and welcome email.
-2. Add Sprint 3 pricing-page Team FAQ and buyer objection copy.
-3. Extend entitlements beyond project count and collaborators (storage usage, export formats).
-4. Add payment provider webhook after the provider is chosen — it can write the same
-   `settings.billingPlan` that admin provisioning already writes.
-5. Move plan state from `settings.billingPlan` inference to a first-class subscription model when webhook work begins.
+2. ~~Add payment provider webhook~~ — Shipped (`POST /api/v1/billing/webhook`,
+   `applyBillingPlanToUser`, success/cancel pages, subscription audit events).
+3. Choose a single provider, bundle its SDK/keys, and wire the hosted-checkout
+   `success_url`/`cancel_url` to `/billing/success` and `/billing/cancel`.
+4. Move plan state from `settings.billingPlan` inference to a first-class
+   subscription model (customer/subscription ids, period end, status) — the
+   webhook handler is the natural write point.
+5. Sprint 7: compile latency metrics + admin SLA widget (priority queueing is
+   already plan-aware; the gap is measurement/observability).

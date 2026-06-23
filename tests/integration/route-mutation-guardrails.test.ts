@@ -11,6 +11,7 @@ const AUTH_EXEMPT_MUTATION_ROUTES = new Set([
   'src/app/api/v1/auth/forgot-password/route.ts', // unauthenticated by design for recovery
   'src/app/api/v1/auth/register/route.ts', // allows bootstrap account creation
   'src/app/api/v1/auth/reset-password/route.ts', // bootstrap without existing session
+  'src/app/api/v1/billing/webhook/route.ts', // authenticated by HMAC signature, not a user session
 ]);
 
 function listRouteFiles(dir: string): string[] {
