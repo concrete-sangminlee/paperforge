@@ -60,8 +60,18 @@ Deliverables:
 - First-run checklist on `/projects`. Shipped via `ActivationChecklist`.
 - Activation computation helper in `src/lib/activation.ts`.
 - Activation tests in `tests/lib/activation.test.ts`.
-- Remaining future work: template-first create flow, persisted activation event markers,
-  and welcome email with direct links to docs and templates.
+- Persisted activation event markers. Shipped: `src/lib/activation-events.ts`
+  (pure, idempotent first-reached-wins merge under `settings.activationEvents`)
+  and `src/services/activation-service.ts` (`recordActivationEvent`, fire-and-forget,
+  never throws). Wired into project creation (`created_project`) and email
+  verification (`verified_email`).
+- Welcome email with direct links to docs and templates. Shipped:
+  `welcomeEmailTemplate` is sent on first email verification (idempotent — a
+  repeated verify click does not re-send), linking to the template gallery and
+  getting-started docs.
+- Remaining future work: a template-first create flow, and wiring the remaining
+  markers (`added_content`, `invited_collaborator`, `reviewed_billing`) into
+  their hooks for a complete funnel.
 
 ## Sprint 3 - Team Selling Surface
 

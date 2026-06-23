@@ -6,6 +6,7 @@ import {
   resolveBillingPlanForUser,
 } from '@/lib/billing-plans';
 import { syncUserStorageUsed } from '@/lib/storage';
+import { recordActivationEvent } from '@/services/activation-service';
 
 async function assertProjectCreationAllowed(userId: string) {
   const user = await prisma.user.findUnique({
@@ -52,6 +53,9 @@ export async function createProject(
       members: { create: { userId, role: 'owner' } },
     },
   });
+  // Persisted activation marker (first project). Fire-and-forget and idempotent
+  // so it never blocks or fails project creation.
+  recordActivationEvent(userId, 'created_project').catch(() => {});
   return project;
 }
 

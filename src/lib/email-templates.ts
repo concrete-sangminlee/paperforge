@@ -33,6 +33,26 @@ export function buttonHtml(text: string, url: string): string {
   return `<a href="${escapeHtml(url)}" style="display:inline-block;padding:12px 24px;background:#18181b;color:#fff;text-decoration:none;border-radius:6px;font-weight:500;margin:16px 0">${escapeHtml(text)}</a>`;
 }
 
+export function welcomeEmailTemplate(input: {
+  name: string;
+  projectsUrl: string;
+  templatesUrl: string;
+  docsUrl: string;
+}): string {
+  const body = `
+    <p style="margin:0 0 12px;color:#3f3f46">Hi ${escapeHtml(input.name)},</p>
+    <p style="margin:0 0 12px;color:#3f3f46;line-height:1.5">Your email is verified and your account is ready. The fastest way to a compiled document is to start from a template, then edit and compile in the browser.</p>
+    ${buttonHtml('Create your first project', input.projectsUrl)}
+    <p style="margin:20px 0 8px;color:#18181b;font-weight:600">Quick links</p>
+    <ul style="margin:0;padding-left:18px;color:#3f3f46;line-height:1.8">
+      <li><a href="${escapeHtml(input.templatesUrl)}" style="color:#2563eb">Browse the template gallery</a> — journals, theses, Beamer, CV</li>
+      <li><a href="${escapeHtml(input.docsUrl)}" style="color:#2563eb">Read the getting-started docs</a> — shortcuts, symbols, Git</li>
+    </ul>
+    <p style="margin:16px 0 0;font-size:13px;color:#71717a">Happy writing — the PaperForge team.</p>
+  `;
+  return emailTemplate('Welcome to PaperForge', body);
+}
+
 export function salesInquiryEmailTemplate(input: {
   requesterEmail: string;
   requesterName: string;
