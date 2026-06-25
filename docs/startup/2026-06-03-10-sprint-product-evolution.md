@@ -69,9 +69,11 @@ Deliverables:
   `welcomeEmailTemplate` is sent on first email verification (idempotent — a
   repeated verify click does not re-send), linking to the template gallery and
   getting-started docs.
-- Remaining future work: a template-first create flow, and wiring the remaining
-  markers (`added_content`, `invited_collaborator`, `reviewed_billing`) into
-  their hooks for a complete funnel.
+- Complete activation funnel. Shipped: all five markers are now wired at their
+  natural hooks (fire-and-forget) — `created_project` (project creation),
+  `verified_email` (email verification), `added_content` (file write),
+  `invited_collaborator` (member invite), `reviewed_billing` (checkout start).
+- Remaining future work: a template-first create flow.
 
 ## Sprint 3 - Team Selling Surface
 

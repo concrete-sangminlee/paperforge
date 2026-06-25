@@ -7,6 +7,7 @@ import { enforceRateLimit } from '@/lib/rate-limit';
 import { RATE_LIMITS } from '@/lib/constants';
 import { env } from '@/lib/env';
 import { logAuditAction } from '@/services/audit-service';
+import { recordActivationEvent } from '@/services/activation-service';
 import {
   type BillingCadence,
   type BillingPlan,
@@ -99,6 +100,8 @@ export async function POST(request: NextRequest) {
       providerConfigured: target.providerConfigured,
       mode: target.mode,
     }).catch(() => {});
+    // Persisted activation marker (user reviewed plans / started checkout).
+    recordActivationEvent(user.id, 'reviewed_billing').catch(() => {});
 
     return apiSuccess({
       planId: data.planId,

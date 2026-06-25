@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { ApiError } from '@/lib/errors';
 import { sendEmail } from '@/lib/email';
 import { assertProjectRole } from '@/services/project-service';
+import { recordActivationEvent } from '@/services/activation-service';
 import { emailTemplate, buttonHtml, escapeHtml } from '@/lib/email-templates';
 import { getAppBaseUrl } from '@/lib/app-url';
 import {
@@ -66,6 +67,9 @@ export async function inviteMember(
     }
     throw err;
   }
+
+  // Persisted activation marker (the inviter validated the collaboration flow).
+  recordActivationEvent(inviterId, 'invited_collaborator').catch(() => {});
 
   const project = await prisma.project.findFirst({
     where: { id: projectId, deletedAt: null },

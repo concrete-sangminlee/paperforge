@@ -11,6 +11,7 @@ import {
 import { isValidFilePath, LIMITS, RATE_LIMITS } from '@/lib/constants';
 import { enforceRateLimit } from '@/lib/rate-limit';
 import { logAuditAction } from '@/services/audit-service';
+import { recordActivationEvent } from '@/services/activation-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -72,6 +73,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     const file = await createFile(id, filePath, content);
     logAuditAction(userId, 'file.updated', 'project', id, { path: filePath }).catch(() => {});
+    // Persisted activation marker (added source content). Fire-and-forget.
+    recordActivationEvent(userId, 'added_content').catch(() => {});
 
     return apiSuccess({ file });
   } catch (error) {
