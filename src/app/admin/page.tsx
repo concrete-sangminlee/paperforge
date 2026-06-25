@@ -37,6 +37,20 @@ interface HealthData {
   checks: Record<string, { status: string; latency?: number }>;
 }
 
+interface FunnelStage {
+  id: string;
+  label: string;
+  count: number;
+  pctOfRegistered: number | null;
+  pctOfPrevious: number | null;
+}
+
+interface FunnelData {
+  registered: number;
+  stages: FunnelStage[];
+  conversion: { activated: number; canceled: number; net: number; rate: number | null };
+}
+
 function formatUptime(seconds: number): string {
   const days = Math.floor(seconds / 86400);
   const hours = Math.floor((seconds % 86400) / 3600);
@@ -57,6 +71,12 @@ export default function AdminDashboard() {
     '/api/healthz',
     fetcher,
     { refreshInterval: 15000 },
+  );
+
+  const { data: funnel } = useSWR<FunnelData>(
+    '/api/v1/admin/funnel',
+    fetcher,
+    { refreshInterval: 30000 },
   );
 
   const cards = [
@@ -278,6 +298,71 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Growth Funnel */}
+      {funnel && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <TrendingUpIcon className="size-4" />
+              Growth Funnel
+            </CardTitle>
+            <CardDescription>
+              Acquisition → activation and paid conversion
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {funnel.stages.map((stage) => (
+                <div key={stage.id} className="rounded-md border px-3 py-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">{stage.label}</span>
+                    <span className="tabular-nums">
+                      {stage.count.toLocaleString()}
+                      {stage.pctOfRegistered !== null && (
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          {stage.pctOfRegistered}% of registered
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                  <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-primary"
+                      style={{ width: `${stage.pctOfRegistered ?? 0}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-md bg-green-500/10 px-3 py-2">
+                <p className="text-xs text-muted-foreground">Paid conversions</p>
+                <p className="text-xl font-bold text-green-600 dark:text-green-400">
+                  {funnel.conversion.activated.toLocaleString()}
+                  {funnel.conversion.rate !== null && (
+                    <span className="ml-1 text-xs font-normal text-muted-foreground">
+                      ({funnel.conversion.rate}%)
+                    </span>
+                  )}
+                </p>
+              </div>
+              <div className="rounded-md bg-red-500/10 px-3 py-2">
+                <p className="text-xs text-muted-foreground">Cancellations</p>
+                <p className="text-xl font-bold text-red-600 dark:text-red-400">
+                  {funnel.conversion.canceled.toLocaleString()}
+                </p>
+              </div>
+              <div className="rounded-md bg-blue-500/10 px-3 py-2">
+                <p className="text-xs text-muted-foreground">Net active subs</p>
+                <p className="text-xl font-bold text-blue-600 dark:text-blue-400">
+                  {funnel.conversion.net.toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

@@ -256,9 +256,14 @@ Deliverables:
   `src/services/campaign-service.ts`, captured fire-and-forget at registration
   into `settings.attribution`.
 - Pricing FAQ and objection handling. Shipped in Sprint 3.
-- Remaining future work: persona landing variants and a trial-conversion
-  dashboard (the attribution data + audit-log subscription events are the
-  inputs; the KPI review template enumerates the metrics).
+- Trial conversion dashboard. Shipped: `src/lib/funnel.ts` (pure funnel math)
+  and `src/services/funnel-service.ts` build an acquisition→activation funnel
+  (registered → verified → created-project) plus paid conversion/churn from
+  cheap indexable counts (emailVerified column, project-owner relation,
+  subscription audit events — no JSON scan). Surfaced via
+  `GET /api/v1/admin/funnel` and a Growth Funnel card on the admin dashboard.
+- Remaining future work: persona landing variants, and an attribution-source
+  breakdown (requires a settings-JSON scan or a denormalized column).
 
 ## Sprint 10 - Operating Maturity
 
