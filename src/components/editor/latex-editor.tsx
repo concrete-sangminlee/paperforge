@@ -18,6 +18,7 @@ import { getLanguageForFile } from '@/lib/latex-language';
 import { latexLinter } from '@/lib/latex-linter';
 import { latexFoldService } from '@/lib/latex-fold';
 import { clientEnv } from '@/lib/client-env';
+import type { ProviderStatus } from '@/lib/connection-status';
 
 interface LaTeXEditorProps {
   initialContent: string;
@@ -27,7 +28,7 @@ interface LaTeXEditorProps {
   readOnly?: boolean;
   onSave?: (content: string) => void;
   onProviderReady?: (provider: WebsocketProvider) => void;
-  onConnectionChange?: (connected: boolean) => void;
+  onConnectionChange?: (status: ProviderStatus) => void;
 }
 
 const themeCompartment = new Compartment();
@@ -72,7 +73,8 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
 
       // --- Connection status tracking ---
       handleStatus = ({ status }: { status: string }) => {
-        onConnectionChange?.(status === 'connected');
+        // y-websocket emits 'connected' | 'connecting' | 'disconnected'.
+        onConnectionChange?.(status as ProviderStatus);
       };
       provider.on('status', handleStatus);
 
@@ -89,8 +91,9 @@ export function LaTeXEditor({ initialContent, filePath, projectId, theme = 'ligh
       };
       provider.on('sync', handleSync);
     } else {
-      // No WebSocket configured — single-user mode, no collaboration
-      onConnectionChange?.(true);
+      // No WebSocket configured — single-user mode, no collaboration. Report
+      // 'connected'; the editor layout renders single-user from wsConfigured.
+      onConnectionChange?.('connected');
     }
 
     const saveKeymap = keymap.of([

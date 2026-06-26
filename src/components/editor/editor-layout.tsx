@@ -35,6 +35,7 @@ import { Button } from '@/components/ui/button';
 import type { WebsocketProvider } from 'y-websocket';
 import { useOnlineStatus } from '@/hooks/use-online-status';
 import { clientEnv } from '@/lib/client-env';
+import { resolveConnectionState, type ProviderStatus } from '@/lib/connection-status';
 
 interface FileEntry {
   id: string;
@@ -72,12 +73,32 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
   const [pdfRefreshKey, setPdfRefreshKey] = useState(0);
   const providerRef = useRef<WebsocketProvider | null>(null);
   const [provider, setProvider] = useState<WebsocketProvider | null>(null);
-  const [wsConnected, setWsConnected] = useState(true);
+  const [wsStatus, setWsStatus] = useState<ProviderStatus | null>(null);
   const isOnline = useOnlineStatus();
 
-  const handleConnectionChange = useCallback((connected: boolean) => {
-    setWsConnected(connected);
+  const handleConnectionChange = useCallback((status: ProviderStatus) => {
+    setWsStatus(status);
   }, []);
+
+  // Richer connection state for the reconnect/offline UX. Yjs holds edits
+  // locally while disconnected and syncs on reconnect, so the copy reassures.
+  const conn = resolveConnectionState({
+    wsConfigured: !!clientEnv.NEXT_PUBLIC_WS_URL,
+    browserOnline: isOnline,
+    providerStatus: wsStatus,
+  });
+  const connToneText: Record<string, string> = {
+    positive: 'text-green-600',
+    pending: 'text-blue-600',
+    warning: 'text-amber-600',
+    neutral: 'text-muted-foreground',
+  };
+  const connToneDot: Record<string, string> = {
+    positive: 'bg-green-500',
+    pending: 'bg-blue-500',
+    warning: 'bg-amber-500',
+    neutral: 'bg-muted-foreground',
+  };
 
   // Track recent project access
   useEffect(() => {
@@ -382,17 +403,25 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
     <div className="flex h-screen flex-col overflow-hidden">
       {/* Recovery banner for crashed sessions */}
       <RecoveryBanner />
-      {/* Offline / disconnected banner */}
-      {!isOnline && (
-        <div className="flex items-center gap-2 bg-red-500/10 border-b border-red-500/20 px-4 py-1.5 text-xs text-red-600">
-          <WifiOff className="size-3.5" />
-          You are offline. Changes will sync when your internet connection is restored.
-        </div>
-      )}
-      {isOnline && !wsConnected && clientEnv.NEXT_PUBLIC_WS_URL && (
-        <div className="flex items-center gap-2 bg-amber-500/10 border-b border-amber-500/20 px-4 py-1.5 text-xs text-amber-600">
-          <WifiOff className="size-3.5" />
-          Connection lost. Changes will sync when reconnected.
+      {/* Connection banner — offline / reconnecting / connecting (Yjs keeps
+          edits locally and syncs on reconnect, so the copy is reassuring) */}
+      {conn.banner && (
+        <div
+          className={cn(
+            'flex items-center gap-2 border-b px-4 py-1.5 text-xs',
+            conn.state === 'offline'
+              ? 'bg-red-500/10 border-red-500/20 text-red-600'
+              : conn.tone === 'warning'
+                ? 'bg-amber-500/10 border-amber-500/20 text-amber-600'
+                : 'bg-blue-500/10 border-blue-500/20 text-blue-600',
+          )}
+        >
+          {conn.tone === 'pending' ? (
+            <LoaderCircleIcon className="size-3.5 animate-spin" />
+          ) : (
+            <WifiOff className="size-3.5" />
+          )}
+          {conn.banner}
         </div>
       )}
 
@@ -404,10 +433,19 @@ export function EditorLayout({ projectId, projectName, initialMainFile, files: i
           onCompileReady={(fn) => { compileFnRef.current = fn; }}
         />
         <div className="flex items-center gap-2 px-2">
-          {isOnline && wsConnected && (
-            <div className="flex items-center gap-1.5 text-xs text-green-600" title="Connected">
-              <span className="size-2 rounded-full bg-green-500" />
-              Connected
+          {conn.state !== 'local' && (
+            <div
+              className={cn('flex items-center gap-1.5 text-xs', connToneText[conn.tone])}
+              title={conn.label}
+            >
+              <span
+                className={cn(
+                  'size-2 rounded-full',
+                  connToneDot[conn.tone],
+                  conn.tone === 'pending' && 'animate-pulse',
+                )}
+              />
+              {conn.label}
             </div>
           )}
           {provider && <Collaborators provider={provider} />}
