@@ -51,6 +51,15 @@ interface FunnelData {
   conversion: { activated: number; canceled: number; net: number; rate: number | null };
 }
 
+interface AttributionData {
+  totalUsers: number;
+  attributed: number;
+  unattributed: number;
+  sources: Array<{ source: string; count: number; pct: number | null }>;
+  otherCount: number;
+  sampled: boolean;
+}
+
 function formatUptime(seconds: number): string {
   const days = Math.floor(seconds / 86400);
   const hours = Math.floor((seconds % 86400) / 3600);
@@ -77,6 +86,12 @@ export default function AdminDashboard() {
     '/api/v1/admin/funnel',
     fetcher,
     { refreshInterval: 30000 },
+  );
+
+  const { data: attribution } = useSWR<AttributionData>(
+    '/api/v1/admin/attribution',
+    fetcher,
+    { refreshInterval: 60000 },
   );
 
   const cards = [
@@ -359,6 +374,51 @@ export default function AdminDashboard() {
                   {funnel.conversion.net.toLocaleString()}
                 </p>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Acquisition Sources */}
+      {attribution && attribution.attributed > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <TrendingUpIcon className="size-4" />
+              Acquisition Sources
+            </CardTitle>
+            <CardDescription>
+              First-touch attribution · {attribution.attributed.toLocaleString()} of{' '}
+              {attribution.totalUsers.toLocaleString()} users attributed
+              {attribution.sampled ? ' (sampled)' : ''}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {attribution.sources.map((src) => (
+                <div key={src.source} className="rounded-md border px-3 py-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">{src.source}</span>
+                    <span className="tabular-nums">
+                      {src.count.toLocaleString()}
+                      {src.pct !== null && (
+                        <span className="ml-2 text-xs text-muted-foreground">{src.pct}%</span>
+                      )}
+                    </span>
+                  </div>
+                  <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-primary"
+                      style={{ width: `${src.pct ?? 0}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+              {attribution.otherCount > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  + {attribution.otherCount.toLocaleString()} from other sources
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>

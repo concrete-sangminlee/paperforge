@@ -67,6 +67,14 @@ export const EDITOR = {
   CLIPBOARD_FEEDBACK_MS: 2000,
 } as const;
 
+// ── Admin analytics ──────────────────────────────────────
+export const ANALYTICS = {
+  // Upper bound on the user rows scanned for the attribution-source breakdown
+  // (attribution lives in the settings JSON, which isn't cheaply countable).
+  // Above this the report is flagged `sampled` rather than silently truncated.
+  ATTRIBUTION_SCAN_LIMIT: 10000,
+} as const;
+
 // ── Compilation SLA ──────────────────────────────────────
 export const COMPILE_SLA = {
   // Target p95 latency for successful compilations. Paid priority compilation

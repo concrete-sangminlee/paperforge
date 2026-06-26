@@ -264,8 +264,13 @@ Deliverables:
   cheap indexable counts (emailVerified column, project-owner relation,
   subscription audit events — no JSON scan). Surfaced via
   `GET /api/v1/admin/funnel` and a Growth Funnel card on the admin dashboard.
-- Remaining future work: persona landing variants, and an attribution-source
-  breakdown (requires a settings-JSON scan or a denormalized column).
+- Attribution-source breakdown. Shipped: `src/lib/attribution-report.ts` (pure
+  top-sources aggregation) and `src/services/attribution-service.ts` (bounded
+  settings scan, `sampled` flag instead of silent truncation) behind
+  `GET /api/v1/admin/attribution`, surfaced as an Acquisition Sources card on
+  the admin dashboard.
+- Remaining future work: persona landing variants, and denormalizing
+  attribution source to a column if the user table outgrows the bounded scan.
 
 ## Sprint 10 - Operating Maturity
 
